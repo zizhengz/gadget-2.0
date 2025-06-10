@@ -3,9 +3,20 @@
 # HELPER FUNCTIONS FOR PLOTTING
 #---------------------------------------------------------------------------------------------------
 
+#' Mean-center ICE curves
+#'
+#' Converts a long‐format ICE data set into a wide matrix
+#' @param ice A **data.frame** (or **data.table**) in long ICE format;
+#'   must contain a value column \code{.value}.
+#' @param feature Column name (string) used as the key when spreading to
+#'   wide format.
+#'
+#' @return A **data.table** (in wide format) of centered ICE curves
+#' @importFrom tidyr pivot_wider
 #' @importFrom data.table setDT
+#' @keywords internal
 mean_center_ice = function(ice, feature) {
-  Y = tidyr::spread(ice, feature, .value)
+  Y = tidyr::pivot_wider(ice, names_from = feature, values_from = .value)
   Y = Y[, setdiff(colnames(Y), c(".type", ".id"))]
 
   # center ICE curves by their mean
@@ -13,7 +24,20 @@ mean_center_ice = function(ice, feature) {
   data.table::setDT(Y)
 }
 
-# generate data for regional plots
+
+
+#' Prepare centered ICE data for regional PDP plots
+#'
+#' @param effect A list returned by your earlier pipeline, expected to
+#'   contain \code{$results} with ICE curves per feature.
+#' @param tree A list-of-lists representing the tree (as in
+#'   \code{compute_tree()} output).
+#' @param depth Integer depth level whose nodes should be visualized.
+#'
+#' @return A named \code{list} of **data.table** objects, one per
+#'   feature, each with an added integer column \code{node}.
+#'
+#' @keywords internal
 regional_pd = function(effect, tree, depth) {
 
   nodes = tree[[depth]]
@@ -43,8 +67,29 @@ regional_pd = function(effect, tree, depth) {
 }
 
 
-# generate regional pd plot
-#' @importFrom tidyr pivot_longer
+#' Generate regional ICE + PDP plot for single tree node
+#' @param effect A named \code{list} whose elements are \code{data.table}s /
+#'   \code{data.frame}s produced by \code{regional_pd()}; each element
+#'   contains centered ICE data for one feature and a column
+#'   \code{node}.
+#' @param target.feature Character. The response-axis label to show
+#'   on the y-axis (e.g., \code{"\\hat{f}_j"}).
+#' @param node_num Integer. Which node (at the chosen depth) to
+#'   visualize.
+#' @param color_ice Color value used for ICE curves
+#' @param color_pd Color value used for the PDP line
+#' @param ymin, ymax Numeric limits for the y-axis (kept identical
+#'   across features so multiple plots can share a scale).
+#' @param split_condition Optional character string appended to each
+#'   facet label, e.g. \code{"x1 > 0.3"}.
+#'
+#' @return A \code{list} of ggplot objects—one for every feature in the
+#'   supplied \code{effect}.
+#'
+#' @importFrom tidyr gather
+#' @importFrom dplyr group_by summarise mutate
+#' @importFrom ggplot2 ggplot aes geom_line scale_color_manual
+#' @keywords internal
 regional_pd_plot = function(effect, target.feature, node_num, color_ice, color_pd, ymin, ymax, split_condition = NULL) {
   plot = lapply(names(effect), function(feat) {
 
@@ -213,7 +258,15 @@ plot_ale_split = function(ale_preds) {
 }
 
 
-# locate node
+#' Locate a node in a list by its id
+#'
+#' @param node_list A list of node objects.
+#' @param id The identifier to look for.
+#'
+#' @return The matched node object, or \code{NULL} when no node with
+#'   that \code{id} exists in \code{node_list}.
+#'
+#' @keywords internal
 find_node_by_id = function(node_list, id) {
   for (n in node_list) {
     if (!is.null(n) && isTRUE(n$id == id)) {
@@ -223,16 +276,41 @@ find_node_by_id = function(node_list, id) {
   return(NULL)
 }
 
+
+#' Plot ICE + partial-dependence panels for every node in a tree
+#' @param tree  A list-of-lists representing the fitted tree. Each
+#'   depth level is a list of node objects (as produced by
+#'   \code{compute_tree()}).
+#' @param effect  An \code{FeatureEffects} object created earlier in the pipeline that holds
+#'   centered ICE curves; must have a slot \code{$results} and a vector \code{$features}.
+#' @param color_ice  Color for ICE curves. Default \code{"lightblue"}.
+#' @param color_pd   Color for the PDP line. Default \code{"lightcoral"}.
+#' @param target.feature  Character string shown on the y-axis
+#'   (e.g.\ \code{"\\hat{f}_j"}). Passed down to
+#'   \code{regional_pd_plot()}.
+#' @param show.plot  Logical. Print each node panel to the active
+#'   graphics device? Default \code{TRUE}.
+#' @param save.plot  Logical. Save each node panel as a PDF file?
+#'   Default \code{FALSE}.
+#' @param path  Path where PDFs are written (ignored if
+#'   \code{save.plot = FALSE}). Defaults to the current directory
+#'   \code{"."}.
+#' @param file.prefix  File name prefix for saved PDFs
+#'   (ignored unless \code{save.plot = TRUE}).
+#'
+#' @return A nested \code{list}. The top level is one entry per depth,
+#'   named \code{"Depth_1"}, \code{"Depth_2"}, …; each contains a list
+#'   of ggplot objects named \code{"Node_1"}, \code{"Node_2"}, ….
+#'
+#' @importFrom ggplot2 ggsave theme element_text
+#' @importFrom patchwork wrap_plots plot_annotation
+#' @export
 plot_tree = function(tree, effect,
   color_ice = "lightblue", color_pd = "lightcoral",
   target.feature,
-  # ymin = -4, ymax = 4,
   show.plot = TRUE,
   save.plot = FALSE,
   path = ".", file.prefix = "tree_plot") {
-
-  # requireNamespace("ggplot2")
-  # requireNamespace("patchwork")
 
   plot_list = list()
   max_depth = length(tree)
@@ -240,15 +318,6 @@ plot_tree = function(tree, effect,
   for (depth in 1:max_depth) {
     reg = regional_pd(effect, tree, depth)
     plots_at_depth = list()
-
-    # ymin = range(unlist(lapply(reg, function(dt) {
-    #   cols = setdiff(names(dt), "node")
-    #   unlist(dt[, cols, with = FALSE], use.names = FALSE)
-    #   })), na.rm = TRUE)[1]
-    # ymax = range(unlist(lapply(reg, function(dt) {
-    #   cols = setdiff(names(dt), "node")
-    #   unlist(dt[, cols, with = FALSE], use.names = FALSE)
-    #   })), na.rm = TRUE)[2]
 
     for (node_num in seq_along(tree[[depth]])) {
       if (!is.null(tree[[depth]][[node_num]])) {
@@ -301,7 +370,7 @@ plot_tree = function(tree, effect,
           ymin = ymin, ymax = ymax,
           split_condition = split_condition)
 
-        p = patchwork::wrap_plots(plots, ncol = length(effect$features)) +
+        p = patchwork::wrap_plots(plots, ncol = if (length(effect$features) <= 3) length(effect$features) else 3) +
           patchwork::plot_annotation(title = title) &
           theme(plot.title = element_text(hjust = 0.5))
 
