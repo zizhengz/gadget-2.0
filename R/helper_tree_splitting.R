@@ -2,8 +2,45 @@
 # HELPER FUNCTIONS FOR TREE SPLITTING
 #---------------------------------------------------------------------------------------------------
 
+#' Evaluate and select the best binary split for all features
+#'
+#' @param Y A list or data structure representing response values
+#'   (e.g. centered ICE curves) that the supplied \code{objective}
+#'   knows how to consume.
+#' @param X A \code{data.frame} (or matrix) of predictor variables.
+#' @param n.splits Integer. How many split points the optimizer should
+#'   return per feature (default 1 for binary splits).
+#' @param min.node.size Integer. Minimum number of observations that
+#'   each child node must retain.
+#' @param optimizer A function with signature
+#'   \code{optimizer(x, y, n.splits, min.node.size, grid, objective,
+#'   n.quantiles, ...)} that returns at least
+#'   \code{$split.points} and \code{$objective.value}.
+#' @param grid Either a numeric vector or list of candidate split
+#'   points passed untouched to \code{optimizer()}.
+#' @param objective Objective function with interface
+#'   \code{objective(y, x, requires.x, ...)} used inside the optimizer
+#'   to score splits.
+#' @param n.quantiles Integer specifying how many quantile-based
+#'   candidate points the optimizer should pre-compute.
+#' @param ... Further arguments passed directly to
+#'   \code{optimizer()}.
+#'
+#' @return A **data.table** with columns
+#'   \describe{
+#'     \item{feature}{Feature name.}
+#'     \item{objective.value}{Numeric value returned by \code{objective}.}
+#'     \item{runtime}{Elapsed time (sec) spent inside \code{optimizer()}.}
+#'     \item{split.points}{A list column; each cell holds the vector of
+#'       split points (may be \code{NA}).}
+#'     \item{best.split}{Logical flag indicating which feature attains
+#'       the minimum objective.}
+#'   }
+#'
 #' @importFrom checkmate assert_data_frame assert_integerish assert_function
 #' @importFrom data.table rbindlist
+#'
+#' @keywords internal
 split_parent_node = function(Y, X, n.splits = 1, min.node.size = 40, optimizer, grid,
   objective, n.quantiles, ...) {
 
@@ -71,8 +108,34 @@ generate_node_index = function(Y, X, result) {
 
 
 
-# performs a binary split
+#' Identify the best split point for a single feature
+#'
+#' @param xval A one‐column \code{data.frame} or matrix of predictor
+#'   values for the feature under inspection.
+#' @param y Response object (list, matrix, or data.frame) that the
+#'   \code{objective} function understands.
+#' @param n.splits Integer; must be \code{1}. The argument is checked
+#'   but otherwise unused.
+#' @param min.node.size Minimum number of observations each child node
+#'   must contain.
+#' @param grid Optional vector/list of grid points forwarded to
+#'   \code{perform_split()} (e.g., ICE/PDP evaluation grid).
+#' @param objective Objective function with interface
+#'   \code{objective(y, x, requires.x, ...)} used inside
+#'   \code{perform_split()}.
+#' @param n.quantiles Number of quantile-based candidate points to pass
+#'   to \code{generate_split_candidates()}.
+#' @param ... Additional arguments propagated to \code{perform_split()}.
+#'
+#' @return A list with two elements:
+#'   \describe{
+#'     \item{split.points}{Numeric value of the best split.}
+#'     \item{objective.value}{Objective value attained at that split.}
+#'   }
+#'
 #' @importFrom checkmate assert_choice
+#'
+#' @keywords internal
 find_best_binary_split = function(xval, y, n.splits = 1, min.node.size, grid,
   objective, n.quantiles, ...) {
   assert_choice(n.splits, choices = 1)
@@ -90,6 +153,24 @@ find_best_binary_split = function(xval, y, n.splits = 1, min.node.size, grid,
   return(list(split.points = q[best], objective.value = splits[best]))
 }
 
+
+#' Generate candidate split points for a numeric feature
+#'
+#' @param xval Numeric vector (or length‐\eqn{n} atomic) containing the
+#'   feature values of the parent node.
+#' @param n.quantiles Integer or \code{NULL}. If not \code{NULL}, the
+#'   function takes sample quantiles of \code{xval} (after enforcing
+#'   \code{min.node.size}) at probabilities
+#'   \eqn{0, 1/n, 2/n, \dots, 1}. When \code{NULL}, all eligible values
+#'   in \code{xval} become candidates.
+#' @param min.node.size Integer. Each child node must have at least
+#'   this many observations.
+#'
+#' @return Numeric vector of candidate split points.
+#'
+#' @importFrom checkmate assert_integerish
+#'
+#' @keywords internal
 generate_split_candidates = function(xval, n.quantiles, min.node.size) {
 
   assert_integerish(min.node.size, upper = floor((length(xval) - 1) / 2))
@@ -116,7 +197,32 @@ generate_split_candidates = function(xval, n.quantiles, min.node.size) {
   return(q)
 }
 
-# Performs a single split and measures the objective
+
+
+#' Compute the objective value of a candidate binary split
+#'
+#' @param split.points Numeric vector of candidate cut points. Only the
+#'   first element is used after being adjusted by
+#'   \code{get_closest_point()}.
+#' @param xval A single-column \code{data.frame} (or matrix) with the
+#'   feature values of the parent node.
+#' @param y A list (usually per-feature ICE/ALE/SHAP matrices) that the
+#'   supplied \code{objective} function can understand.
+#' @param min.node.size Integer. Minimum number of observations
+#'   required in each child node.
+#' @param grid A named list of evaluation grids; the element
+#'   corresponding to the current feature is passed down to
+#'   \code{objective()} so that losses can be computed on the proper
+#'   subset of grid points.
+#' @param objective Objective function with interface
+#'   \code{objective(y, x, split.feat, y.parent, grid, sub.number,
+#'   ...)}. Must return a numeric scalar (or vector that can be summed).
+#' @param ... Additional arguments forwarded to \code{objective()}.
+#'
+#' @return A single numeric value: the summed objective of the two
+#'   child nodes, or \code{Inf} if \code{min.node.size} is violated.
+#'
+#' @keywords internal
 perform_split = function(split.points, xval, y, min.node.size, grid, objective, ...) {
 
   feat = names(xval)
@@ -170,7 +276,18 @@ adjust_nsplits = function(xval, n.splits) {
 
 
 
-# replace split.points with closest value from xval taking into account min.node.size
+#' Map candidate split points to the nearest admissible values
+#'
+#' @param split.points Numeric vector of preliminary candidate cut
+#'   points (e.g., quantiles or mid‐points).
+#' @param xval Numeric vector of the feature values in the parent node.
+#' @param min.node.size Integer. Minimum number of observations each
+#'   child node must preserve.
+#'
+#' @return Numeric vector of the same length as \code{split.points}
+#'   containing adjusted split locations.
+#'
+#' @keywords internal
 get_closest_point = function(split.points, xval, min.node.size = 10) {
   xval = sort.int(xval)
   # try to ensure min.node.size between points (is not guaranteed if many duplicated values exist)
@@ -192,6 +309,21 @@ get_closest_point = function(split.points, xval, min.node.size = 10) {
   return(sort.int(split.adj))
 }
 
+
+
+#' Shift candidate split points into open intervals
+#'
+#' @param split.points Numeric vector of preliminary split locations
+#'   (typically returned by \code{generate_split_candidates()} or
+#'   \code{get_closest_point()}).
+#' @param xval Numeric vector of feature values from the parent node.
+#'
+#' @return Numeric vector of the same length as \code{split.points},
+#'   adjusted so that each element falls strictly inside an open
+#'   interval between consecutive unique values of \code{xval}. Any
+#'   duplicates are removed via \code{unique()} before returning.
+#'
+#' @keywords internal
 adjust_split_point = function(split.points, xval) {
   # use a value between two subsequent points
   q = split.points
@@ -210,15 +342,36 @@ adjust_split_point = function(split.points, xval) {
   return(unique(q))
 }
 
+
+#' Prepare centered ICE matrices and covariate data for split search
+#'
+#' @param effect An object returned by \pkg{iml}\::\code{FeatureEffect}
+#'   (with \code{method = "ice"}). Must contain slots
+#'   \code{\$results} and \code{\$features}.
+#' @param testdata The original data set passed to
+#'   \code{FeatureEffect$new()} (or a subset of it) as a
+#'   \code{data.frame}/\code{data.table}.
+#' @param Z Character vector of column names to be used as splitting features
+#'
+#' @return A named \code{list} with three elements:
+#'   \describe{
+#'     \item{\code{X}}{A \code{data.table} containing the selected
+#'       covariates, coercing factors to numeric when needed.}
+#'     \item{\code{Y}}{A list of \code{data.table}s, one per
+#'       feature, each in wide ICE matrix form and centered by row
+#'       means. Each row corresponds to a ice curve}
+#'     \item{\code{grid}}{A list; each element is a character vector of
+#'       column names (i.e.\ grid points) used for the corresponding
+#'       ICE matrix in \code{Y}.}
+#'   }
+#'
 #' @importFrom data.table setDT
-#' @importFrom tidyr spread
+#' @importFrom tidyr pivot_wider
+#'
+#' @keywords internal
 compute_data_for_ice_splitting = function(effect, testdata, Z) {
 
-  # effect: effect object of IML method FeatureEffect
-  # testdata: data
-  # Output: A data.frame where each row corresponds to a ice curve
-
-  # Z = if (is.null(Z)) setdiff(colnames(testdata), target.feature) else Z
+    # Z = if (is.null(Z)) setdiff(colnames(testdata), target.feature) else Z
   df = setDT(testdata[, Z, drop = FALSE])
   df = lapply(df, function(feat) {
     feat = as.numeric(feat)
@@ -232,7 +385,7 @@ compute_data_for_ice_splitting = function(effect, testdata, Z) {
   ice = lapply(effectdata, function(feat) {
     if (!is.null(feat$.class)) feat = feat[, setdiff(colnames(feat), ".class")]
     if (is.factor(feat$.borders)) feat$.borders = as.numeric(feat$.borders)
-    Y = tidyr::spread(feat, .borders, .value)
+    Y = tidyr::pivot_wider(feat, names_from = .borders, values_from = .value)
     Y = Y[, setdiff(colnames(Y), c(".type", ".id", ".feature"))]
 
     # center ICE curves by their mean
@@ -249,14 +402,16 @@ compute_data_for_ice_splitting = function(effect, testdata, Z) {
   return(list(X = df, Y = ice, grid = grid))
 }
 
-#' @importFrom data.table
+
+
+#' @importFrom data.table setDT
 compute_data_for_ale_splitting = function(effect, testdata, Z) {
 
   # effect: effect object of IML method FeatureEffect
   # testdata: X
   # Output: A data.frame where each row corresponds to a ice curve
 
-  df = setDT(testdata[, Z, drop = FALSE])
+  df = data.table::setDT(testdata[, Z, drop = FALSE])
   df = lapply(df, function(feat) {
     feat = as.numeric(feat)
   })

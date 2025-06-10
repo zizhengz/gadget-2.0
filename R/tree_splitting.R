@@ -1,11 +1,54 @@
-# library(R6)
-# library(data.table)
 
-
-# Definition of Class Node
-#' @importFrom R6
-#' @importFrom checkmate
-#' @importFrom data.table
+#' R6 class: \code{Node}
+#'
+#' @docType class
+#' @name Node
+#'
+#' @field id           Integer. Identifier within its depth level
+#'   (\code{1} = left, \code{2} = right).
+#' @field depth        Integer. Depth of the node; root starts at
+#'   \code{1}.
+#' @field subset.idx   Integer vector with row indices of
+#'   \code{testdata} that fall into this node.
+#' @field objective.value Numeric vector of objective values for the
+#'   node (one per feature).
+#' @field objective.value.parent Numeric vector holding the parent's
+#'   objective values.
+#' @field grid         Named list; each element is the set of grid
+#'   points (column names).
+#' @field id.parent    Integer. ID of the parent node (\code{NULL} for
+#'   root).
+#' @field child.type   Character. Either \code{"<="} or \code{">"} to
+#'   indicate left / right traversal.
+#' @field split.feature Character. Feature chosen for splitting this
+#'   node.
+#' @field split.value  Numeric. Threshold applied to
+#'   \code{split.feature}.
+#' @field children     Two-element list with \code{left.child} and
+#'   \code{right.child} (each another \code{Node} or \code{NULL}).
+#' @field stop.criterion.met Logical. Whether the minimal node size or
+#'   improvement threshold has been reached.
+#' @field improvement.met Logical. Whether the improvement threshold
+#'   (\code{impr.par}) was not met.
+#' @field intImp       Numeric. Interaction importance of the node.
+#' @field local        Optional cached copy of centered ICE / ALE /
+#'   SHAP data used for fast re-computation.
+#'
+#' @section Methods:
+#' \describe{
+#'   \item{\code{$new(id, depth, subset.idx, grid, …)}}{Constructor.}
+#'   \item{\code{$computeSplit(X, Y, objective, …)}}{Find best split,
+#'     update node metadata.}
+#'   \item{\code{$computeChildren(X, Y, testdata, objective, …)}}{Create
+#'     \code{left.child} and \code{right.child} as new \code{Node}
+#'     instances.}
+#' }
+#'
+#' @importFrom R6 R6Class
+#' @importFrom checkmate assert_numeric assert_character
+#' @importFrom data.table setDT
+#'
+#' @keywords internal
 Node = R6::R6Class("Node", list(
   id = NULL,
 
@@ -338,7 +381,52 @@ Node = R6::R6Class("Node", list(
 
 
 
-# compute single tree based on Class 'Node'
+#' Compute single tree based on Class 'Node'
+#'
+#' @param effect An \pkg{iml}\::\code{FeatureEffect} object created
+#'   with \code{method = "ice" \| "ale"} (depending on \code{objective}).
+#' @param testdata Original data set (\code{data.frame}/\code{data.table})
+#'   used for model training or evaluation.
+#' @param model   Fitted prediction model (passed through to SHAP/ALE
+#'   recalculations).
+#' @param predict.function Function of signature
+#'   \code{predict.function(model, newdata)} returning numeric
+#'   predictions.
+#' @param objective Character. One of \code{"SS_L2_pd"},
+#'   \code{"SS_L2_ale"}, or \code{"SS_L2_shap"}.
+#' @param Z Character vector of covariate names kept as splitting
+#'   candidates.
+#' @param target.feature Character. Label for y-axis in downstream
+#'   plots (not used inside the algorithm).
+#' @param n.split Integer. Maximum tree depth (root counts as depth 1).
+#' @param impr.par Numeric in (0, 1]. Relative improvement threshold:
+#'   splits with improvement below \code{impr.par} are not pursued.
+#' @param min.split Integer. Minimum observations that each child node
+#'   must hold.
+#' @param n.quantiles Integer. Number of quantile based candidate
+#'   points passed to \code{generate_split_candidates()}.
+#' @param store.data Logical. If \code{TRUE}, caches node-local ICE /
+#'   ALE / SHAP matrices inside each \code{Node} to accelerate later
+#'   operations (at the cost of memory).
+#' @param shap.recalc Logical. If \code{TRUE} re-computes SHAP values
+#'   for child nodes instead of sub-setting the parent cache.
+#'
+#' @return A nested list representing the tree: level 1 contains the
+#'   root (\code{Node}), level 2 the two children, and so on.  Each
+#'   element is either a \code{Node} object or \code{NULL} (for pruned
+#'   leaves).
+#'
+#' @section Supported objectives:
+#' \describe{
+#'   \item{\code{SS_L2_pd}}{Sum-of-squares on centered ICE curves
+#'     (partial dependence).}
+#'   \item{\code{SS_L2_ale}}{Sum-of-squares on accumulated local effect
+#'     derivatives, including numerical stabilization in the tails.}
+#'   \item{\code{SS_L2_shap}}{Spline-smoothed residual variance of SHAP
+#'     values.}
+#' }
+#'
+#' @export
 compute_tree = function(effect, testdata, model,
   predict.function,
   objective = "SS_L2_pd",
@@ -379,8 +467,7 @@ compute_tree = function(effect, testdata, model,
       L2
     }
 
-    input.data = compute_data_for_ice_splitting(effect, testdata = testdata,
-      Z = Z)
+    input.data = compute_data_for_ice_splitting(effect, testdata = testdata, Z = Z)
   }
 
   else if (objective == "SS_L2_ale") {

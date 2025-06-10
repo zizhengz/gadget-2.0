@@ -12,8 +12,10 @@
 #'   wide format.
 #'
 #' @return A **data.table** (in wide format) of centered ICE curves
+#'
 #' @importFrom tidyr pivot_wider
 #' @importFrom data.table setDT
+#'
 #' @keywords internal
 mean_center_ice = function(ice, feature) {
   Y = tidyr::pivot_wider(ice, names_from = feature, values_from = .value)
@@ -68,6 +70,7 @@ regional_pd = function(effect, tree, depth) {
 
 
 #' Generate regional ICE + PDP plot for single tree node
+#'
 #' @param effect A named \code{list} whose elements are \code{data.table}s /
 #'   \code{data.frame}s produced by \code{regional_pd()}; each element
 #'   contains centered ICE data for one feature and a column
@@ -89,6 +92,7 @@ regional_pd = function(effect, tree, depth) {
 #' @importFrom tidyr gather
 #' @importFrom dplyr group_by summarise mutate
 #' @importFrom ggplot2 ggplot aes geom_line scale_color_manual
+#'
 #' @keywords internal
 regional_pd_plot = function(effect, target.feature, node_num, color_ice, color_pd, ymin, ymax, split_condition = NULL) {
   plot = lapply(names(effect), function(feat) {
@@ -278,6 +282,7 @@ find_node_by_id = function(node_list, id) {
 
 
 #' Plot ICE + partial-dependence panels for every node in a tree
+#'
 #' @param tree  A list-of-lists representing the fitted tree. Each
 #'   depth level is a list of node objects (as produced by
 #'   \code{compute_tree()}).
@@ -304,6 +309,7 @@ find_node_by_id = function(node_list, id) {
 #'
 #' @importFrom ggplot2 ggsave theme element_text
 #' @importFrom patchwork wrap_plots plot_annotation
+#'
 #' @export
 plot_tree = function(tree, effect,
   color_ice = "lightblue", color_pd = "lightcoral",

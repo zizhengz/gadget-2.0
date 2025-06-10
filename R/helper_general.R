@@ -121,6 +121,7 @@ SS_ALE = function(y, x, split.feat, requires.x = FALSE, ...) {
 #'   of \code{y}.
 #'
 #' @importFrom mgcv gam
+#'
 #' @keywords internal
 SS_SHAP = function(y, x, split.feat, requires.x = FALSE, ...) {
   L2 = lapply(y, function(feat) {
