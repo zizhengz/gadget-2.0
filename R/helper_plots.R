@@ -1,10 +1,10 @@
-#source("R/helper_effects.R")
+# source("R/helper_effects.R")
 #---------------------------------------------------------------------------------------------------
 # HELPER FUNCTIONS FOR PLOTTING
 #---------------------------------------------------------------------------------------------------
 
 #' @importFrom data.table setDT
-mean_center_ice = function(ice, feature){
+mean_center_ice = function(ice, feature) {
   Y = tidyr::spread(ice, feature, .value)
   Y = Y[, setdiff(colnames(Y), c(".type", ".id"))]
 
@@ -14,16 +14,16 @@ mean_center_ice = function(ice, feature){
 }
 
 # generate data for regional plots
-regional_pd = function(effect, tree, depth){
+regional_pd = function(effect, tree, depth) {
 
   nodes = tree[[depth]]
   ice_curves = effect$results
-  ice_centered = lapply(names(ice_curves), function(feat){
-    ice = mean_center_ice(ice_curves[[feat]][, - which(colnames(ice_curves[[feat]])==".feature")], ".borders")
+  ice_centered = lapply(names(ice_curves), function(feat) {
+    ice = mean_center_ice(ice_curves[[feat]][, -which(colnames(ice_curves[[feat]]) == ".feature")], ".borders")
     grid_total = colnames(ice)
     ice$node = NA_integer_
 
-    for(node_num in 1:length(nodes)){
+    for (node_num in 1:length(nodes)) {
       node = nodes[[node_num]]
       subset = node$subset.idx
       grid = node$grid[[feat]]
@@ -31,7 +31,7 @@ regional_pd = function(effect, tree, depth){
 
       if (length(grid) < length(grid_total)) {
         ice[subset, which(!(grid_total %in% grid))] = NA
-        #ice[subset, (grid_total)] = ice[subset, ..grid_total] - rowMeans(ice[subset, ..grid_total], na.rm = TRUE)
+        # ice[subset, (grid_total)] = ice[subset, ..grid_total] - rowMeans(ice[subset, ..grid_total], na.rm = TRUE)
         ice[subset, grid_total] = ice[subset, grid_total, with = FALSE] - rowMeans(ice[subset, grid_total, with = FALSE], na.rm = TRUE)
       }
 
@@ -45,15 +45,15 @@ regional_pd = function(effect, tree, depth){
 
 # generate regional pd plot
 #' @importFrom tidyr pivot_longer
-regional_pd_plot = function(effect, target.feature, node_num, color_ice, color_pd, ymin, ymax, split_condition = NULL){
-  plot = lapply(names(effect), function(feat){
+regional_pd_plot = function(effect, target.feature, node_num, color_ice, color_pd, ymin, ymax, split_condition = NULL) {
+  plot = lapply(names(effect), function(feat) {
 
     data = effect[[feat]]
     data_subset = data[data$node == node_num, ]
 
-    ice = tidyr::gather(data_subset[,-ncol(data_subset)], grid, value)
+    ice = tidyr::gather(data_subset[, -ncol(data_subset)], grid, value)
     ice$grid = as.numeric(ice$grid)
-    #ice$id = rep(1:nrow(data_subset), length(unique(ice$grid)))
+    # ice$id = rep(1:nrow(data_subset), length(unique(ice$grid)))
     ice$id = rep(seq_len(nrow(data_subset)), times = length(unique(ice$grid)))
     ice$type = "ICE"
 
@@ -80,8 +80,8 @@ regional_pd_plot = function(effect, target.feature, node_num, color_ice, color_p
       theme_bw(base_size = 9) +
       theme_bw() +
       labs(
-        #x = feat,
-        #y = expression(hat(f)[j]),
+        # x = feat,
+        # y = expression(hat(f)[j]),
         x = if (!is.null(split_condition)) paste0(feat, " | ", split_condition) else feat,
         y = target.feature,
         title = "Partial Dependence Plot",
@@ -90,13 +90,13 @@ regional_pd_plot = function(effect, target.feature, node_num, color_ice, color_p
       theme(
         legend.position = c(0.95, 0.95),
         legend.justification = c("right", "top"),
-        #legend.background = element_rect(fill = alpha("white", 0.7), color = NA),
+        # legend.background = element_rect(fill = alpha("white", 0.7), color = NA),
         legend.background = element_rect(fill = NA, color = NA),
         legend.box.background = element_rect(fill = NA, color = "grey", linewidth = 0.1),
         legend.title = element_blank(),
         legend.text = element_text(size = 8),
         legend.key.size = unit(0.4, "lines"),
-        #plot.title = element_text(hjust = 0.5)
+        # plot.title = element_text(hjust = 0.5)
         plot.title = element_text(hjust = 0.5, size = 9),
         axis.title = element_text(size = 9),
         axis.text = element_text(size = 9)
@@ -109,17 +109,17 @@ regional_pd_plot = function(effect, target.feature, node_num, color_ice, color_p
 }
 
 # generate regional ale plot
-regional_ale_plot = function(effect, color_ale, ymin, ymax, ymin2, ymax2, xmin = NULL, xmax = NULL){
-  plot = lapply(names(effect), function(feat){
+regional_ale_plot = function(effect, color_ale, ymin, ymax, ymin2, ymax2, xmin = NULL, xmax = NULL) {
+  plot = lapply(names(effect), function(feat) {
 
     mean_data = effect[[feat]]$mean_effect
     sd_data = effect[[feat]]$sd_effect
 
-    p_ale  = ggplot() + geom_line(data = mean_data, aes(x = x.grid, y = dL), col = color_ale, lwd = 1.5) +
-      theme_bw() + xlab(feat) + ylab(expression(hat(f)[j])) + ylim(ymin,ymax)
-    p_sd = ggplot() + geom_line(data = sd_data, aes(x = (x.right+x.left)/2, y = sd), col = "orange", lwd = 1.5) +
+    p_ale = ggplot() + geom_line(data = mean_data, aes(x = x.grid, y = dL), col = color_ale, lwd = 1.5) +
+      theme_bw() + xlab(feat) + ylab(expression(hat(f)[j])) + ylim(ymin, ymax)
+    p_sd = ggplot() + geom_line(data = sd_data, aes(x = (x.right + x.left) / 2, y = sd), col = "orange", lwd = 1.5) +
       theme_bw() + xlab("") + ylab("sd(deriv)") + ylim(ymin2, ymax2)
-    if(!is.null(xmin)){
+    if (!is.null(xmin)) {
       p_ale = p_ale + xlim(xmin, xmax)
       p_sd = p_sd + xlim(xmin, xmax)
     }
@@ -131,17 +131,17 @@ regional_ale_plot = function(effect, color_ale, ymin, ymax, ymin2, ymax2, xmin =
 }
 
 # generate regional shap plot
-regional_shap_plot = function(effect, color_local, color_global, ymin, ymax, xmin = NULL, xmax = NULL){
-  plot = lapply(names(effect), function(feat){
-    #browser()
+regional_shap_plot = function(effect, color_local, color_global, ymin, ymax, xmin = NULL, xmax = NULL) {
+  plot = lapply(names(effect), function(feat) {
+    # browser()
     data_shap = effect[[feat]]
-    gam_mod = mgcv::gam(phi~s(feat.val, k = 3), data = data_shap)
+    gam_mod = mgcv::gam(phi ~ s(feat.val, k = 3), data = data_shap)
 
-    p_shap  = ggplot() + geom_point(data = data_shap, aes(x = feat.val, y = phi), col = color_local, alpha = 0.4) +
+    p_shap = ggplot() + geom_point(data = data_shap, aes(x = feat.val, y = phi), col = color_local, alpha = 0.4) +
       geom_line(data = data_shap, aes(x = feat.val, y = gam_mod$fitted.values), col = color_global, lwd = 1.5) +
-      theme_bw() + xlab(feat) + ylab(expression(hat(f)[j])) + ylim(ymin,ymax)
+      theme_bw() + xlab(feat) + ylab(expression(hat(f)[j])) + ylim(ymin, ymax)
 
-    if(!is.null(xmin)){
+    if (!is.null(xmin)) {
       p_shap = p_shap + xlim(xmin, xmax)
     }
     p_shap
@@ -153,14 +153,14 @@ regional_shap_plot = function(effect, color_local, color_global, ymin, ymax, xmi
 
 
 # create explanation plots: pdp
-plot_pdp_split = function(sp_L2, eff, data, feature_num){
+plot_pdp_split = function(sp_L2, eff, data, feature_num) {
 
   feature = names(data)[feature_num]
-  ice_right = eff$results[[feature]][which(eff$results[[feature]]$.id %in% which(data[,sp_L2$feature[sp_L2$best.split]]>sp_L2$split.points[[which(sp_L2$best.split)]])),]
-  ice_left = eff$results[[feature]][which(eff$results[[feature]]$.id %in% which(data[,sp_L2$feature[sp_L2$best.split]]<=sp_L2$split.points[[which(sp_L2$best.split)]])),]
-  pdp = aggregate(.value~.borders, data = eff$results[[feature]], FUN = mean)
-  pdp_right = aggregate(.value~.borders, data = ice_right, FUN = mean)
-  pdp_left = aggregate(.value~.borders, data = ice_left, FUN = mean)
+  ice_right = eff$results[[feature]][which(eff$results[[feature]]$.id %in% which(data[, sp_L2$feature[sp_L2$best.split]] > sp_L2$split.points[[which(sp_L2$best.split)]])), ]
+  ice_left = eff$results[[feature]][which(eff$results[[feature]]$.id %in% which(data[, sp_L2$feature[sp_L2$best.split]] <= sp_L2$split.points[[which(sp_L2$best.split)]])), ]
+  pdp = aggregate(.value ~ .borders, data = eff$results[[feature]], FUN = mean)
+  pdp_right = aggregate(.value ~ .borders, data = ice_right, FUN = mean)
+  pdp_left = aggregate(.value ~ .borders, data = ice_left, FUN = mean)
   colnames(pdp)[1] = colnames(pdp_right)[1] = colnames(pdp_left)[1] = feature
 
   p_pdp = ggplot() +
@@ -170,44 +170,44 @@ plot_pdp_split = function(sp_L2, eff, data, feature_num){
     geom_line(data = pdp_left, aes_string(x = feature, ".value"), lwd = 2, color = brewer.pal(11, "RdBu")[9]) +
     geom_line(data = pdp, aes_string(x = feature, ".value"), color = "darkgrey", lwd = 2) +
     geom_point(data = data, aes_string(x = feature, y = "y"), alpha = 0.4) +
-    theme_bw() + ylab(bquote(hat(f)[ .(feature_num)])) + xlab(feature) +
-    geom_rug(data = data, aes_string(x = feature), color = ifelse(data[,sp_L2$feature[sp_L2$best.split]] > sp_L2$split.points[[which(sp_L2$best.split)]], brewer.pal(11, "RdBu")[4], brewer.pal(11, "RdBu")[8]))
+    theme_bw() + ylab(bquote(hat(f)[.(feature_num)])) + xlab(feature) +
+    geom_rug(data = data, aes_string(x = feature), color = ifelse(data[, sp_L2$feature[sp_L2$best.split]] > sp_L2$split.points[[which(sp_L2$best.split)]], brewer.pal(11, "RdBu")[4], brewer.pal(11, "RdBu")[8]))
   p_pdp
 
 }
 
 # create explanation plots: ale
-plot_ale_split = function(ale_preds){
+plot_ale_split = function(ale_preds) {
 
   # average over instances within each interval
   setkeyv(ale_preds, c("interval.index"))
-  delta.aggr = ale_preds[,list(dL = mean(dL, na.rm = TRUE), interval.n = .N), by = c("interval.index", "x.left", "x.right")]
-  delta.aggr1 = ale_preds[ale_preds$node==1, list(dL = mean(dL, na.rm = TRUE), interval.n = .N), by = c("interval.index", "x.left", "x.right")]
-  delta.aggr2 = ale_preds[ale_preds$node==2, list(dL = mean(dL, na.rm = TRUE), interval.n = .N), by = c("interval.index", "x.left", "x.right")]
+  delta.aggr = ale_preds[, list(dL = mean(dL, na.rm = TRUE), interval.n = .N), by = c("interval.index", "x.left", "x.right")]
+  delta.aggr1 = ale_preds[ale_preds$node == 1, list(dL = mean(dL, na.rm = TRUE), interval.n = .N), by = c("interval.index", "x.left", "x.right")]
+  delta.aggr2 = ale_preds[ale_preds$node == 2, list(dL = mean(dL, na.rm = TRUE), interval.n = .N), by = c("interval.index", "x.left", "x.right")]
 
   # accumulate over the intervals
-  delta.acc = delta.aggr[, list(dL.cumsum = cumsum_na(c(0, dL)), index0 = c(0,interval.index), index1 = c(interval.index, max(interval.index)+1))]
-  delta.acc1 = delta.aggr1[, list(dL.cumsum = cumsum_na(c(0, dL)), index0 = c(0,interval.index), index1 = c(interval.index, max(interval.index)+1))]
-  delta.acc2 = delta.aggr2[, list(dL.cumsum = cumsum_na(c(0, dL)), index0 = c(0,interval.index), index1 = c(interval.index, max(interval.index)+1))]
+  delta.acc = delta.aggr[, list(dL.cumsum = cumsum_na(c(0, dL)), index0 = c(0, interval.index), index1 = c(interval.index, max(interval.index) + 1))]
+  delta.acc1 = delta.aggr1[, list(dL.cumsum = cumsum_na(c(0, dL)), index0 = c(0, interval.index), index1 = c(interval.index, max(interval.index) + 1))]
+  delta.acc2 = delta.aggr2[, list(dL.cumsum = cumsum_na(c(0, dL)), index0 = c(0, interval.index), index1 = c(interval.index, max(interval.index) + 1))]
 
   # the mean effect is the weighted mean of the interval mid point effects
   # weighted by the number of points in the interval
   fJ0 = delta.acc[, list(.ale0 = sum(((dL.cumsum[1:(nrow(.SD) - 1)] +
-                                         dL.cumsum[2:nrow(.SD)]) / 2) * delta.aggr$interval.n) / sum(delta.aggr$interval.n))]
+    dL.cumsum[2:nrow(.SD)]) / 2) * delta.aggr$interval.n) / sum(delta.aggr$interval.n))]
   fJ01 = delta.acc1[, list(.ale0 = sum(((dL.cumsum[1:(nrow(.SD) - 1)] +
-                                           dL.cumsum[2:nrow(.SD)]) / 2) * delta.aggr1$interval.n) / sum(delta.aggr1$interval.n))]
+    dL.cumsum[2:nrow(.SD)]) / 2) * delta.aggr1$interval.n) / sum(delta.aggr1$interval.n))]
   fJ02 = delta.acc2[, list(.ale0 = sum(((dL.cumsum[1:(nrow(.SD) - 1)] +
-                                           dL.cumsum[2:nrow(.SD)]) / 2) * delta.aggr2$interval.n) / sum(delta.aggr2$interval.n))]
+    dL.cumsum[2:nrow(.SD)]) / 2) * delta.aggr2$interval.n) / sum(delta.aggr2$interval.n))]
 
   # centering the ALEs
   fJ = delta.acc[, list(dL = dL.cumsum - fJ0$.ale0, x.grid = c(delta.aggr$x.left, delta.aggr$x.right[length(delta.aggr$x.right)]))]
   fJ1 = delta.acc1[, list(dL = dL.cumsum - fJ01$.ale0, x.grid = c(delta.aggr1$x.left, delta.aggr1$x.right[length(delta.aggr1$x.right)]))]
   fJ2 = delta.acc2[, list(dL = dL.cumsum - fJ02$.ale0, x.grid = c(delta.aggr2$x.left, delta.aggr2$x.right[length(delta.aggr2$x.right)]))]
-  p_ale = ggplot()  + geom_point(aes(x = feat.val, y = y-mean(y), color = node ),data = ale_preds, alpha = 0.5) +
+  p_ale = ggplot() + geom_point(aes(x = feat.val, y = y - mean(y), color = node), data = ale_preds, alpha = 0.5) +
     geom_line(data = fJ, aes(x = x.grid, y = dL), color = "darkgrey", lwd = 2) +
     geom_line(data = fJ1, aes(x = x.grid, y = dL), color = brewer.pal(11, "RdBu")[9], lwd = 2) +
     geom_line(data = fJ2, aes(x = x.grid, y = dL), color = brewer.pal(11, "RdBu")[3], lwd = 2) +
-    geom_vline(data = data.frame(interval = c(min(ale_preds$x.left),unique(ale_preds$x.right))), aes(xintercept = interval), lty = 2) + theme_classic()
+    geom_vline(data = data.frame(interval = c(min(ale_preds$x.left), unique(ale_preds$x.right))), aes(xintercept = interval), lty = 2) + theme_classic()
   p_ale
 
 }
@@ -216,21 +216,23 @@ plot_ale_split = function(ale_preds){
 # locate node
 find_node_by_id = function(node_list, id) {
   for (n in node_list) {
-    if (!is.null(n) && isTRUE(n$id == id)) return(n)
+    if (!is.null(n) && isTRUE(n$id == id)) {
+      return(n)
+    }
   }
   return(NULL)
 }
 
 plot_tree = function(tree, effect,
-                     color_ice = "lightblue", color_pd = "lightcoral",
-                     target.feature,
-                     #ymin = -4, ymax = 4,
-                     show.plot = TRUE,
-                     save.plot = FALSE,
-                     path = ".", file.prefix = "tree_plot") {
+  color_ice = "lightblue", color_pd = "lightcoral",
+  target.feature,
+  # ymin = -4, ymax = 4,
+  show.plot = TRUE,
+  save.plot = FALSE,
+  path = ".", file.prefix = "tree_plot") {
 
-  #requireNamespace("ggplot2")
-  #requireNamespace("patchwork")
+  # requireNamespace("ggplot2")
+  # requireNamespace("patchwork")
 
   plot_list = list()
   max_depth = length(tree)
@@ -269,24 +271,24 @@ plot_tree = function(tree, effect,
         split_condition = NULL
 
         if (depth == 1) {
-          #title = paste0("Depth ", depth, " - Node ", node_num)
-          title = paste0("Root node", " (N = ", n_samples,")")
+          # title = paste0("Depth ", depth, " - Node ", node_num)
+          title = paste0("Root node", " (N = ", n_samples, ")")
         } else {
           parent_node = find_node_by_id(tree[[depth - 1]], node$id.parent)
           op = "?"
           if (!is.null(parent_node)) {
             if (!is.null(parent_node$children[[1]]) &&
-                identical(parent_node$children[[1]], node)) {
+              identical(parent_node$children[[1]], node)) {
               op = "≤"
               direction = "Left"
             } else if (!is.null(parent_node$children[[2]]) &&
-                       identical(parent_node$children[[2]], node)) {
+              identical(parent_node$children[[2]], node)) {
               op = ">"
               direction = "Right"
             }
           }
           split_condition = paste0(node$split.feature.parent, " ", op, " ", round(node$split.value.parent, 3))
-          title = paste0(depth-1, ".Split Results", ": ", direction, " node - ", "N = ", n_samples)
+          title = paste0(depth - 1, ".Split Results", ": ", direction, " node - ", "N = ", n_samples)
         }
 
         if (node$improvement.met | node$stop.criterion.met | node$depth == length(tree)) {
@@ -294,10 +296,10 @@ plot_tree = function(tree, effect,
         }
 
         plots = regional_pd_plot(reg, target.feature, node_num,
-                                 color_ice = color_ice,
-                                 color_pd = color_pd,
-                                 ymin = ymin, ymax = ymax,
-                                 split_condition = split_condition)
+          color_ice = color_ice,
+          color_pd = color_pd,
+          ymin = ymin, ymax = ymax,
+          split_condition = split_condition)
 
         p = patchwork::wrap_plots(plots, ncol = length(effect$features)) +
           patchwork::plot_annotation(title = title) &
@@ -306,7 +308,7 @@ plot_tree = function(tree, effect,
         if (show.plot) print(p)
         if (save.plot) {
           ggsave(filename = file.path(path, paste0(file.prefix, "_d", depth, "_n", node_num, ".pdf")),
-                 plot = p, width = 8, height = 5)
+            plot = p, width = 8, height = 5)
         }
 
         plots_at_depth[[paste0("Node_", node_num)]] = p
@@ -318,8 +320,3 @@ plot_tree = function(tree, effect,
 
   return(plot_list)
 }
-
-
-
-
-
