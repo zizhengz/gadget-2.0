@@ -1,6 +1,6 @@
 Package: GADGET
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Decomposing Global Feature Effects Based on Feature Interactions
 Version: 0.1.0
 Authors@R: c(
     person(
@@ -27,3 +27,6 @@ Imports:
     fastshap (>= 0.1.1),
     iml (>= 0.11.4)
 RoxygenNote: 7.3.2
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
