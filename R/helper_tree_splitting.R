@@ -85,6 +85,11 @@ split_parent_node = function(Y, X, n.splits = 1, min.node.size = 40, optimizer, 
   )
 
   result$best.split = result$objective.value == min(result$objective.value)
+
+  if (all(is.infinite(result$objective.value))) {
+    result$best.split = FALSE
+  }
+
   return(result)
 }
 
@@ -142,6 +147,11 @@ find_best_binary_split = function(xval, y, n.splits = 1, min.node.size, grid,
 
   # use different split candidates to perform split
   q = generate_split_candidates(xval[, 1], n.quantiles = n.quantiles, min.node.size = min.node.size)
+
+  if (length(q) == 0) {
+    return(list(split.points = NA_real_, objective.value = Inf))
+  }
+
   splits = vapply(q, FUN = function(i) {
 
     perform_split(i, xval = xval, y = y, min.node.size = min.node.size, grid = grid,
@@ -173,9 +183,18 @@ find_best_binary_split = function(xval, y, n.splits = 1, min.node.size, grid,
 #' @keywords internal
 generate_split_candidates = function(xval, n.quantiles, min.node.size) {
 
+  if (length(xval) < 2 * min.node.size + 1) {
+    return(numeric(0))
+  }
+
   assert_integerish(min.node.size, upper = floor((length(xval) - 1) / 2))
   xval = sort.int(xval)
-  chunk.ind = seq.int(min.node.size + 1, length(xval) - min.node.size, by = min.node.size)
+  #chunk.ind = seq.int(min.node.size + 1, length(xval) - min.node.size, by = min.node.size)
+  if ((min.node.size + 1) <= (length(xval) - min.node.size)) {
+    chunk.ind <- seq.int(min.node.size + 1, length(xval) - min.node.size, by = min.node.size)
+  } else {
+    chunk.ind <- integer(0)
+  }
   xadj = xval[chunk.ind]
 
   if (!is.null(n.quantiles)) {
@@ -289,9 +308,19 @@ adjust_nsplits = function(xval, n.splits) {
 #'
 #' @keywords internal
 get_closest_point = function(split.points, xval, min.node.size = 10) {
+
+  if (length(xval) < 2 * min.node.size + 1) {
+    return(numeric(0))
+  }
+
   xval = sort.int(xval)
   # try to ensure min.node.size between points (is not guaranteed if many duplicated values exist)
-  chunk.ind = seq.int(min.node.size + 1, length(xval) - min.node.size, by = min.node.size)
+  #chunk.ind = seq.int(min.node.size + 1, length(xval) - min.node.size, by = min.node.size)
+  if ((min.node.size + 1) <= (length(xval) - min.node.size)) {
+    chunk.ind <- seq.int(min.node.size + 1, length(xval) - min.node.size, by = min.node.size)
+  } else {
+    chunk.ind <- integer(0)
+  }
   if (length(chunk.ind) > length(unique(xval))) {
     xadj = unique(xval)
   } else {
