@@ -362,13 +362,36 @@ plot_tree = function(tree, effect,
               direction = "Right"
             }
           }
-          split_condition = paste0(node$split.feature.parent, " ", op, " ", round(node$split.value.parent, 3))
-          title = paste0(depth - 1, ".Split Results", ": ", direction, " node - ", "N = ", n_samples)
+          #split_condition = paste0(node$split.feature.parent, " ", op, " ", round(node$split.value.parent, 3))
+                  # 构建完整 path conditions（从当前往上回溯）
+          path_conditions = c()
+          current_node = node
+
+          while (!is.null(current_node$id.parent)) {
+            parent_node = find_node_by_id(tree[[current_node$depth - 1]], current_node$id.parent)
+
+            if (is.null(parent_node)) break
+
+            is_left = !is.null(parent_node$children[[1]]) && identical(parent_node$children[[1]], current_node)
+            op = if (is_left) "≤" else ">"
+            cond = paste0(parent_node$split.feature, " ", op, " ", round(parent_node$split.value, 3))
+            path_conditions = c(cond, path_conditions)
+
+            current_node = parent_node
+          }
+
+          if (length(path_conditions) > 0) {
+            split_condition = paste(path_conditions, collapse = " & ")
+          } else {
+            split_condition = NULL
+          }
+
+          title = paste0(depth - 1, ".Split results: ", split_condition, " (N = ", n_samples,")")
         }
 
-        if (node$improvement.met | node$stop.criterion.met | node$depth == length(tree)) {
-          title = sub("node", "(leaf) node", title)
-        }
+        # if (node$improvement.met | node$stop.criterion.met | node$depth == length(tree)) {
+        #   title = sub("node", "(leaf) node", title)
+        # }
 
         plots = regional_pd_plot(reg, target.feature, node_num,
           color_ice = color_ice,
@@ -484,7 +507,7 @@ prepare_tree_layout <- function(tree) {
 #' @importFrom ggplot2 theme margin unit arrow expansion
 #'
 #' @export
-plot_tree_structure_with_ggraph <- function(tree) {
+plot_tree_structure <- function(tree) {
   layout = prepare_tree_layout(tree)
 
   parent_map = setNames(layout$id, layout$node.id)
@@ -515,7 +538,7 @@ plot_tree_structure_with_ggraph <- function(tree) {
     scale_y_reverse(expand = expansion(mult = c(0.01, 0.01))) +
     theme(
       legend.position = "none",
-      plot.margin = margin(t = 10, r = 20, b = 10, l = 20, unit = "mm")  # ↑ 这里设置边距
+      plot.margin = margin(t = 10, r = 20, b = 10, l = 20, unit = "mm")
     )
 }
 
