@@ -479,9 +479,9 @@ prepare_tree_layout <- function(tree) {
 #'   Typically used for visualization purposes.
 #'
 #' @importFrom igraph graph_from_data_frame
-#' @importFrom ggraph ggraph geom_edge_elbow geom_node_label
+#' @importFrom ggraph ggraph geom_edge_elbow geom_node_label circle
 #' @importFrom ggplot2 aes coord_flip scale_fill_brewer theme_void scale_y_reverse
-#' @importFrom ggplot2 theme margin unit arrow circle expansion
+#' @importFrom ggplot2 theme margin unit arrow expansion
 #'
 #' @export
 plot_tree_structure_with_ggraph <- function(tree) {
