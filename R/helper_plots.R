@@ -437,7 +437,7 @@ plot_tree = function(tree, effect,
 #' }
 #'
 #' @keywords internal
-prepare_tree_layout <- function(tree) {
+prepare_tree_layout = function(tree) {
   rows = vector("list", 0)
   k = 1
 
@@ -507,7 +507,7 @@ prepare_tree_layout <- function(tree) {
 #' @importFrom ggplot2 theme margin unit arrow expansion
 #'
 #' @export
-plot_tree_structure <- function(tree) {
+plot_tree_structure = function(tree) {
   layout = prepare_tree_layout(tree)
 
   parent_map = setNames(layout$id, layout$node.id)
