@@ -376,7 +376,7 @@ plot_tree = function(tree, effect,
           ymin = ymin, ymax = ymax,
           split_condition = split_condition)
 
-        p = patchwork::wrap_plots(plots, ncol = if (length(effect$features) <= 3) length(effect$features) else 3) +
+        p = patchwork::wrap_plots(plots, ncol = if (length(effect$features) <= 3) length(effect$features) else 2) +
           patchwork::plot_annotation(title = title) &
           theme(plot.title = element_text(hjust = 0.5))
 
@@ -395,3 +395,164 @@ plot_tree = function(tree, effect,
 
   return(plot_list)
 }
+
+#' Prepare Tree Layout for Visualization
+#'
+#'@param tree A list of lists representing a tree structure.
+#'
+#' @return A data.frame with one row per node. Columns include:
+#' \describe{
+#'   \item{id}{Unique internal ID for the node (e.g., "2_1").}
+#'   \item{node.id}{Node identifier from the original tree.}
+#'   \item{id.parent}{Node ID of the parent node.}
+#'   \item{child.type}{Type of child node ("<=" or ">").}
+#'   \item{split.feature}{Feature used to split at this node. `"final"` for leaf nodes.}
+#'   \item{split.value}{Threshold value for the split.}
+#'   \item{depth}{Depth level of the node (starting from 1).}
+#'   \item{index}{Index of the node within its depth level.}
+#'   \item{label}{Text label summarizing the split condition (for internal nodes) or full path (for leaf nodes).}
+#' }
+#'
+#' @keywords internal
+prepare_tree_layout <- function(tree) {
+  rows = vector("list", 0)
+  k = 1
+
+  for (depth in seq_along(tree)) {
+    nodes = tree[[depth]]
+    for (i in seq_along(nodes)) {
+      node = nodes[[i]]
+      if (!is.null(node)) {
+        rows[[k]] = list(
+          id            = paste0(depth, "_", i),
+          node.id       = if (!is.null(node$id)) node$id else NA,
+          id.parent     = if (!is.null(node$id.parent)) node$id.parent else NA,
+          child.type    = if (!is.null(node$child.type)) node$child.type else NA,
+          split.feature = if (!is.null(node$split.feature)) node$split.feature else NA,
+          split.value   = if (!is.null(node$split.value)) node$split.value else NA,
+          depth         = depth,
+          index         = i
+        )
+        k = k + 1
+      }
+    }
+  }
+
+  layout = do.call(rbind.data.frame, rows)
+  rownames(layout) = NULL
+
+  layout$label = NA
+  for (i in seq_len(nrow(layout))) {
+    path_conditions = c()
+    current = layout[i, ]
+
+    while (!is.na(current$id.parent)) {
+      parent = layout[layout$node.id == current$id.parent & layout$depth == current$depth - 1, ]
+      if (nrow(parent) != 1) break
+
+      op = if (current$child.type == "<=") "≤" else ">"
+      cond = paste0(parent$split.feature, " ", op, " ", round(as.numeric(parent$split.value), 3))
+      path_conditions = c(cond, path_conditions)
+
+      current = parent
+    }
+
+    if (!is.na(layout$split.feature[i]) && layout$split.feature[i] != "final") {
+      cond_self = paste0(layout$split.feature[i], " ", " ≤ ", " ", round(as.numeric(layout$split.value[i]), 3))
+      path_conditions = cond_self
+    } else {
+      path_conditions = path_conditions
+    }
+
+    layout$label[i] = paste(path_conditions, collapse = " \n& ")
+  }
+
+  return(layout)
+}
+
+
+#' Plot Tree Structure with ggraph
+#'
+#'@param tree A list of lists representing a tree structure.
+#'
+#' @return A \code{ggplot} object (of class \code{ggraph}) representing the tree layout.
+#'   Typically used for visualization purposes.
+#'
+#' @importFrom igraph graph_from_data_frame
+#' @importFrom ggraph ggraph geom_edge_elbow geom_node_label
+#' @importFrom ggplot2 aes coord_flip scale_fill_brewer theme_void scale_y_reverse
+#' @importFrom ggplot2 theme margin unit arrow circle expansion
+#'
+#' @export
+plot_tree_structure_with_ggraph <- function(tree) {
+  layout = prepare_tree_layout(tree)
+
+  parent_map = setNames(layout$id, layout$node.id)
+  layout$parent.id = parent_map[as.character(layout$id.parent)]
+
+  edge_list = na.omit(layout[, c("parent.id", "id")])
+  colnames(edge_list) = c("from", "to")
+
+  g = igraph::graph_from_data_frame(edge_list, vertices = layout, directed = TRUE)
+
+  ggraph(g, layout = "tree") +
+    coord_flip(clip = "off") +
+    geom_edge_elbow(
+      arrow = arrow(length = unit(0.05, "cm")),
+      end_cap = circle(1.5, "mm"),
+      edge_colour = "grey40",
+      edge_width = 0.4
+    ) +
+    geom_node_label(
+      aes(label = label, fill = factor(depth)),
+      size = 3.5,
+      label.padding = unit(0.25, "lines"),
+      label.size = 0.3,
+      label.r = unit(0.1, "lines")
+    ) +
+    scale_fill_brewer(palette = "Set2") +
+    theme_void() +
+    scale_y_reverse(expand = expansion(mult = c(0.01, 0.01))) +
+    theme(
+      legend.position = "none",
+      plot.margin = margin(t = 10, r = 20, b = 10, l = 20, unit = "mm")  # ↑ 这里设置边距
+    )
+}
+
+
+
+
+# prepare_tree_layout = function(tree) {
+#   rows = vector("list", 0)
+#   k = 1
+#
+#   for (depth in seq_along(tree)) {
+#     nodes = tree[[depth]]
+#     for (i in seq_along(nodes)) {
+#       node = nodes[[i]]
+#       if (!is.null(node)) {
+#         label = if (!is.null(node$split.feature)) {
+#           paste0(node$split.feature, "≤ ", round(node$split.value, 3))
+#         } else {
+#           "Leaf node"
+#         }
+#
+#         rows[[k]] = list(
+#           id = paste0(depth, "_", i),
+#           node.id = node$id,
+#           id.parent = if (!is.null(node$id.parent)) node$id.parent else NA,
+#           depth = depth,
+#           index = i,
+#           x_manual = i,
+#           y_manual = -depth,
+#           label = label
+#         )
+#         k = k + 1
+#       }
+#     }
+#   }
+#
+#   layout = do.call(rbind.data.frame, rows)
+#   rownames(layout) = NULL
+#   return(layout)
+# }
