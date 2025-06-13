@@ -452,6 +452,7 @@ prepare_tree_layout = function(tree) {
           child.type    = if (!is.null(node$child.type)) node$child.type else NA,
           split.feature = if (!is.null(node$split.feature)) node$split.feature else NA,
           split.value   = if (!is.null(node$split.value)) node$split.value else NA,
+          intImp        = if (!is.null(node$intImp)) node$intImp else NA,
           depth         = depth,
           index         = i
         )
@@ -481,7 +482,7 @@ prepare_tree_layout = function(tree) {
 
     if (!is.na(layout$split.feature[i]) && layout$split.feature[i] != "final") {
       cond_self = paste0(layout$split.feature[i], " ", " ≤ ", " ", round(as.numeric(layout$split.value[i]), 3))
-      path_conditions = cond_self
+      path_conditions = paste0(cond_self, "\nintImp: ", round(layout$intImp[i], 3))
     } else {
       path_conditions = path_conditions
     }
