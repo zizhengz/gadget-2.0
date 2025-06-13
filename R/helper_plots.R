@@ -62,6 +62,7 @@ regional_pd = function(effect, tree, depth) {
       }
 
     }
+
     return(ice)
   })
   names(ice_centered) = names(ice_curves)
@@ -122,9 +123,9 @@ regional_pd_plot = function(effect, target.feature, node_num, color_ice, color_p
     # p_centered_ice
 
     p = ggplot(plot_data, aes(x = grid, y = value, group = id, color = type)) +
-      geom_line(alpha = 0.4, linewidth = 0.3) +
+      geom_line(alpha = 0.9, linewidth = 0.3, linetype = "dashed", na.rm = TRUE) +
       geom_line(data = subset(plot_data, type == "PDP"), linewidth = 1) +
-      scale_color_manual(values = c("ICE" = color_ice, "PDP" = color_pd)) +
+      scale_color_manual(values = c("ICE" = color_ice, "PDP" = color_pd), labels = c("ICE" = "Mean centered ICE", "PDP" = "PDP")) +
       coord_cartesian(ylim = c(ymin, ymax)) +
       theme_bw(base_size = 9) +
       theme_bw() +
@@ -139,13 +140,11 @@ regional_pd_plot = function(effect, target.feature, node_num, color_ice, color_p
       theme(
         legend.position = c(0.95, 0.95),
         legend.justification = c("right", "top"),
-        # legend.background = element_rect(fill = alpha("white", 0.7), color = NA),
         legend.background = element_rect(fill = NA, color = NA),
         legend.box.background = element_rect(fill = NA, color = "grey", linewidth = 0.1),
         legend.title = element_blank(),
         legend.text = element_text(size = 8),
-        legend.key.size = unit(0.4, "lines"),
-        # plot.title = element_text(hjust = 0.5)
+        legend.key.size = unit(0.6, "lines"),
         plot.title = element_text(hjust = 0.5, size = 9),
         axis.title = element_text(size = 9),
         axis.text = element_text(size = 9)
@@ -156,6 +155,7 @@ regional_pd_plot = function(effect, target.feature, node_num, color_ice, color_p
   })
   return(plot)
 }
+
 
 # generate regional ale plot
 regional_ale_plot = function(effect, color_ale, ymin, ymax, ymin2, ymax2, xmin = NULL, xmax = NULL) {
@@ -313,9 +313,7 @@ find_node_by_id = function(node_list, id) {
 #' @export
 plot_tree = function(tree, effect,
   color_ice = "lightblue", color_pd = "lightcoral",
-  target.feature,
-  show.plot = TRUE,
-  save.plot = FALSE,
+  target.feature, show.plot = TRUE, save.plot = FALSE,
   path = ".", file.prefix = "tree_plot") {
 
   plot_list = list()
@@ -362,8 +360,6 @@ plot_tree = function(tree, effect,
               direction = "Right"
             }
           }
-          #split_condition = paste0(node$split.feature.parent, " ", op, " ", round(node$split.value.parent, 3))
-                  # 构建完整 path conditions（从当前往上回溯）
           path_conditions = c()
           current_node = node
 
@@ -386,7 +382,7 @@ plot_tree = function(tree, effect,
             split_condition = NULL
           }
 
-          title = paste0(depth - 1, ".Split results: ", split_condition, " (N = ", n_samples,")")
+          title = paste0(depth - 1, ".Split results: ", split_condition, " (N = ", n_samples, ")")
         }
 
         # if (node$improvement.met | node$stop.criterion.met | node$depth == length(tree)) {
@@ -419,9 +415,12 @@ plot_tree = function(tree, effect,
   return(plot_list)
 }
 
+
+
+
 #' Prepare Tree Layout for Visualization
 #'
-#'@param tree A list of lists representing a tree structure.
+#' @param tree A list of lists representing a tree structure.
 #'
 #' @return A data.frame with one row per node. Columns include:
 #' \describe{
@@ -496,7 +495,7 @@ prepare_tree_layout = function(tree) {
 
 #' Plot Tree Structure with ggraph
 #'
-#'@param tree A list of lists representing a tree structure.
+#' @param tree A list of lists representing a tree structure.
 #'
 #' @return A \code{ggplot} object (of class \code{ggraph}) representing the tree layout.
 #'   Typically used for visualization purposes.

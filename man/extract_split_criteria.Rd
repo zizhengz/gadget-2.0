@@ -2,28 +2,19 @@
 % Please edit documentation in R/helper_general.R
 \name{extract_split_criteria}
 \alias{extract_split_criteria}
-\title{Extract split-node information from a tree list}
+\title{Print summary of split criteria in a partition tree}
 \usage{
-extract_split_criteria(tree)
+extract_split_criteria(tree, feat_name = NULL)
 }
 \arguments{
-\item{tree}{`list`. Each element is one depth level; each depth
-contains a list of nodes created by your recursive split function.}
+\item{tree}{A list of tree nodes structured by depth,}
+
+\item{feat_name}{Character string specifying a single feature name to filter the
+displayed heterogeneity (`objective.value`).}
 }
 \value{
-A `data.frame` with one row per node and columns
-  \describe{
-    \item{depth}{Integer depth of the node (root = 1).}
-    \item{id}{Node identifier within its depth level.}
-    \item{objective.value}{Value of the optimisation criterion.}
-    \item{intImp}{Internal improvement of the split (or \code{NA} for finals).}
-    \item{split.feature}{Feature used for the split; \code{"final"} for leaf nodes.}
-    \item{split.value}{Numeric split point (or \code{NA}).}
-    \item{node.final}{\code{TRUE} if the node is terminal.}
-    \item{n.final}{Total count of terminal nodes in the tree (scalar, repeated).}
-  }
+No return value. The function prints to console.
 }
 \description{
-Go through a list‐of‐lists representation of trees and converts
-node information into a long **data.table**/**data.frame**.
+Print summary of split criteria in a partition tree
 }
