@@ -125,6 +125,7 @@ regional_pd_plot = function(effect, target.feature, node_num, color_ice, color_p
     p = ggplot(plot_data, aes(x = grid, y = value, group = id, color = type)) +
       geom_line(alpha = 0.9, linewidth = 0.3, linetype = "dashed", na.rm = TRUE) +
       geom_line(data = subset(plot_data, type == "PDP"), linewidth = 1) +
+      #geom_point(data = data_subset, aes_string(x = feat, y = "y"), alpha = 0.4) +
       scale_color_manual(values = c("ICE" = color_ice, "PDP" = color_pd), labels = c("ICE" = "Mean centered ICE", "PDP" = "PDP")) +
       coord_cartesian(ylim = c(ymin, ymax)) +
       theme_bw(base_size = 9) +
@@ -320,7 +321,7 @@ plot_tree = function(tree, effect,
   max_depth = length(tree)
 
   for (depth in 1:max_depth) {
-    reg = regional_pd(effect, tree, depth)
+    reg = regional_pd(effect = effect, tree = tree, depth = depth)
     plots_at_depth = list()
 
     for (node_num in seq_along(tree[[depth]])) {
@@ -393,7 +394,9 @@ plot_tree = function(tree, effect,
         #   title = sub("node", "(leaf) node", title)
         # }
 
-        plots = regional_pd_plot(reg, target.feature, node_num,
+        plots = regional_pd_plot(effect = reg,
+                                 target.feature = target.feature,
+                                 node_num = node_num,
           color_ice = color_ice,
           color_pd = color_pd,
           ymin = ymin, ymax = ymax,
@@ -533,15 +536,15 @@ plot_tree_structure = function(tree) {
 
   g = igraph::graph_from_data_frame(edge_list, vertices = layout, directed = TRUE)
 
-  ggraph(g, layout = "tree") +
+  ggraph::ggraph(g, layout = "tree") +
     coord_flip(clip = "off") +
-    geom_edge_elbow(
+    ggraph::geom_edge_elbow(
       arrow = arrow(length = unit(0.05, "cm")),
-      end_cap = circle(1.5, "mm"),
+      end_cap = ggraph::circle(1.5, "mm"),
       edge_colour = "grey40",
       edge_width = 0.4
     ) +
-    geom_node_label(
+    ggraph::geom_node_label(
       aes(label = label, fill = factor(depth)),
       size = 3.5,
       label.padding = unit(0.25, "lines"),
