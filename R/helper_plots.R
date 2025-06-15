@@ -352,12 +352,12 @@ plot_tree = function(tree, effect,
           if (!is.null(parent_node)) {
             if (!is.null(parent_node$children[[1]]) &&
               identical(parent_node$children[[1]], node)) {
-              op = "≤"
-              direction = "Left"
+              op = if (is.numeric(parent_node$split.value)) "≤" else "="
+              # direction = "Left"
             } else if (!is.null(parent_node$children[[2]]) &&
               identical(parent_node$children[[2]], node)) {
-              op = ">"
-              direction = "Right"
+              op = if (is.numeric(parent_node$split.value)) ">" else "≠"
+              # direction = "Right"
             }
           }
           path_conditions = c()
@@ -369,8 +369,12 @@ plot_tree = function(tree, effect,
             if (is.null(parent_node)) break
 
             is_left = !is.null(parent_node$children[[1]]) && identical(parent_node$children[[1]], current_node)
-            op = if (is_left) "≤" else ">"
-            cond = paste0(parent_node$split.feature, " ", op, " ", round(parent_node$split.value, 3))
+            op = if (is_left) {
+              if (is.numeric(parent_node$split.value)) "≤" else "="
+            } else {
+              if (is.numeric(parent_node$split.value)) ">" else "≠"
+            }
+            cond = paste0(parent_node$split.feature, " ", op, " ", round(as.numeric(parent_node$split.value), 3))
             path_conditions = c(cond, path_conditions)
 
             current_node = parent_node
@@ -462,6 +466,7 @@ prepare_tree_layout = function(tree) {
   }
 
   layout = do.call(rbind.data.frame, rows)
+  # layout = rbindlist(rows, fill = TRUE)
   rownames(layout) = NULL
 
   layout$label = NA
@@ -473,7 +478,17 @@ prepare_tree_layout = function(tree) {
       parent = layout[layout$node.id == current$id.parent & layout$depth == current$depth - 1, ]
       if (nrow(parent) != 1) break
 
-      op = if (current$child.type == "<=") "≤" else ">"
+      # op = if (current$child.type == "<=") "≤" else ">"
+      op = switch(current$child.type, "<=" = {
+        "≤"
+      }, ">" = {
+        ">"
+      }, "==" = {
+        "="
+      }, "!=" = {
+        "≠"
+      })
+
       cond = paste0(parent$split.feature, " ", op, " ", round(as.numeric(parent$split.value), 3))
       path_conditions = c(cond, path_conditions)
 
@@ -481,7 +496,7 @@ prepare_tree_layout = function(tree) {
     }
 
     if (!is.na(layout$split.feature[i]) && layout$split.feature[i] != "final") {
-      cond_self = paste0(layout$split.feature[i], " ", " ≤ ", " ", round(as.numeric(layout$split.value[i]), 3))
+      cond_self = paste0(layout$split.feature[i], " ", ifelse(layout$child.type[i + 1] == "==", "=", "≤"), " ", round(as.numeric(layout$split.value[i]), 3))
       path_conditions = paste0(cond_self, "\nintImp: ", round(layout$intImp[i], 3))
     } else {
       path_conditions = path_conditions

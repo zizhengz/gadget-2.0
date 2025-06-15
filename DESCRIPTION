@@ -4,9 +4,9 @@ Title: Decomposing Global Feature Effects Based on Feature Interactions
 Version: 0.1.0
 Authors@R: c(
     person(
-      "Jane", "Doe",
-      email = "jane@example.com",
-      role = c("aut", "cre")
+      "Zizheng", "Zhang",
+      email = "zhangzizheng@example.com",
+      role = "cre"
     )
   )
 Description: More about what it does (maybe more than one line).

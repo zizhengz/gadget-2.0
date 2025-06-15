@@ -1,4 +1,3 @@
-
 #' R6 class: \code{Node}
 #'
 #' @docType class
@@ -225,9 +224,13 @@ Node = R6::R6Class("Node", list(
       if (is.null(self$split.feature)) {
         stop("Please compute the split first via computeSplit().")
       }
-
-      idx.left = which(X[self$subset.idx, self$split.feature, with = FALSE] <= self$split.value)
-      idx.right = which(X[self$subset.idx, self$split.feature, with = FALSE] > self$split.value)
+      if (is.factor(X[[self$split.feature]])) {
+        idx.left = which(X[self$subset.idx, self$split.feature, with = FALSE] == self$split.value)
+        idx.right = which(X[self$subset.idx, self$split.feature, with = FALSE] != self$split.value)
+      } else {
+        idx.left = which(X[self$subset.idx, self$split.feature, with = FALSE] <= self$split.value)
+        idx.right = which(X[self$subset.idx, self$split.feature, with = FALSE] > self$split.value)
+      }
 
       idx.left = self$subset.idx[idx.left]
       if (length(idx.left) == 0) idx.left = 0
@@ -245,9 +248,13 @@ Node = R6::R6Class("Node", list(
       grid.left = self$grid
       grid.right = self$grid
       # Update grid range for left and right child
-      grid.left[[feat_name]] = grid.left[[feat_name]][as.numeric(grid.left[[feat_name]]) <= self$split.value]
-      grid.right[[feat_name]] = grid.right[[feat_name]][as.numeric(grid.right[[feat_name]]) > self$split.value]
-
+      if (is.factor(X[[self$split.feature]])) {
+        grid.left[[feat_name]] = grid.left[[feat_name]][grid.left[[feat_name]] == self$split.value]
+        grid.right[[feat_name]] = grid.right[[feat_name]][grid.right[[feat_name]] != self$split.value]
+      } else {
+        grid.left[[feat_name]] = grid.left[[feat_name]][as.numeric(grid.left[[feat_name]]) <= self$split.value]
+        grid.right[[feat_name]] = grid.right[[feat_name]][as.numeric(grid.right[[feat_name]]) > self$split.value]
+      }
 
       if (method == "SS_L2_pd") {
         Y_left = lapply(names(Y), function(feat) {
@@ -362,8 +369,13 @@ Node = R6::R6Class("Node", list(
       obj.right = objective(y = Y_right, x = X[idx.right, ], split.feat = self$split.feature, y.parent = NULL, grid = grid.right[[self$split.feature]])
       obj.parent = self$objective.value
 
-      left.child = Node$new(id = 1, depth = self$depth + 1, subset.idx = idx.left, id.parent = self$id, child.type = "<=", improvement.met = self$improvement.met, intImp = self$intImp, grid = grid.left, objective.value = obj.left, objective.value.parent = obj.parent, store.data = self$store.data)
-      right.child = Node$new(id = 2, depth = self$depth + 1, subset.idx = idx.right, id.parent = self$id, child.type = ">", improvement.met = self$improvement.met, intImp = self$intImp, grid = grid.right, objective.value = obj.right, objective.value.parent = obj.parent, store.data = self$store.data)
+      if (is.factor(X[[self$split.feature]])) {
+        left.child = Node$new(id = 1, depth = self$depth + 1, subset.idx = idx.left, id.parent = self$id, child.type = "==", improvement.met = self$improvement.met, intImp = self$intImp, grid = grid.left, objective.value = obj.left, objective.value.parent = obj.parent, store.data = self$store.data)
+        right.child = Node$new(id = 2, depth = self$depth + 1, subset.idx = idx.right, id.parent = self$id, child.type = "!=", improvement.met = self$improvement.met, intImp = self$intImp, grid = grid.right, objective.value = obj.right, objective.value.parent = obj.parent, store.data = self$store.data)
+      } else {
+        left.child = Node$new(id = 1, depth = self$depth + 1, subset.idx = idx.left, id.parent = self$id, child.type = "<=", improvement.met = self$improvement.met, intImp = self$intImp, grid = grid.left, objective.value = obj.left, objective.value.parent = obj.parent, store.data = self$store.data)
+        right.child = Node$new(id = 2, depth = self$depth + 1, subset.idx = idx.right, id.parent = self$id, child.type = ">", improvement.met = self$improvement.met, intImp = self$intImp, grid = grid.right, objective.value = obj.right, objective.value.parent = obj.parent, store.data = self$store.data)
+      }
 
       # left.child$split.value = right.child$split.value = self$split.value
       left.child$split.feature.parent = right.child$split.feature.parent = self$split.feature

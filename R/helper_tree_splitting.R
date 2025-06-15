@@ -152,15 +152,47 @@ find_best_binary_split = function(xval, y, n.splits = 1, min.node.size, grid,
     return(list(split.points = NA_real_, objective.value = Inf))
   }
 
-  splits = vapply(q, FUN = function(i) {
+  if (is.factor(xval[, 1]) || is.character(xval[, 1])) {
+    splits.objective.values = numeric(length(levels(xval[, 1])))
+    if (length(levels(xval[, 1])) == 2) {
+      split.levels = levels(xval[, 1])[1]
+      splits.objective.values = perform_split_cat(
+        split.levels = split.levels,
+        xval = xval,
+        y = y,
+        min.node.size = min.node.size,
+        grid = grid,
+        objective = objective
+      )
+      best = which.min(splits.objective.values)
+      return(list(split.points = levels(xval[, 1])[1], objective.value = splits.objective.values[best]))
+    } else {
+      for (i in seq_along(levels(xval[, 1]))) {
+        split.levels = levels(xval[, 1])[i]
+        res = perform_split_cat(
+          split.levels = split.levels,
+          xval = xval,
+          y = y,
+          min.node.size = min.node.size,
+          grid = grid,
+          objective = objective
+        )
+        splits.objective.values[i] = sum(res)
+      }
+      best = which.min(splits.objective.values)
+      return(list(split.points = levels(xval[, 1])[best], objective.value = splits.objective.values[best]))
+    }
+  }
+  else {
+    splits.objective.values = vapply(q, FUN = function(i) {
 
-    perform_split(i, xval = xval, y = y, min.node.size = min.node.size, grid = grid,
-      objective = objective, ...)
-  }, FUN.VALUE = NA_real_, USE.NAMES = FALSE)
-  # select the split point yielding the minimal objective
-  best = which.min(splits)
-
-  return(list(split.points = q[best], objective.value = splits[best]))
+      perform_split(i, xval = xval, y = y, min.node.size = min.node.size, grid = grid,
+        objective = objective, ...)
+    }, FUN.VALUE = NA_real_, USE.NAMES = FALSE)
+    # select the split point yielding the minimal objective
+    best = which.min(splits.objective.values)
+    return(list(split.points = q[best], objective.value = splits.objective.values[best]))
+  }
 }
 
 
@@ -181,41 +213,71 @@ find_best_binary_split = function(xval, y, n.splits = 1, min.node.size, grid,
 #' @importFrom checkmate assert_integerish
 #'
 #' @keywords internal
-generate_split_candidates = function(xval, n.quantiles, min.node.size) {
+generate_split_candidates = function(xval, n.quantiles, min.node.size, max.subsets = 32L) {
 
   if (length(xval) < 2 * min.node.size + 1) {
     return(numeric(0))
   }
 
   assert_integerish(min.node.size, upper = floor((length(xval) - 1) / 2))
-  xval = sort.int(xval)
-  #chunk.ind = seq.int(min.node.size + 1, length(xval) - min.node.size, by = min.node.size)
-  if ((min.node.size + 1) <= (length(xval) - min.node.size)) {
-    chunk.ind <- seq.int(min.node.size + 1, length(xval) - min.node.size, by = min.node.size)
+
+  if (is.factor(xval) || is.character(xval)) {
+    return(generate_categorical_split_candidates(xval, min.node.size, max.subsets))
   } else {
-    chunk.ind <- integer(0)
-  }
-  xadj = xval[chunk.ind]
-
-  if (!is.null(n.quantiles)) {
-
-    if (length(unique(xval)) < 10) {
-      q = unique(xval)
+    xval = sort.int(xval)
+    # chunk.ind = seq.int(min.node.size + 1, length(xval) - min.node.size, by = min.node.size)
+    if ((min.node.size + 1) <= (length(xval) - min.node.size)) {
+      chunk.ind = seq.int(min.node.size + 1, length(xval) - min.node.size, by = min.node.size)
     } else {
-      qprobs = seq(0, 1, by = 1 / n.quantiles)
-      q = unique(quantile(xadj, qprobs, type = 1))
+      chunk.ind = integer(0)
+    }
+    xadj = xval[chunk.ind]
+
+    if (!is.null(n.quantiles)) {
+
+      if (length(unique(xval)) < 10) {
+        q = unique(xval)
+      } else {
+        qprobs = seq(0, 1, by = 1 / n.quantiles)
+        q = unique(quantile(xadj, qprobs, type = 1))
+      }
+
+    } else {
+      q = unique(xadj)
     }
 
-  } else {
-    q = unique(xadj)
+    # use a value between two subsequent points
+    q = adjust_split_point(q, xval)
+
+    return(q)
   }
-
-  # use a value between two subsequent points
-  q = adjust_split_point(q, xval)
-
-  return(q)
 }
 
+generate_categorical_split_candidates = function(xval, min.node.size = 1L, max.subsets = NULL) {
+  levels = levels(xval)
+  k = length(levels)
+
+  if (k <= 1) {
+    return(list())
+  }
+
+  all_subsets = unlist(
+    lapply(1:(k - 1), function(i) combn(levels, i, simplify = FALSE)),
+    recursive = FALSE
+  )
+
+  valid_subsets = Filter(function(subset_levels) {
+    node.left = xval %in% subset_levels
+    node.right = !node.left
+    sum(node.left) >= min.node.size && sum(node.right) >= min.node.size
+  }, all_subsets)
+
+  if (!is.null(max.subsets) && length(valid_subsets) > max.subsets) {
+    valid_subsets = valid_subsets[seq_len(max.subsets)]
+  }
+
+  return(valid_subsets)
+}
 
 
 #' Compute the objective value of a candidate binary split
@@ -282,7 +344,54 @@ perform_split = function(split.points, xval, y, min.node.size, grid, objective, 
   sum(res)
 }
 
+perform_split_cat = function(split.levels, xval, y, min.node.size, grid, objective, ...) {
+  feat = colnames(xval)[1]
+  xval_vec = xval[[1]]
 
+  node.left = xval_vec %in% split.levels
+  node.right = !node.left
+
+  if (sum(node.left) < min.node.size || sum(node.right) < min.node.size) {
+    return(Inf)
+  }
+
+  y.left = lapply(y, function(feat) feat[node.left, , drop = FALSE])
+  y.right = lapply(y, function(feat) feat[node.right, , drop = FALSE])
+  y.list = list(y.left, y.right)
+
+  requires.x = formals(objective)[["requires.x"]]
+  if (isTRUE(requires.x)) {
+    x.left = xval[node.left, , drop = FALSE]
+    x.right = xval[node.right, , drop = FALSE]
+    x.list = list(x.left, x.right)
+  } else {
+    x.list = list(NULL, NULL)
+  }
+
+  # -- Grid --
+  grid_vals = grid[[feat]]
+  if (is.factor(grid_vals)) grid_vals = as.character(grid_vals)
+  split.char = as.character(split.levels)
+  grid_sub = list(
+    grid_vals[grid_vals %in% split.char],
+    grid_vals[!grid_vals %in% split.char]
+  )
+
+  res = vapply(seq_along(y.list), function(i) {
+    loss = sum(unlist(objective(
+      y = y.list[[i]],
+      x = x.list[[i]],
+      split.feat = feat,
+      y.parent = NULL,
+      grid = grid_sub[[i]],
+      sub.number = i,
+      ...
+    )))
+    if (!is.finite(loss)) Inf else loss
+  }, FUN.VALUE = NA_real_, USE.NAMES = FALSE)
+
+  return(res)
+}
 
 adjust_nsplits = function(xval, n.splits) {
   # max. number of splits to be performed must be unique.x-1
@@ -315,11 +424,11 @@ get_closest_point = function(split.points, xval, min.node.size = 10) {
 
   xval = sort.int(xval)
   # try to ensure min.node.size between points (is not guaranteed if many duplicated values exist)
-  #chunk.ind = seq.int(min.node.size + 1, length(xval) - min.node.size, by = min.node.size)
+  # chunk.ind = seq.int(min.node.size + 1, length(xval) - min.node.size, by = min.node.size)
   if ((min.node.size + 1) <= (length(xval) - min.node.size)) {
-    chunk.ind <- seq.int(min.node.size + 1, length(xval) - min.node.size, by = min.node.size)
+    chunk.ind = seq.int(min.node.size + 1, length(xval) - min.node.size, by = min.node.size)
   } else {
-    chunk.ind <- integer(0)
+    chunk.ind = integer(0)
   }
   if (length(chunk.ind) > length(unique(xval))) {
     xadj = unique(xval)
@@ -354,6 +463,9 @@ get_closest_point = function(split.points, xval, min.node.size = 10) {
 #'
 #' @keywords internal
 adjust_split_point = function(split.points, xval) {
+  if (is.factor(xval)) {
+    return(split.points)
+  }
   # use a value between two subsequent points
   q = split.points
   x.unique = sort.int(unique(xval))
@@ -400,12 +512,22 @@ adjust_split_point = function(split.points, xval) {
 #' @keywords internal
 compute_data_for_ice_splitting = function(effect, testdata, Z) {
 
-    # Z = if (is.null(Z)) setdiff(colnames(testdata), target.feature) else Z
-  df = setDT(testdata[, Z, drop = FALSE])
-  df = lapply(df, function(feat) {
-    feat = as.numeric(feat)
-  })
-  df = setDT(df)
+  # Z = if (is.null(Z)) setdiff(colnames(testdata), target.feature) else Z
+  # df = setDT(testdata[, Z, drop = FALSE])
+  # df = lapply(df, function(feat) {
+  #   feat = as.numeric(feat)
+  # })
+  # df = setDT(df)
+  df = setDT(copy(testdata[, Z, drop = FALSE]))
+
+  for (col in Z) {
+    x = df[[col]]
+    if (is.character(x) || is.factor(x)) {
+      df[[col]] = as.factor(x)
+    } else if (is.numeric(x) && length(unique(x)) <= 5) {
+      df[[col]] = as.factor(x)
+    }
+  }
 
   ice_feat = effect$features
 

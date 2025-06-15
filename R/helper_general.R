@@ -49,8 +49,12 @@ extract_split_criteria = function(tree, feat_name = NULL) {
       parent = node_map[[as.character(current$id.parent)]]
       if (is.null(parent)) break
       is_left = !is.null(parent$children[[1]]) && identical(parent$children[[1]], current)
-      op = if (is_left) "≤" else ">"
-      cond = paste0(parent$split.feature, " ", op, " ", round(parent$split.value, 3))
+      op = if (is_left) {
+        if (is.numeric(parent$split.value)) "≤" else "="
+      } else {
+        if (is.numeric(parent$split.value)) ">" else "≠"
+      }
+      cond = paste0(parent$split.feature, " ", op, " ", round(as.numeric(parent$split.value), 3))
       conds = c(cond, conds)
       current = parent
     }
@@ -72,19 +76,27 @@ extract_split_criteria = function(tree, feat_name = NULL) {
     cat_line(prefix, "[", paste(fields, collapse = " | "), "]")
 
 
-    if (is.null(node$children) || (is.null(node$children[[1]]) && is.null(node$children[[2]]))) {
+    # if (is.null(node$children) || (is.null(node$children[[1]]) && is.null(node$children[[2]]))) {
+    #   cat_line(prefix, "    🌿 Leaf Node")
+    # } else {
+    #   print_node(node$children[[1]], paste0(prefix, "    "))
+    #   print_node(node$children[[2]], paste0(prefix, "    "))
+    # }
+    if (!is.list(node$children) || length(node$children) < 2 ||
+      (is.null(node$children[[1]]) && is.null(node$children[[2]]))) {
       cat_line(prefix, "    🌿 Leaf Node")
     } else {
-      print_node(node$children[[1]], paste0(prefix, "    "))
-      print_node(node$children[[2]], paste0(prefix, "    "))
+      if (!is.null(node$children[[1]])) print_node(node$children[[1]], paste0(prefix, "    "))
+      if (!is.null(node$children[[2]])) print_node(node$children[[2]], paste0(prefix, "    "))
     }
+
   }
 
   print_node(tree[[1]][[1]])
   invisible(NULL)
 }
 
-# extract_split_criteria = function(tree) {
+# extract_split_criteria1 = function(tree) {
 #
 #   list.split.criteria = lapply(tree, function(depth) {
 #     lapply(depth, function(node) {
@@ -125,6 +137,7 @@ extract_split_criteria = function(tree, feat_name = NULL) {
 #
 #   return(df.split.criteria)
 # }
+
 
 #' L2 (sum-of-squares) objective
 #'
