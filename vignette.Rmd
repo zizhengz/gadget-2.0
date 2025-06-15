@@ -1,0 +1,156 @@
+---
+title: "Introduction to GADGET"
+author: "Zizheng Zhang"
+date: "2025-06-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+```
+```{r}
+library(mlr)
+library(iml)
+library(nnet)
+library(ggplot2)
+library(RColorBrewer)
+library(GADGET)
+```
+
+## Synthetic data
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+### Data generation
+```{r}
+n = 500
+set.seed(123)
+create_xor = function(n, seed){
+  x2 = runif(n, -1, 1)
+  x3 = runif(n, -1, 1)
+  x1 = runif(n, -1, 1)
+  x4 = runif(n, -1, 1)
+  y = ifelse(x3>0, 3*x1, -3*x1) + ifelse(x4>0, 3*x2, -3*x2) + x3 + rnorm(n, sd = 0.3)
+  data.frame(x1, x2, x3, x4, y)
+}
+syn.data = create_xor(n, seed)
+X = syn.data[, setdiff(names(syn.data), "y")]
+features = colnames(X)
+head(syn.data)
+```
+
+### Modelling
+```{r, message = FALSE, results = 'hide'}
+task = makeRegrTask(data = syn.data, target = "y")
+
+# tune Neural Network
+set.seed(123)
+ps = makeParamSet(
+  makeDiscreteParam("decay", values = c(0.5, 0.1, 1e-2, 1e-3, 1e-4, 1e-5)),
+  makeDiscreteParam("size", values = c(3, 5, 10, 20, 30))
+)
+ctrl = makeTuneControlGrid()
+rdesc = makeResampleDesc("CV", iters = 5L)
+res = tuneParams(makeLearner("regr.nnet",  maxit = 1000), task = task, resampling = rdesc,
+                 par.set = ps, control = ctrl,  measures = list(mlr::mse, mlr::mae, mlr::rsq))
+
+# fit Neural Network with best found HP on all training data
+set.seed(123)
+lrn = makeLearner("regr.nnet",  maxit = 1000,  size = res$x$size, decay = res$x$decay, trace = F)
+model = mlr::train(task = task, learner = lrn)
+
+testset = create_xor(n = 10000, seed=234)
+pred = predict(model, newdata = testset)$data
+measureRSQ(pred$truth, pred$response)
+predict.function = function(model, newdata) predict(model, newdata = newdata)$data$response
+```
+### Feature effects and tree building
+```{r}
+syn.predictor = Predictor$new(model, data = syn.data[which(names(syn.data)!="y")], y = syn.data$y)
+
+syn.effect = FeatureEffects$new(syn.predictor, grid.size = 20, method = "ice")
+
+syn.tree = compute_tree(effect = syn.effect,
+                        testdata = syn.data,
+                        objective = "SS_L2_pd", 
+                        Z = c("x1", "x2", "x3", "x4"),
+                        target.feature = "y",
+                        n.split = 3, 
+                        n.quantiles = 50, 
+                        min.split = 1)
+```
+
+### Tree visualization
+```{r}
+# extract full tree structure
+extract_split_criteria(syn.tree)
+
+# extract tree structure for one element in S
+extract_split_criteria(syn.tree, "x1")
+
+# create all plots by one call
+plots = plot_tree(syn.tree, syn.effect, target.feature = "y")
+
+# visulize solits
+plot_tree_structure(syn.tree)
+```
+
+## Bikeshare data
+
+
+### Data processing
+```{r}
+library(ISLR2)
+data(Bikeshare)
+bike <- data.table(Bikeshare)
+bike[, hr := as.numeric(as.character(hr))]
+bike[, workingday := as.factor((workingday))]
+bike[, season := as.factor(season)]
+
+# feature space
+X <- bike[, .(day, hr, temp, windspeed, workingday, hum, season, weathersit, atemp, casual)]
+
+# target
+y <- bike$bikers
+
+# analyzed dataset
+train1 = cbind(X, "cnt" = y)
+# remove data point with weathersit = heavy rain/snow (only one occurence) to use lm within benchmark
+bike.data = as.data.frame(train1)[-which(train1$weathersit=="heavy rain/snow"),]
+bike.data$weathersit = droplevels(bike.data$weathersit)
+```
+
+### Modelling
+```{r}
+# create Task
+set.seed(123)
+task = makeRegrTask(id = "bike", data = bike.data, target = "cnt")
+
+X = bike.data[,setdiff(colnames(bike.data), "cnt")]
+
+rf = mlr::train(task = task, learner = makeLearner("regr.ranger"))
+bike.predictor = Predictor$new(rf, data = X, y = task$env$data$cnt)
+```
+
+### Feature effects and tree building
+```{r}
+library(future)
+plan(sequential)
+options(future.globals.maxSize = 2 * 1024^3)
+
+bike.effect = FeatureEffects$new(bike.predictor, method = "ice", grid.size = 50, features = "hr")
+bike.tree = compute_tree(bike.effect, testdata = bike.data, objective = "SS_L2_pd",
+                    Z = c("workingday","temp"), target.feature = "cnt",
+                    n.split = 2, impr.par = 0.01, n.quantiles = 100,
+                    min.split = 50)
+```
+
+### Tree visualization
+```{r}
+extract_split_criteria(bike.tree)
+plot_tree_structure(bike.tree)
+plot_tree(bike.tree, bike.effect, target.feature = "cnt")
+```
+
