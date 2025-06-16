@@ -8,22 +8,63 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
 ```
+
 ```{r}
 library(mlr)
 library(iml)
 library(nnet)
-library(ggplot2)
-library(RColorBrewer)
 library(GADGET)
 ```
 
+## Overview of the GADGET Package
+
+This document demonstrates the use of the **GADGET** package to build interpretable trees based on local feature effects. We showcase both synthetic XOR data and a real-world Bikeshare dataset.
+
+The **GADGET** (Generalized Additive Decomposition for Global Explanation Trees) package provides interpretable model explanation through regionally partitioned trees, built upon local feature effect estimates. In this notebook, we demonstrate how GADGET can be used to construct and visualize global explanations from local interpretation methods such as **ICE** (Individual Conditional Expectation) or **PDP** (Partial Dependence Plots).
+
+The following core functions are provided to users:
+
+-   `compute_tree()`\
+    Constructs a recursive explanation tree by optimizing an objective function (e.g., ICE-based or PDP-based L2 reduction) at each node. It supports both numeric and categorical features and allows flexible control over split granularity and minimal node sizes.
+
+-   `extract_split_criteria()` Summarizes the full structure of the computed explanation tree, including split features, values, node depth, and objective improvement. It can also extract criteria related to a specific feature.
+
+-   `plot_tree()` Visualizes the ICE or PDP behavior of each feature in the tree across split regions. Regional plots help users interpret how a model behaves differently across subgroups.
+
+-   `plot_tree_structure()` Draws the structure of the explanation tree itself, with node annotations and split conditions.
+
+This notebook walks through two examples:
+
+1.  A **synthetic XOR-like dataset** to illustrate behavior in controlled settings with known interactions.
+
+2.  The **Bikeshare dataset** from the ISLR2 package, demonstrating usage on real-world, heterogeneous data.
+
+The GADGET package is especially useful when interpreting black-box models (e.g., neural networks, random forests) in terms of their localized behavior across feature space.
+
 ## Synthetic data
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
 ### Data generation
+
+The synthetic data set is constructed to mimic an XOR-like interaction structure with noise. The response variable y is defined as:
+
+$$
+y = 
+\begin{cases}
++3x_1, & \text{if } x_3 > 0 \\\\
+-3x_1, & \text{if } x_3 \leq 0
+\end{cases}
++
+\begin{cases}
++3x_2, & \text{if } x_4 > 0 \\\\
+-3x_2, & \text{if } x_4 \leq 0
+\end{cases}
++ x_3 + \varepsilon
+$$
+
+where $\varepsilon \sim \mathcal{N}(0, 0.3^2)$, and all covariates $x_1, x_2, x_3, x_4 \sim \mathcal{U}(-1, 1)$ independently.
+
+This setup creates a nonlinear response surface with sharp localized directional changes depending on the signs of $x_3$ and $x_4$, making it suitable for evaluating interpretable model partitioning via ICE/PDP.
+
 ```{r}
 n = 500
 set.seed(123)
@@ -42,6 +83,14 @@ head(syn.data)
 ```
 
 ### Modelling
+
+We train a feedforward neural network on the synthetic data using the `mlr` package. Hyperparameters are tuned via 5-fold cross-validation over a grid of values for:
+
+-   `decay`: weight decay (regularization strength)
+-   `size`: number of hidden units
+
+The best combination is selected based on mean squared error (MSE), mean absolute error (MAE), and $R^2$. The final model is retrained on the full dataset, and its predictive performance is evaluated on a large test set. The prediction function is defined to interface with interpretation tools later on.
+
 ```{r, message = FALSE, results = 'hide'}
 task = makeRegrTask(data = syn.data, target = "y")
 
@@ -66,7 +115,15 @@ pred = predict(model, newdata = testset)$data
 measureRSQ(pred$truth, pred$response)
 predict.function = function(model, newdata) predict(model, newdata = newdata)$data$response
 ```
+
 ### Feature effects and tree building
+
+We first use the `iml` package to compute **Individual Conditional Expectation (ICE)** curves for each feature based on the trained neural network model. These ICE curves capture local prediction behavior.
+
+Next, we apply `compute_tree()` from the GADGET package to build an interpretable explanation tree. The tree partitions the data into regions where the PDP (partial dependence) behavior is relatively homogeneous, as measured by the objective function `"SS_L2_pd"`.
+
+The set `Z` specifies contextual features that may influence the behavior of the features of interest. The resulting tree identifies regions with distinct interaction patterns in model predictions.
+
 ```{r}
 syn.predictor = Predictor$new(model, data = syn.data[which(names(syn.data)!="y")], y = syn.data$y)
 
@@ -74,33 +131,47 @@ syn.effect = FeatureEffects$new(syn.predictor, grid.size = 20, method = "ice")
 
 syn.tree = compute_tree(effect = syn.effect,
                         testdata = syn.data,
+                        model = model, # required only when using SHAP or ALE-based objectives.
                         objective = "SS_L2_pd", 
-                        Z = c("x1", "x2", "x3", "x4"),
+                        Z = c("x1", "x2", "x3", "x4"), # features assumed to interact with the features of interest
                         target.feature = "y",
                         n.split = 3, 
+                        impr.par = 0.1,
                         n.quantiles = 50, 
                         min.split = 1)
 ```
 
 ### Tree visualization
+
+The following plots visualize regional ICE and PDP for each split node. All plots share the same y-axis range and show feature-specific effects
+
 ```{r}
 # extract full tree structure
-extract_split_criteria(syn.tree)
+extract_split_criteria(tree = syn.tree)
 
-# extract tree structure for one element in S
-extract_split_criteria(syn.tree, "x1")
+# extract tree structure for one element in S (features of interest)
+extract_split_criteria(tree = syn.tree, feat_name = "x1")
 
 # create all plots by one call
-plots = plot_tree(syn.tree, syn.effect, target.feature = "y")
+plots = plot_tree(tree = syn.tree, effect = syn.effect,
+                  color_ice = "lightblue", color_pd = "lightcoral",
+                  target.feature = "y", show.plot = TRUE, save.plot = FALSE,
+                  path = ".", file.prefix = "tree_plot")
 
-# visulize solits
-plot_tree_structure(syn.tree)
+# visulize splits
+plot_tree_structure(tree = syn.tree)
 ```
 
 ## Bikeshare data
 
-
 ### Data processing
+
+We load the **Bikeshare** dataset from the ISLR2 package, which contains hourly bike rental counts along with weather and calendar-related features.
+
+The feature set includes numeric (e.g., `temp`, `windspeed`) and categorical variables (e.g., `season`, `workingday`). The response variable is `bikers`, representing the number of rented bikes.
+
+To ensure model robustness, we remove the single observation with `"heavy rain/snow"` in the `weathersit` variable, as it could distort model fitting due to its rarity.
+
 ```{r}
 library(ISLR2)
 data(Bikeshare)
@@ -117,15 +188,22 @@ y <- bike$bikers
 
 # analyzed dataset
 train1 = cbind(X, "cnt" = y)
+
 # remove data point with weathersit = heavy rain/snow (only one occurence) to use lm within benchmark
 bike.data = as.data.frame(train1)[-which(train1$weathersit=="heavy rain/snow"),]
 bike.data$weathersit = droplevels(bike.data$weathersit)
 ```
 
 ### Modelling
+
+We train a **random forest** regression model using the `mlr` package to predict hourly bike counts. The model is trained on the cleaned Bikeshare dataset with all available predictors.
+
+After training, the model is wrapped in an `iml::Predictor` object, which standardizes the interface for feature effect computations and interpretability.
+
 ```{r}
 # create Task
 set.seed(123)
+
 task = makeRegrTask(id = "bike", data = bike.data, target = "cnt")
 
 X = bike.data[,setdiff(colnames(bike.data), "cnt")]
@@ -135,12 +213,15 @@ bike.predictor = Predictor$new(rf, data = X, y = task$env$data$cnt)
 ```
 
 ### Feature effects and tree building
+
 ```{r}
 library(future)
 plan(sequential)
 options(future.globals.maxSize = 2 * 1024^3)
 
+# here we specify the only feature of interest: hr
 bike.effect = FeatureEffects$new(bike.predictor, method = "ice", grid.size = 50, features = "hr")
+
 bike.tree = compute_tree(bike.effect, testdata = bike.data, objective = "SS_L2_pd",
                     Z = c("workingday","temp"), target.feature = "cnt",
                     n.split = 2, impr.par = 0.01, n.quantiles = 100,
@@ -148,9 +229,41 @@ bike.tree = compute_tree(bike.effect, testdata = bike.data, objective = "SS_L2_p
 ```
 
 ### Tree visualization
+
 ```{r}
 extract_split_criteria(bike.tree)
 plot_tree_structure(bike.tree)
-plot_tree(bike.tree, bike.effect, target.feature = "cnt")
+bike.plots = plot_tree(bike.tree, bike.effect, target.feature = "cnt")
 ```
 
+## TODO
+
+We outline several planned improvements and extensions to the GADGET package along two main directions:
+
+### 🔧 Computational Efficiency
+
+-   **Objective optimization speed-up**: Consider integrating ideas from the **FAST** algorithm to accelerate computation of regional loss (e.g., L2 loss on ICE/PDP/ALE curves).
+-   **Efficient SHAP value estimation**: Explore fast Shapley value approximation methods (provided by Julia).
+
+### 🖼️ Visual Presentation & Interactivity
+
+-   **Interactive tree plots**: Investigate combining `shiny` with `ggparty` to allow users to interactively explore split trees and node-level plots.
+    -   This will reduce clutter.
+    -   Users can expand/collapse nodes and selectively view ICE/PDP behavior.
+
+### 📌 Additional Work
+
+-   Complete and validate **ALE** and **SHAP**-based functions within the GADGET framework.
+-   Extend **unit tests** beyond tree splitting:
+    -   ✅ Already implemented: unit tests for tree splitting helper functions (e.g., `find_best_binary_split`, `perform_split`, `generate_split_candidates`).
+    -   ⏳ Planned: test coverage for the main tree construction workflow (`compute_tree()`), visualization functions (`plot_tree()`, `plot_tree_structure()`), and general helpers (`extract_split_criteria()`).
+-   Add more usage examples and inline documentation to enhance package usability.
+
+These enhancements will further improve the interpretability, usability, and scalability of the GADGET package for both academic and applied use cases.
+
+### GADGET Architecture Diagram
+
+The following figure shows the structure and flow of core functions and objects in the GADGET package.
+
+```{r, echo=FALSE, out.width="100%", fig.align='center'}
+knitr::include_graphics("core_functions.svg")

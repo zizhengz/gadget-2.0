@@ -1,0 +1,259 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1309pt" height="806pt" viewBox="0.00 0.00 1308.89 806.00">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 802)">
+<title>ICE_Tree_Module</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-802 1304.89,-802 1304.89,4 -4,4"/>
+<g id="clust1" class="cluster">
+<title>cluster_0</title>
+<polygon fill="#fff8e1" stroke="#fff8e1" points="329.2,-290 329.2,-462 521.41,-462 521.41,-290 329.2,-290"/>
+<text text-anchor="middle" x="425.3" y="-444.5" font-family="Helvetica,sans-Serif" font-size="15.00">Data Preparation</text>
+</g>
+<g id="clust2" class="cluster">
+<title>cluster_1</title>
+<polygon fill="#e3f2fd" stroke="#e3f2fd" points="151.79,-572 151.79,-662 565.22,-662 565.22,-572 151.79,-572"/>
+<text text-anchor="middle" x="358.51" y="-644.5" font-family="Helvetica,sans-Serif" font-size="15.00">Tree Construction</text>
+</g>
+<g id="clust3" class="cluster">
+<title>cluster_3</title>
+<polygon fill="#e0f7fa" stroke="#e0f7fa" points="351.94,-8 351.94,-274 499.66,-274 499.66,-8 351.94,-8"/>
+<text text-anchor="middle" x="425.8" y="-256.5" font-family="Helvetica,sans-Serif" font-size="15.00">Objective Functions</text>
+</g>
+<g id="clust4" class="cluster">
+<title>cluster_2</title>
+<polygon fill="#e8f5e9" stroke="#e8f5e9" points="600.95,-618 600.95,-790 1292.89,-790 1292.89,-618 600.95,-618"/>
+<text text-anchor="middle" x="946.92" y="-772.5" font-family="Helvetica,sans-Serif" font-size="15.00">Split Evaluation</text>
+</g>
+<g id="clust5" class="cluster">
+<title>cluster_4</title>
+<polygon fill="#f3e5f5" stroke="#f3e5f5" points="598.82,-434 598.82,-606 906.21,-606 906.21,-434 598.82,-434"/>
+<text text-anchor="middle" x="752.51" y="-588.5" font-family="Helvetica,sans-Serif" font-size="15.00">Visualization</text>
+</g>
+<g id="clust6" class="cluster">
+<title>cluster_5</title>
+<polygon fill="#fce4ec" stroke="#fce4ec" points="592.22,-340 592.22,-418 737.45,-418 737.45,-340 592.22,-340"/>
+<text text-anchor="middle" x="664.84" y="-400.5" font-family="Helvetica,sans-Serif" font-size="15.00">Split Info Extraction</text>
+</g>
+<!-- start -->
+<g id="node1" class="node">
+<title>start</title>
+<polygon fill="#fffde7" stroke="black" points="58.4,-616 0,-598 58.4,-580 116.79,-598 58.4,-616"/>
+<text text-anchor="middle" x="58.4" y="-594.7" font-family="Helvetica,sans-Serif" font-size="11.00">User Input</text>
+</g>
+<!-- compute_tree -->
+<g id="node5" class="node">
+<title>compute_tree</title>
+<polygon fill="#d0e6fa" stroke="black" points="250.38,-616 159.79,-616 159.79,-580 250.38,-580 250.38,-616"/>
+<text text-anchor="middle" x="205.09" y="-594.7" font-family="Helvetica,sans-Serif" font-size="11.00">compute_tree()</text>
+</g>
+<!-- start&#45;&gt;compute_tree -->
+<g id="edge1" class="edge">
+<title>start-&gt;compute_tree</title>
+<path fill="none" stroke="black" d="M118.25,-598C128.14,-598 138.39,-598 148.21,-598"/>
+<polygon fill="black" stroke="black" points="147.98,-601.5 157.98,-598 147.98,-594.5 147.98,-601.5"/>
+</g>
+<!-- tree_object -->
+<g id="node2" class="node">
+<title>tree_object</title>
+<polygon fill="#fffde7" stroke="black" points="425.3,-522 342.85,-504 425.3,-486 507.76,-504 425.3,-522"/>
+<text text-anchor="middle" x="425.3" y="-500.7" font-family="Helvetica,sans-Serif" font-size="11.00">tree (R6 Object)</text>
+</g>
+<!-- plot_tree_structure -->
+<g id="node17" class="node">
+<title>plot_tree_structure</title>
+<polygon fill="lightgrey" stroke="black" points="721.86,-478 606.82,-478 606.82,-442 721.86,-442 721.86,-478"/>
+<text text-anchor="middle" x="664.34" y="-456.7" font-family="Helvetica,sans-Serif" font-size="11.00">plot_tree_structure()</text>
+</g>
+<!-- tree_object&#45;&gt;plot_tree_structure -->
+<g id="edge10" class="edge">
+<title>tree_object-&gt;plot_tree_structure</title>
+<path fill="none" stroke="black" d="M471.44,-495.62C506.48,-489.12 555.63,-479.99 595.42,-472.61"/>
+<polygon fill="black" stroke="black" points="595.95,-476.07 605.15,-470.8 594.68,-469.19 595.95,-476.07"/>
+</g>
+<!-- plot_tree -->
+<g id="node18" class="node">
+<title>plot_tree</title>
+<polygon fill="lightgrey" stroke="black" points="697.4,-572 631.27,-572 631.27,-536 697.4,-536 697.4,-572"/>
+<text text-anchor="middle" x="664.34" y="-550.7" font-family="Helvetica,sans-Serif" font-size="11.00">plot_tree()</text>
+</g>
+<!-- tree_object&#45;&gt;plot_tree -->
+<g id="edge9" class="edge">
+<title>tree_object-&gt;plot_tree</title>
+<path fill="none" stroke="black" d="M468.68,-512.94C511.25,-521.92 576.55,-535.69 619.6,-544.77"/>
+<polygon fill="black" stroke="black" points="618.85,-548.19 629.36,-546.83 620.3,-541.34 618.85,-548.19"/>
+</g>
+<!-- extract_split_criteria -->
+<g id="node19" class="node">
+<title>extract_split_criteria</title>
+<polygon fill="#fadbd8" stroke="black" points="724.91,-384 603.77,-384 603.77,-348 724.91,-348 724.91,-384"/>
+<text text-anchor="middle" x="664.34" y="-362.7" font-family="Helvetica,sans-Serif" font-size="11.00">extract_split_criteria()</text>
+</g>
+<!-- tree_object&#45;&gt;extract_split_criteria -->
+<g id="edge11" class="edge">
+<title>tree_object-&gt;extract_split_criteria</title>
+<path fill="none" stroke="black" d="M499.76,-501.77C522.62,-497.97 546.66,-490.41 565.22,-476 587.05,-459.05 574.74,-441.39 592.22,-420 601.11,-409.12 612.62,-399.18 623.78,-390.87"/>
+<polygon fill="black" stroke="black" points="625.66,-393.83 631.77,-385.17 621.6,-388.13 625.66,-393.83"/>
+</g>
+<!-- compute_data_for_ice_splitting -->
+<g id="node3" class="node">
+<title>compute_data_for_ice_splitting</title>
+<polygon fill="#ffe5cc" stroke="black" points="513.1,-334 337.51,-334 337.51,-298 513.1,-298 513.1,-334"/>
+<text text-anchor="middle" x="425.3" y="-312.7" font-family="Helvetica,sans-Serif" font-size="11.00">compute_data_for_ice_splitting()</text>
+</g>
+<!-- compute_data_for_ale_splitting -->
+<g id="node4" class="node">
+<title>compute_data_for_ale_splitting</title>
+<polygon fill="#ffe5cc" stroke="black" points="513.41,-428 337.2,-428 337.2,-392 513.41,-392 513.41,-428"/>
+<text text-anchor="middle" x="425.3" y="-406.7" font-family="Helvetica,sans-Serif" font-size="11.00">compute_data_for_ale_splitting()</text>
+</g>
+<!-- compute_tree&#45;&gt;tree_object -->
+<g id="edge8" class="edge">
+<title>compute_tree-&gt;tree_object</title>
+<path fill="none" stroke="black" d="M245.49,-579.56C260.43,-572.66 277.64,-564.85 293.38,-558 323.66,-544.82 358.21,-530.61 384.21,-520.07"/>
+<polygon fill="black" stroke="black" points="385.42,-523.36 393.38,-516.36 382.8,-516.87 385.42,-523.36"/>
+</g>
+<!-- compute_tree&#45;&gt;compute_data_for_ice_splitting -->
+<g id="edge2" class="edge">
+<title>compute_tree-&gt;compute_data_for_ice_splitting</title>
+<path fill="none" stroke="black" d="M207.72,-579.62C212.57,-535.94 230.72,-424.98 293.38,-363 303.41,-353.08 315.67,-345.25 328.63,-339.05"/>
+<polygon fill="black" stroke="black" points="330.01,-342.27 337.75,-335.04 327.19,-335.86 330.01,-342.27"/>
+</g>
+<!-- compute_tree&#45;&gt;compute_data_for_ale_splitting -->
+<g id="edge3" class="edge">
+<title>compute_tree-&gt;compute_data_for_ale_splitting</title>
+<path fill="none" stroke="black" d="M212.76,-579.7C224.54,-549.86 251.76,-490.7 293.38,-457 305.81,-446.94 320.57,-438.94 335.62,-432.6"/>
+<polygon fill="black" stroke="black" points="336.64,-435.96 344.65,-429.04 334.07,-429.45 336.64,-435.96"/>
+</g>
+<!-- NodeClass -->
+<g id="node6" class="node">
+<title>NodeClass</title>
+<ellipse fill="#e8f6ff" stroke="black" cx="425.3" cy="-604" rx="131.92" ry="24.32"/>
+<text text-anchor="middle" x="425.3" y="-607.3" font-family="Helvetica,sans-Serif" font-size="11.00">Node (R6 Class)</text>
+<text text-anchor="middle" x="425.3" y="-594.1" font-family="Helvetica,sans-Serif" font-size="11.00">computeSplit() / computeChildren()</text>
+</g>
+<!-- compute_tree&#45;&gt;NodeClass -->
+<g id="edge7" class="edge">
+<title>compute_tree-&gt;NodeClass</title>
+<path fill="none" stroke="black" d="M250.77,-599.23C260.69,-599.5 271.72,-599.8 283.28,-600.12"/>
+<polygon fill="black" stroke="black" points="282.89,-603.61 292.98,-600.39 283.08,-596.62 282.89,-603.61"/>
+</g>
+<!-- SS_L2 -->
+<g id="node7" class="node">
+<title>SS_L2</title>
+<polygon fill="lightgrey" stroke="black" points="452.3,-52 398.3,-52 398.3,-16 452.3,-16 452.3,-52"/>
+<text text-anchor="middle" x="425.3" y="-30.7" font-family="Helvetica,sans-Serif" font-size="11.00">SS_L2</text>
+</g>
+<!-- compute_tree&#45;&gt;SS_L2 -->
+<g id="edge4" class="edge">
+<title>compute_tree-&gt;SS_L2</title>
+<path fill="none" stroke="black" d="M206.76,-579.73C210.15,-497.13 227.89,-159.28 293.38,-81 316.43,-53.45 356.9,-42.05 386.76,-37.33"/>
+<polygon fill="black" stroke="black" points="387.09,-40.82 396.52,-35.99 386.14,-33.88 387.09,-40.82"/>
+</g>
+<!-- SS_ALE -->
+<g id="node8" class="node">
+<title>SS_ALE</title>
+<polygon fill="lightgrey" stroke="black" points="454.09,-146 396.51,-146 396.51,-110 454.09,-110 454.09,-146"/>
+<text text-anchor="middle" x="425.3" y="-124.7" font-family="Helvetica,sans-Serif" font-size="11.00">SS_ALE</text>
+</g>
+<!-- compute_tree&#45;&gt;SS_ALE -->
+<g id="edge5" class="edge">
+<title>compute_tree-&gt;SS_ALE</title>
+<path fill="none" stroke="black" d="M207.49,-579.95C213.47,-507.35 239.07,-237.58 293.38,-175 316.37,-148.51 355.41,-136.95 384.89,-131.91"/>
+<polygon fill="black" stroke="black" points="385.2,-135.4 394.57,-130.45 384.16,-128.48 385.2,-135.4"/>
+</g>
+<!-- SS_SHAP -->
+<g id="node9" class="node">
+<title>SS_SHAP</title>
+<polygon fill="lightgrey" stroke="black" points="458.67,-240 391.93,-240 391.93,-204 458.67,-204 458.67,-240"/>
+<text text-anchor="middle" x="425.3" y="-218.7" font-family="Helvetica,sans-Serif" font-size="11.00">SS_SHAP</text>
+</g>
+<!-- compute_tree&#45;&gt;SS_SHAP -->
+<g id="edge6" class="edge">
+<title>compute_tree-&gt;SS_SHAP</title>
+<path fill="none" stroke="black" d="M205.74,-579.77C205.71,-526.23 212.79,-367.49 293.38,-276 315.76,-250.59 351.95,-236.89 380.62,-229.66"/>
+<polygon fill="black" stroke="black" points="381.16,-233.13 390.11,-227.45 379.58,-226.31 381.16,-233.13"/>
+</g>
+<!-- split_parent_node -->
+<g id="node10" class="node">
+<title>split_parent_node</title>
+<polygon fill="#d5f5e3" stroke="black" points="719.73,-666 608.95,-666 608.95,-630 719.73,-630 719.73,-666"/>
+<text text-anchor="middle" x="664.34" y="-644.7" font-family="Helvetica,sans-Serif" font-size="11.00">split_parent_node()</text>
+</g>
+<!-- NodeClass&#45;&gt;split_parent_node -->
+<g id="edge12" class="edge">
+<title>NodeClass-&gt;split_parent_node</title>
+<path fill="none" stroke="black" d="M519.64,-621.33C545.7,-626.16 573.46,-631.32 597.57,-635.79"/>
+<polygon fill="black" stroke="black" points="596.77,-639.2 607.24,-637.59 598.04,-632.32 596.77,-639.2"/>
+</g>
+<!-- find_best_binary_split -->
+<g id="node11" class="node">
+<title>find_best_binary_split</title>
+<polygon fill="#d5f5e3" stroke="black" points="902.18,-666 772.45,-666 772.45,-630 902.18,-630 902.18,-666"/>
+<text text-anchor="middle" x="837.32" y="-644.7" font-family="Helvetica,sans-Serif" font-size="11.00">find_best_binary_split()</text>
+</g>
+<!-- split_parent_node&#45;&gt;find_best_binary_split -->
+<g id="edge13" class="edge">
+<title>split_parent_node-&gt;find_best_binary_split</title>
+<path fill="none" stroke="black" d="M719.91,-648C732.89,-648 746.96,-648 760.7,-648"/>
+<polygon fill="black" stroke="black" points="760.61,-651.5 770.61,-648 760.61,-644.5 760.61,-651.5"/>
+</g>
+<!-- perform_split -->
+<g id="node12" class="node">
+<title>perform_split</title>
+<polygon fill="#e8f8e8" stroke="black" points="1132.95,-662 945.18,-662 945.18,-626 1132.95,-626 1132.95,-662"/>
+<text text-anchor="middle" x="1039.06" y="-640.7" font-family="Helvetica,sans-Serif" font-size="11.00">perform_split() / perform_split_cat()</text>
+</g>
+<!-- find_best_binary_split&#45;&gt;perform_split -->
+<g id="edge15" class="edge">
+<title>find_best_binary_split-&gt;perform_split</title>
+<path fill="none" stroke="black" d="M902.62,-646.71C912.5,-646.51 922.92,-646.31 933.4,-646.1"/>
+<polygon fill="black" stroke="black" points="933.35,-649.6 943.28,-645.9 933.21,-642.6 933.35,-649.6"/>
+</g>
+<!-- generate_split_candidates -->
+<g id="node13" class="node">
+<title>generate_split_candidates</title>
+<polygon fill="#e8f8e8" stroke="black" points="1114.94,-756 963.19,-756 963.19,-720 1114.94,-720 1114.94,-756"/>
+<text text-anchor="middle" x="1039.06" y="-734.7" font-family="Helvetica,sans-Serif" font-size="11.00">generate_split_candidates()</text>
+</g>
+<!-- find_best_binary_split&#45;&gt;generate_split_candidates -->
+<g id="edge14" class="edge">
+<title>find_best_binary_split-&gt;generate_split_candidates</title>
+<path fill="none" stroke="black" d="M879.22,-666.43C910.32,-680.44 953.31,-699.82 986.73,-714.87"/>
+<polygon fill="black" stroke="black" points="985.28,-718.06 995.83,-718.97 988.15,-711.67 985.28,-718.06"/>
+</g>
+<!-- get_closest_point -->
+<g id="node15" class="node">
+<title>get_closest_point</title>
+<polygon fill="#e8f8e8" stroke="black" points="1284.89,-662 1175.95,-662 1175.95,-626 1284.89,-626 1284.89,-662"/>
+<text text-anchor="middle" x="1230.42" y="-640.7" font-family="Helvetica,sans-Serif" font-size="11.00">get_closest_point()</text>
+</g>
+<!-- perform_split&#45;&gt;get_closest_point -->
+<g id="edge17" class="edge">
+<title>perform_split-&gt;get_closest_point</title>
+<path fill="none" stroke="black" d="M1133.35,-644C1143.75,-644 1154.18,-644 1164.12,-644"/>
+<polygon fill="black" stroke="black" points="1164.03,-647.5 1174.03,-644 1164.03,-640.5 1164.03,-647.5"/>
+</g>
+<!-- adjust_split_point -->
+<g id="node14" class="node">
+<title>adjust_split_point</title>
+<polygon fill="#e8f8e8" stroke="black" points="1284.58,-756 1176.25,-756 1176.25,-720 1284.58,-720 1284.58,-756"/>
+<text text-anchor="middle" x="1230.42" y="-734.7" font-family="Helvetica,sans-Serif" font-size="11.00">adjust_split_point()</text>
+</g>
+<!-- generate_split_candidates&#45;&gt;adjust_split_point -->
+<g id="edge16" class="edge">
+<title>generate_split_candidates-&gt;adjust_split_point</title>
+<path fill="none" stroke="black" d="M1115.17,-738C1131.54,-738 1148.73,-738 1164.65,-738"/>
+<polygon fill="black" stroke="black" points="1164.48,-741.5 1174.48,-738 1164.48,-734.5 1164.48,-741.5"/>
+</g>
+<!-- prepare_tree_layout -->
+<g id="node16" class="node">
+<title>prepare_tree_layout</title>
+<polygon fill="lightgrey" stroke="black" points="898.21,-478 776.42,-478 776.42,-442 898.21,-442 898.21,-478"/>
+<text text-anchor="middle" x="837.32" y="-456.7" font-family="Helvetica,sans-Serif" font-size="11.00">prepare_tree_layout()</text>
+</g>
+<!-- plot_tree_structure&#45;&gt;prepare_tree_layout -->
+<g id="edge18" class="edge">
+<title>plot_tree_structure-&gt;prepare_tree_layout</title>
+<path fill="none" stroke="black" d="M722.27,-460C735.91,-460 750.65,-460 764.86,-460"/>
+<polygon fill="black" stroke="black" points="764.6,-463.5 774.6,-460 764.6,-456.5 764.6,-463.5"/>
+</g>
+</g>
+</svg>
