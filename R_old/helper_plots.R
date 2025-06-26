@@ -312,8 +312,7 @@ find_node_by_id = function(node_list, id) {
 #' @importFrom patchwork wrap_plots plot_annotation
 #'
 #' @export
-plot_tree = function(tree, effect,
-  color_ice = "lightblue", color_pd = "lightcoral",
+plot_tree = function(tree, effect, color_ice = "lightblue", color_pd = "lightcoral",
   target.feature, show.plot = TRUE, save.plot = FALSE,
   path = ".", file.prefix = "tree_plot") {
 

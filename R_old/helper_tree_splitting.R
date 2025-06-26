@@ -112,7 +112,6 @@ generate_node_index = function(Y, X, result) {
 }
 
 
-
 #' Identify the best split point for a single feature
 #'
 #' @param xval A one‐column \code{data.frame} or matrix of predictor
@@ -185,7 +184,6 @@ find_best_binary_split = function(xval, y, n.splits = 1, min.node.size, grid,
   }
   else {
     splits.objective.values = vapply(q, FUN = function(i) {
-
       perform_split(i, xval = xval, y = y, min.node.size = min.node.size, grid = grid,
         objective = objective, ...)
     }, FUN.VALUE = NA_real_, USE.NAMES = FALSE)
@@ -336,13 +334,20 @@ perform_split = function(split.points, xval, y, min.node.size, grid, objective, 
     x.list = NULL
   }
   res = vapply(seq_along(y.list), FUN = function(i) {
-    if (i == 1) {
-      grid_sub = grid[[feat]][which(as.numeric(grid[[feat]]) <= split.points)]
-    } else if (i == 2) grid_sub = grid[[feat]][which(as.numeric(grid[[feat]]) > split.points)]
-    sum(unlist(objective(y = y.list[[i]], x = x.list[[i]], split.feat = feat, y.parent = NULL, grid = grid_sub, sub.number = i, ...)))
+    grid_sub = if (i == 1) {
+      grid[[feat]][which(as.numeric(grid[[feat]]) <= split.points)]
+    } else {
+      grid[[feat]][which(as.numeric(grid[[feat]]) > split.points)]
+    }
+    # sum for (multiple) features in S
+    sum(unlist(objective(y = y.list[[i]], x = x.list[[i]],
+                         split.feat = feat, y.parent = NULL,
+                         grid = grid_sub, sub.number = i, ...)))
   }, FUN.VALUE = NA_real_, USE.NAMES = FALSE)
+  # sum for left and right region
   sum(res)
 }
+
 
 perform_split_cat = function(split.levels, xval, y, min.node.size, grid, objective, ...) {
   feat = colnames(xval)[1]
@@ -402,8 +407,6 @@ adjust_nsplits = function(xval, n.splits) {
   return(n.splits)
 }
 
-
-
 #' Map candidate split points to the nearest admissible values
 #'
 #' @param split.points Numeric vector of preliminary candidate cut
@@ -446,7 +449,6 @@ get_closest_point = function(split.points, xval, min.node.size = 10) {
 
   return(sort.int(split.adj))
 }
-
 
 
 #' Shift candidate split points into open intervals
@@ -511,7 +513,6 @@ adjust_split_point = function(split.points, xval) {
 #'
 #' @keywords internal
 compute_data_for_ice_splitting = function(effect, testdata, Z) {
-
   # Z = if (is.null(Z)) setdiff(colnames(testdata), target.feature) else Z
   # df = setDT(testdata[, Z, drop = FALSE])
   # df = lapply(df, function(feat) {
@@ -519,16 +520,14 @@ compute_data_for_ice_splitting = function(effect, testdata, Z) {
   # })
   # df = setDT(df)
   df = setDT(copy(testdata[, Z, drop = FALSE]))
-
   for (col in Z) {
     x = df[[col]]
     if (is.character(x) || is.factor(x)) {
       df[[col]] = as.factor(x)
-    } else if (is.numeric(x) && length(unique(x)) <= 5) {
+    } else if (is.numeric(x) && length(unique(x)) <= 7) {
       df[[col]] = as.factor(x)
     }
   }
-
   ice_feat = effect$features
 
   effectdata = effect$results
