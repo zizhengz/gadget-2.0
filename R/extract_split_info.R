@@ -1,6 +1,6 @@
 extract_split_info = function(tree) {
   list.split.criteria = lapply(tree, function(depth) {
-    lapply(depth, function(node) {ﬂ
+    lapply(depth, function(node) {
       if (is.null(node)) {
         df = NULL
       } else if (node$improvement.met | node$stop.criterion.met | node$depth == length(tree)) {
