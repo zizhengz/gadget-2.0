@@ -29,15 +29,17 @@ prepare_tree_structure_data = function(tree) {
     while (!is.na(current$id.parent)) {
       parent = layout[layout$node.id == current$id.parent, ]
       if (nrow(parent) != 1) break
-      op = switch(current$child.type, "<=" = {
-        "≤"
-      }, ">" = {
-        ">"
-      }, "==" = {
-        "="
-      }, "!=" = {
-        "≠"
-      })
+      op = switch(current$child.type,
+        "<=" = {
+          "≤"
+        }, ">" = {
+          ">"
+        }, "==" = {
+          "="
+        }, "!=" = {
+          "≠"
+        }
+      )
       cond = paste0(parent$split.feature, " ", op, " ", round(as.numeric(parent$split.value), 3))
       path_conditions = c(cond, path_conditions)
       current = parent

@@ -82,9 +82,8 @@ Node = R6::R6Class("Node", list(
   local = NULL,
 
   initialize = function(id, depth = NULL, subset.idx, grid, id.parent = NULL,
-    child.type = NULL, objective.value.parent = NULL,
-    #store.data,
-    objective.value = NULL, improvement.met, intImp) {
+    child.type = NULL, objective.value.parent = NULL, # store.data,
+    objective.value = NULL, improvement.met = FALSE, intImp = NULL) {
 
     assert_numeric(id, len = 1)
     assert_numeric(depth, len = 1, null.ok = TRUE)
@@ -101,8 +100,8 @@ Node = R6::R6Class("Node", list(
     self$objective.value.parent = objective.value.parent
     self$objective.value = objective.value
     self$grid = grid
-    #self$store.data = store.data
-    #self$local = NULL
+    # self$store.data = store.data
+    # self$local = NULL
     self$stop.criterion.met = FALSE
     self$improvement.met = improvement.met
   },
@@ -389,69 +388,61 @@ Node = R6::R6Class("Node", list(
   #   }
   # },
   #### new functions ####
-  single_split = function(Z, Y, effect.method = "PD", min.node.size, n.quantiles, impr.par) {
+  do_single_split = function(Z, Y, effect.method, objective.value.root,
+    min.node.size, n.quantiles, impr.par) {
     checkmate::assert_data_frame(Z)
     if (length(self$subset.idx) < min.node.size | self$improvement.met == TRUE) {
       self$stop.criterion.met = TRUE
     } else {
       if (effect.method == "PD") {
-        Y_curr = if (class(Y) == "list") {
-          lapply(seq_along(Y), function(i) {
-            Y[[i]] = Y[[i]][self$subset.idx, ]
-            Y[[i]][, which(!(colnames(Y[[i]]) %in% self$grid[[i]]))] = NA
-            Y[[i]] - rowMeans(Y[[i]], na.rm = TRUE)
-          })
-        } else if (class(Y) == "data.frame") {
-          Y = Y[self$subset.idx, ]
-          Y[, which(!(colnames(Y) %in% self$grid))] = NA
-          Y - rowMeans(Y, na.rm = TRUE)
-        }
+        Y_curr = lapply(seq_along(Y), function(i) {
+          Y[[i]] = Y[[i]][self$subset.idx, ]
+          Y[[i]][, which(!(colnames(Y[[i]]) %in% self$grid[[i]]))] = NA
+          Y[[i]] - rowMeans(Y[[i]], na.rm = TRUE)
+        })
         names(Y_curr) = names(Y)
       }
 
-      objective.value.root = if (class(Y) == "list") {
-        sum(unlist(lapply(Y, function(Y_i) {
-          sum(Rfast::colsums(as.matrix(Y_i)^2) - Rfast::colsums(as.matrix(Y_i))^2 / nrow(Y_i))
-        })))
-      } else if (class(Y) == "data.frame") {
-        sum(Rfast::colsums(as.matrix(Y)^2) - Rfast::colsums(as.matrix(Y))^2 / nrow(Y))
-      }
-
-      if (is.null(self$objective.value)) {
-        self$objective.value.parent = objective.value.root
+      curr.objective.value = sum(vapply(Y_curr, function(Y_curr_i) {
+        sum(Rfast::colsums(as.matrix(Y_curr_i)^2) - Rfast::colsums(as.matrix(Y_curr_i))^2 / nrow(Y_curr_i), na.rm = TRUE)
+      }, NA_real_), na.rm = TRUE)
+      if (self$id == 1) {
+        self$objective.value = objective.value.root
+        self$objective.value.parent = NA
         self$split.feature.parent = NA
         self$split.value.parent = NA
         self$intImp.parent = NA
+      } else {
+        self$objective.value = curr.objective.value
       }
 
       tryCatch({
-        split.res = best_split(Z = Z[self$subset.idx, ], Y = Y_curr, min.node.size = min.node.size, n.quantiles = n.quantiles)
-        self$objective.value = split.res$current.objective[1]
+        split.res = search_best_split(Z = Z[self$subset.idx, ], Y = Y_curr,
+          min.node.size = min.node.size, n.quantiles = n.quantiles)
+
+        split.feature = split.res$split.feature[split.res$best.split][1]
+        split.value = split.res$split.point[split.res$best.split][1]
+        is.categorical = split.res$is.categorical[split.res$best.split][1]
+        split.objective = split.res$split.objective[split.res$best.split][1]
 
         if (is.null(self$intImp)) self$intImp = 0
-        intImp = (self$objective.value - split.res$objective.value[split.res$best.split]) / objective.value.root
+        intImp = (self$objective.value - split.objective) / objective.value.root
+        # for root node
         if (self$intImp == 0) {
           if (intImp < impr.par) {
             self$improvement.met = TRUE
           } else {
-            self$split.feature = split.res$split.feature[split.res$best.split]
-            self$split.value = if (split.res$is.categorical[split.res$best.split] == TRUE) {
-              split.res$split.point[split.res$best.split]
-            } else {
-              as.numeric(split.res$split.point[split.res$best.split])
-            }
+            self$split.feature = split.feature
+            self$split.value = if (is.categorical) split.value else as.numeric(split.value)
             self$intImp = intImp
           }
+          # for node after
         } else {
           if (intImp < self$intImp * impr.par) {
             self$improvement.met = TRUE
           } else {
-            self$split.feature = split.res$split.feature[split.res$best.split]
-            self$split.value = if (split.res$is.categorical[split.res$best.split] == TRUE) {
-              split.res$split.point[split.res$best.split]
-            } else {
-              as.numeric(split.res$split.point[split.res$best.split])
-            }
+            self$split.feature = split.feature
+            self$split.value = if (is.categorical) split.value else as.numeric(split.value)
             self$intImp.parent = self$intImp
             self$intImp = intImp
           }
@@ -470,7 +461,7 @@ Node = R6::R6Class("Node", list(
       self$children = list("left.child" = NULL, "right.child" = NULL)
     } else {
       if (is.null(self$split.feature)) {
-        stop("Please first compute the split via single_split().")
+        stop("Please first compute the split via do_single_split().")
       }
       if (is.factor(Z[[self$split.feature]])) {
         idx.left = which(Z[self$subset.idx, ][[self$split.feature]] == self$split.value)
@@ -488,26 +479,16 @@ Node = R6::R6Class("Node", list(
       grid.left = self$grid
       grid.right = self$grid
       if (is.factor(Z[[self$split.feature]])) {
-        if (class(Y) == "list") {
-          grid.left[[split.feature.name]] = grid.left[[split.feature.name]][grid.left[[split.feature.name]] == self$split.value]
-          grid.right[[split.feature.name]] = grid.right[[split.feature.name]][grid.right[[split.feature.name]] != self$split.value]
-        } else if (class(Y) == "data.frame") {
-          grid.left = grid.left[grid.left == self$split.value]
-          grid.right = grid.right[grid.right != self$split.value]
-        }
+        grid.left[[split.feature.name]] = grid.left[[split.feature.name]][grid.left[[split.feature.name]] == self$split.value]
+        grid.right[[split.feature.name]] = grid.right[[split.feature.name]][grid.right[[split.feature.name]] != self$split.value]
       } else {
-        if (class(Y) == "list") {
-          grid.left[[split.feature.name]] = grid.left[[split.feature.name]][as.numeric(grid.left[[split.feature.name]]) <= self$split.value]
-          grid.right[[split.feature.name]] = grid.right[[split.feature.name]][as.numeric(grid.right[[split.feature.name]]) > self$split.value]
-        } else if (class(Y) == "data.frame") {
-          grid.left = grid.left[as.numeric(grid.left) <= self$split.value]
-          grid.right = grid.right[as.numeric(grid.right) > self$split.value]
-        }
+        grid.left[[split.feature.name]] = grid.left[[split.feature.name]][as.numeric(grid.left[[split.feature.name]]) <= self$split.value]
+        grid.right[[split.feature.name]] = grid.right[[split.feature.name]][as.numeric(grid.right[[split.feature.name]]) > self$split.value]
       }
 
       obj.parent = self$objective.value
 
-      left.child = Node$new(id = 2*self$id, depth = self$depth + 1,
+      left.child = Node$new(id = 2 * self$id, depth = self$depth + 1,
         subset.idx = idx.left,
         id.parent = self$id,
         child.type = if (is.factor(Z[[self$split.feature]])) "==" else "<=",
@@ -515,7 +496,7 @@ Node = R6::R6Class("Node", list(
         intImp = self$intImp,
         grid = grid.left,
         objective.value.parent = obj.parent)
-      right.child = Node$new(id = 2*self$id + 1, depth = self$depth + 1,
+      right.child = Node$new(id = 2 * self$id + 1, depth = self$depth + 1,
         subset.idx = idx.right,
         id.parent = self$id,
         child.type = if (is.factor(Z[[self$split.feature]])) "!=" else ">",
@@ -526,6 +507,7 @@ Node = R6::R6Class("Node", list(
 
       left.child$split.feature.parent = right.child$split.feature.parent = self$split.feature
       left.child$split.value.parent = right.child$split.value.parent = self$split.value
+      left.child$intImp.parent = right.child$intImp.parent = self$intImp
       self$children = list("left.child" = left.child, "right.child" = right.child)
     }
   }

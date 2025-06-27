@@ -20,8 +20,8 @@ plot_regional_pd = function(prepared_regional_pd_data, target.feature.name, node
     )
 
     p = ggplot(plot_data, aes(x = grid, y = value, group = id, color = type)) +
-      geom_line(alpha = 0.9, linewidth = 0.3, linetype = "dashed", na.rm = TRUE) +
-      geom_line(data = subset(plot_data, type == "PDP"), linewidth = 1) +
+      geom_line(alpha = 0.9, linewidth = 0.3, linetype = "dotted", na.rm = TRUE) +
+      geom_line(data = subset(plot_data, type == "PDP"), linewidth = 0.8) +
       # geom_point(data = data_subset, aes_string(x = feat, y = "y"), alpha = 0.4) +
       scale_color_manual(values = c("ICE" = color_ice, "PDP" = color_pd), labels = c("ICE" = "Mean centered ICE", "PDP" = "PDP")) +
       coord_cartesian(ylim = c(ymin, ymax)) +

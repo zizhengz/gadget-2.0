@@ -9,7 +9,10 @@ mean_center_ice = function(effect) {
     Y = Y[, setdiff(colnames(Y), c(".type", ".id"))]
     Y = Y - rowMeans(Y)
     grid = colnames(Y)
-    feature.name = feat
+    grid = list(grid)
+    names(grid) = feat
+    Y = list(Y)
+    names(Y) = feat
     # for GADGET, i.e. use FeatureEffects$new()
   } else if (class(effect.results) == "list") {
     Y = lapply(effect.results, function(feat) {
@@ -22,7 +25,6 @@ mean_center_ice = function(effect) {
     grid = lapply(Y, function(Y_i) {
       colnames(Y_i)
     })
-    feature.name = names(Y)
   }
-  return(list(Y = Y, grid = grid, feature.name = feature.name))
+  return(list(Y = Y, grid = grid))
 }

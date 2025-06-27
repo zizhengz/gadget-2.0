@@ -17,9 +17,6 @@ prepare_data_for_ice_splitting = function(effect, data, target.feature.name = NU
       Z[, col] = as.numeric(Z[, col])
     }
   }
-  feature.to.split = colnames(Z)
-
   wide.mean.center = mean_center_ice(effect)
-
-  return(list(Z = Z, Y = wide.mean.center$Y, grid = wide.mean.center$grid, feature.of.interest = wide.mean.center$feature.name, feature.to.split = feature.to.split))
+  return(list(Z = Z, Y = wide.mean.center$Y, grid = wide.mean.center$grid))
 }
