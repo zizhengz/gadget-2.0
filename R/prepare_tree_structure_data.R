@@ -46,7 +46,7 @@ prepare_tree_structure_data = function(tree) {
     }
     if (!is.na(layout$split.feature[i])) {
       cond_self = paste0(layout$split.feature[i], " ", ifelse(layout$child.type[i + 1] == "==", "=", "≤"), " ", round(as.numeric(layout$split.value[i]), 3))
-      path_conditions = paste0(cond_self, "\nintImp: ", round(layout$intImp[i], 3))
+      path_conditions = paste0(cond_self, "\nheter.reduction: ", round(layout$intImp[i], 4))
     } else {
       path_conditions = path_conditions
     }
