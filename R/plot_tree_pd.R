@@ -1,7 +1,7 @@
 plot_tree_pd = function(tree, effect, target.feature.name, color_ice = "lightblue", color_pd = "lightcoral", show.plot = TRUE) {
   plot_list = list()
   for (depth in 1:length(tree)) {
-    prepared_regional_pd_data = prepare_regional_pd_data(effect = effect, tree = tree, depth = depth)
+    prepared_data = prepare_plot_data_PD(effect = effect, tree = tree, depth = depth)
     plots_at_depth = list()
     for (node_idx in seq_along(tree[[depth]])) {
       node = tree[[depth]][[node_idx]]
@@ -24,12 +24,12 @@ plot_tree_pd = function(tree, effect, target.feature.name, color_ice = "lightblu
         }
 
         # make plots
-        ymin = min(unlist(prepared_regional_pd_data), na.rm = TRUE)
-        ymax = max(unlist(prepared_regional_pd_data), na.rm = TRUE)
+        ymin = min(unlist(prepared_data), na.rm = TRUE)
+        ymax = max(unlist(prepared_data), na.rm = TRUE)
         y_range = ymax - ymin
         ymax = ymax + 0.2 * y_range
 
-        plots = plot_regional_pd(prepared_regional_pd_data = prepared_regional_pd_data,
+        plots = plot_regional_pd(prepared_data = prepared_data,
           target.feature.name = target.feature.name,
           node_idx = node_idx,
           color_ice = color_ice,
@@ -37,7 +37,7 @@ plot_tree_pd = function(tree, effect, target.feature.name, color_ice = "lightblu
           ymin = ymin, ymax = ymax,
           split_condition = split_condition)
 
-        p = patchwork::wrap_plots(plots, ncol = if (length(prepared_regional_pd_data) <= 3) length(prepared_regional_pd_data) else 2) +
+        p = patchwork::wrap_plots(plots, ncol = if (length(prepared_data) <= 3) length(prepared_data) else 2) +
           patchwork::plot_annotation(title = title) & theme(plot.title = element_text(hjust = 0.5))
 
         if (show.plot) print(p)

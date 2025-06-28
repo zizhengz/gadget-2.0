@@ -1,4 +1,4 @@
-prepare_data_for_ice_splitting = function(effect, data, target.feature.name = NULL, split.feature = NULL) {
+prepare_split_data_PD = function(effect, data, target.feature.name = NULL, split.feature = NULL) {
   checkmate::assert_data_frame(data)
   if (is.null(target.feature.name) || target.feature.name == "") {
     stop("Please choose a feature name from your data as 'target.feature.name'.")

@@ -1,7 +1,6 @@
-plot_regional_pd = function(prepared_regional_pd_data, target.feature.name, node_idx, color_ice, color_pd, ymin, ymax, split_condition = NULL) {
-
-  plot = lapply(names(prepared_regional_pd_data), function(feat) {
-    data = prepared_regional_pd_data[[feat]]
+plot_regional_pd = function(prepared_data, target.feature.name, node_idx, color_ice, color_pd, ymin, ymax, split_condition = NULL) {
+  plot = lapply(names(prepared_data), function(feat) {
+    data = prepared_data[[feat]]
     data_subset = data[data$node == node_idx, ]
 
     ice.long = tidyr::gather(data_subset[, -ncol(data_subset)], grid, value)

@@ -5,7 +5,7 @@ build_tree = function(effect, data, effect.method = "PD", split.feature = NULL,
   checkmate::assert_data_frame(data)
 
   if (effect.method == "PD") {
-    prepared_data = prepare_data_for_ice_splitting(effect = effect, data = data,
+    prepared_data = prepare_split_data_PD(effect = effect, data = data,
       target.feature.name = target.feature.name,
       split.feature = split.feature)
     Z = prepared_data$Z

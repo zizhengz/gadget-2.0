@@ -1,4 +1,4 @@
-prepare_regional_pd_data = function(effect, tree, depth) {
+prepare_plot_data_PD = function(effect, tree, depth) {
   effect.results = effect$results
   wide.mean.center = mean_center_ice(effect)
   Y = wide.mean.center$Y
