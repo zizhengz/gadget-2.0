@@ -1,4 +1,4 @@
-re_mean_center_PD = function(Y, idx, grid) {
+re_mean_center_ice = function(Y, idx, grid) {
   checkmate::assert_list(Y)
   checkmate::assert_list(grid)
 

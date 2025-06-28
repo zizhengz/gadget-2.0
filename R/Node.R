@@ -396,7 +396,7 @@ Node = R6::R6Class("Node", list(
       self$stop.criterion.met = TRUE
     } else {
       if (effect.method == "PD") {
-        Y_curr = re_mean_center_PD(Y = Y, idx = self$subset.idx, grid = self$grid)
+        Y_curr = re_mean_center_ice(Y = Y, idx = self$subset.idx, grid = self$grid)
       }
       if (self$id == 1) {
         self$split.feature.parent = NA
@@ -435,8 +435,8 @@ Node = R6::R6Class("Node", list(
         }
 
         if (effect.method == "PD") {
-          Y_curr_left = re_mean_center_PD(Y = Y, idx = idx.left, grid = grid.left)
-          Y_curr_right = re_mean_center_PD(Y = Y, idx = idx.right, grid = grid.right)
+          Y_curr_left = re_mean_center_ice(Y = Y, idx = idx.left, grid = grid.left)
+          Y_curr_right = re_mean_center_ice(Y = Y, idx = idx.right, grid = grid.right)
         }
         left.objective.value = node_heterogeneity(Y_curr_left)
         right.objective.value = node_heterogeneity(Y_curr_right)
