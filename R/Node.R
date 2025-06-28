@@ -388,7 +388,7 @@ Node = R6::R6Class("Node", list(
   #   }
   # },
   #### new functions ####
-  do_single_split = function(Z, Y, effect.method, objective.value.root,
+  split_node = function(Z, Y, effect.method, objective.value.root,
     min.node.size, n.quantiles, impr.par) {
     checkmate::assert_data_frame(Z)
     checkmate::assert_list(Y)
@@ -410,18 +410,16 @@ Node = R6::R6Class("Node", list(
         split.feature = split.res$split.feature[split.res$best.split][1]
         split.value = split.res$split.point[split.res$best.split][1]
         is.categorical = split.res$is.categorical[split.res$best.split][1]
-        #split.objective = split.res$split.objective[split.res$best.split][1]
 
+        z_sub = Z[[split.feature]][self$subset.idx]
         if (is.categorical) {
-          idx.left = which(Z[self$subset.idx, ][[split.feature]] == split.value)
-          idx.right = which(Z[self$subset.idx, ][[split.feature]] != split.value)
+          idx.left = self$subset.idx[which(z_sub == split.value)]
+          idx.right = self$subset.idx[which(z_sub != split.value)]
         } else {
-          idx.left = which(Z[self$subset.idx, ][[split.feature]] <= split.value)
-          idx.right = which(Z[self$subset.idx, ][[split.feature]] > split.value)
+          idx.left = self$subset.idx[which(z_sub <= split.value)]
+          idx.right = self$subset.idx[which(z_sub > split.value)]
         }
-        idx.left = self$subset.idx[idx.left]
         if (length(idx.left) == 0) idx.left = 0
-        idx.right = self$subset.idx[idx.right]
         if (length(idx.right) == 0) idx.right = 0
 
         grid.left = self$grid
@@ -437,8 +435,8 @@ Node = R6::R6Class("Node", list(
         }
 
         if (effect.method == "PD") {
-          Y_curr_left = re_mean_center_PD(Y = Y_curr, idx = idx.left, grid = grid.left)
-          Y_curr_right = re_mean_center_PD(Y = Y_curr, idx = idx.right, grid = grid.right)
+          Y_curr_left = re_mean_center_PD(Y = Y, idx = idx.left, grid = grid.left)
+          Y_curr_right = re_mean_center_PD(Y = Y, idx = idx.right, grid = grid.right)
         }
         left.objective.value = node_heterogeneity(Y_curr_left)
         right.objective.value = node_heterogeneity(Y_curr_right)
@@ -470,69 +468,11 @@ Node = R6::R6Class("Node", list(
       },
       error = function(cond) {
         self$stop.criterion.met = TRUE
-      })
+      }
+      )
     }
     if (self$stop.criterion.met | self$improvement.met) {
       self$children = list("left.child" = NULL, "right.child" = NULL)
-    }
-  },
-
-  create_children = function(Z, Y) {
-    checkmate::assert_data_frame(Z)
-    if (self$stop.criterion.met | self$improvement.met) {
-      self$children = list("left.child" = NULL, "right.child" = NULL)
-    } else {
-      if (is.null(self$split.feature)) {
-        stop("Please first compute the split via do_single_split().")
-      }
-      # assign idex to left and right node
-      if (is.factor(Z[[self$split.feature]])) {
-        idx.left = which(Z[self$subset.idx, ][[self$split.feature]] == self$split.value)
-        idx.right = which(Z[self$subset.idx, ][[self$split.feature]] != self$split.value)
-      } else {
-        idx.left = which(Z[self$subset.idx, ][[self$split.feature]] <= self$split.value)
-        idx.right = which(Z[self$subset.idx, ][[self$split.feature]] > self$split.value)
-      }
-      idx.left = self$subset.idx[idx.left]
-      if (length(idx.left) == 0) idx.left = 0
-      idx.right = self$subset.idx[idx.right]
-      if (length(idx.right) == 0) idx.right = 0
-
-      # update grid in case split feature belongs to S
-      split.feature.name = self$split.feature
-      grid.left = self$grid
-      grid.right = self$grid
-      if (is.factor(Z[[self$split.feature]])) {
-        grid.left[[split.feature.name]] = grid.left[[split.feature.name]][grid.left[[split.feature.name]] == self$split.value]
-        grid.right[[split.feature.name]] = grid.right[[split.feature.name]][grid.right[[split.feature.name]] != self$split.value]
-      } else {
-        grid.left[[split.feature.name]] = grid.left[[split.feature.name]][as.numeric(grid.left[[split.feature.name]]) <= self$split.value]
-        grid.right[[split.feature.name]] = grid.right[[split.feature.name]][as.numeric(grid.right[[split.feature.name]]) > self$split.value]
-      }
-
-      obj.parent = self$objective.value
-
-      left.child = Node$new(id = 2 * self$id, depth = self$depth + 1,
-        subset.idx = idx.left,
-        id.parent = self$id,
-        child.type = if (is.factor(Z[[self$split.feature]])) "==" else "<=",
-        improvement.met = self$improvement.met,
-        intImp = self$intImp,
-        grid = grid.left,
-        objective.value.parent = obj.parent)
-      right.child = Node$new(id = 2 * self$id + 1, depth = self$depth + 1,
-        subset.idx = idx.right,
-        id.parent = self$id,
-        child.type = if (is.factor(Z[[self$split.feature]])) "!=" else ">",
-        improvement.met = self$improvement.met,
-        intImp = self$intImp,
-        grid = grid.right,
-        objective.value.parent = obj.parent)
-
-      left.child$split.feature.parent = right.child$split.feature.parent = self$split.feature
-      left.child$split.value.parent = right.child$split.value.parent = self$split.value
-      left.child$intImp.parent = right.child$intImp.parent = self$intImp
-      self$children = list("left.child" = left.child, "right.child" = right.child)
     }
   }
 ))

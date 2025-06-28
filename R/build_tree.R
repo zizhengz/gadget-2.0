@@ -32,13 +32,13 @@ build_tree = function(effect, data, effect.method = "PD", split.feature = NULL,
       node.to.split = leaves[[node.idx]]
 
       if (!is.null(node.to.split)) {
-        node.to.split$do_single_split(Z = Z, Y = Y,
+        node.to.split$split_node(Z = Z, Y = Y,
           effect.method = effect.method,
           objective.value.root = objective.value.root,
           min.node.size = min.node.size,
           n.quantiles = n.quantiles,
           impr.par = impr.par)
-        #node.to.split$create_children(Z = Z, Y = Y)
+
         tree[[depth + 1]] = c(tree[[depth + 1]], list(node.to.split$children[[1]], node.to.split$children[[2]]))
       } else {
         tree[[depth + 1]] = c(tree[[depth + 1]], list(NULL, NULL))
