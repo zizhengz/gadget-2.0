@@ -1,11 +1,11 @@
 plot_tree_structure = function(tree) {
-  tree_structure_data = prepare_tree_structure_data(tree)
-  parent_map = setNames(tree_structure_data$id, tree_structure_data$node.id)
-  tree_structure_data$parent.id = parent_map[as.character(tree_structure_data$id.parent)]
-  edge_list = na.omit(tree_structure_data[, c("parent.id", "id")])
+  data = prepare_layout_data(tree)
+  parent_map = setNames(data$id, data$node.id)
+  data$parent.id = parent_map[as.character(data$id.parent)]
+  edge_list = na.omit(data[, c("parent.id", "id")])
   colnames(edge_list) = c("from", "to")
 
-  g = igraph::graph_from_data_frame(edge_list, vertices = tree_structure_data, directed = TRUE)
+  g = igraph::graph_from_data_frame(edge_list, vertices = data, directed = TRUE)
 
   ggraph::ggraph(g, layout = "tree") +
     coord_flip(clip = "off") +

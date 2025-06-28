@@ -1,4 +1,4 @@
-prepare_tree_structure_data = function(tree) {
+prepare_layout_data = function(tree) {
   rows = vector("list", 0)
   k = 1
   for (depth in seq_along(tree)) {
