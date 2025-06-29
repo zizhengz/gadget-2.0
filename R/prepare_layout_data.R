@@ -14,6 +14,7 @@ prepare_layout_data = function(tree) {
           split.feature = if (!is.null(node$split.feature)) node$split.feature else NA,
           split.value   = if (!is.null(node$split.value)) node$split.value else NA,
           intImp        = if (!is.null(node$intImp)) node$intImp else NA,
+          N             = if (!is.null(node$subset.idx)) length(node$subset.idx) else NA,
           depth         = depth
         )
         k = k + 1
@@ -40,17 +41,18 @@ prepare_layout_data = function(tree) {
           "≠"
         }
       )
-      cond = paste0(parent$split.feature, " ", op, " ", round(as.numeric(parent$split.value), 3))
+      cond = paste0(parent$split.feature, " ", op, " ", round(as.numeric(parent$split.value), 2))
       path_conditions = c(cond, path_conditions)
       current = parent
     }
     if (!is.na(layout$split.feature[i])) {
-      cond_self = paste0(layout$split.feature[i], " ", ifelse(layout$child.type[i + 1] == "==", "=", "≤"), " ", round(as.numeric(layout$split.value[i]), 3))
-      path_conditions = paste0(cond_self, "\nheter.reduction: ", round(layout$intImp[i], 4))
+      cond_self = paste0(layout$split.feature[i], " ", ifelse(layout$child.type[i + 1] == "==", "=", "≤"), " ", round(as.numeric(layout$split.value[i]), 2))
+      path_conditions = paste0(cond_self, "\nheter.reduction: ", round(layout$intImp[i], 3))
     } else {
       path_conditions = path_conditions
     }
-    layout$label[i] = paste(path_conditions, collapse = " \n& ")
+    layout$label[i] = paste0("id:", layout$node.id[i], "  #obs: ", layout$N[i], "\n",
+                             paste(path_conditions, collapse = " \n& "))
   }
   return(layout)
 }

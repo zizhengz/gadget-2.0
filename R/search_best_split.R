@@ -2,7 +2,7 @@ search_best_split = function(Z, Y, min.node.size, n.quantiles) {
   checkmate::assert_data_frame(Z)
   checkmate::assert_list(Y)
   t1 = proc.time()
-  res = data.table::rbindlist(
+  res = do.call(rbind,
     lapply(Z, function(z) {
       search_best_split_point(z = z, Y = Y, n.quantiles = n.quantiles,
         is.categorical = is.factor(z),

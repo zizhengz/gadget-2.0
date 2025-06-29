@@ -57,6 +57,7 @@ Node = R6::R6Class("Node", list(
   # idx of the instances of data that are in this node
   subset.idx = NULL,
   # objective value in a node
+  objective.value.j = NULL,
   objective.value = NULL,
   objective.value.parent = NULL,
 
@@ -76,14 +77,15 @@ Node = R6::R6Class("Node", list(
   children = list(),
   stop.criterion.met = FALSE,
   improvement.met = NULL,
+  intImp.j = NULL,
   intImp = NULL,
   intImp.parent = NULL,
   # store.data = FALSE,
   # local = NULL,
 
   initialize = function(id, depth = NULL, subset.idx, grid, id.parent = NULL,
-    child.type = NULL, objective.value.parent = NULL, # store.data,
-    objective.value = NULL, improvement.met = FALSE, intImp = NULL) {
+    child.type = NULL, objective.value.parent = NULL, objective.value.j = NULL,# store.data,
+    objective.value = NULL, improvement.met = FALSE, intImp = NULL, intImp.j = NULL) {
 
     assert_numeric(id, len = 1)
     assert_numeric(depth, len = 1, null.ok = TRUE)
@@ -97,8 +99,10 @@ Node = R6::R6Class("Node", list(
     self$id.parent = id.parent
     self$child.type = child.type
     self$intImp = intImp
+    self$intImp.j = intImp.j
     self$objective.value.parent = objective.value.parent
     self$objective.value = objective.value
+    self$objective.value.j = objective.value.j
     self$grid = grid
     # self$store.data = store.data
     # self$local = NULL
@@ -388,15 +392,16 @@ Node = R6::R6Class("Node", list(
   #   }
   # },
   #### new functions ####
-  split_node = function(Z, Y, effect.method, objective.value.root,
+  split_node = function(Z, Y, effect.method,
+    objective.value.root.j, objective.value.root,
     min.node.size, n.quantiles, impr.par) {
     checkmate::assert_data_frame(Z)
     checkmate::assert_list(Y)
     if (length(self$subset.idx) < min.node.size | self$improvement.met == TRUE) {
       self$stop.criterion.met = TRUE
     } else {
-      if (effect.method == "PD") {
-        Y_curr = re_mean_center_ice(Y = Y, idx = self$subset.idx, grid = self$grid)
+      if (effect.method == "pd") {
+        Y.curr = re_mean_center_ice(Y = Y, idx = self$subset.idx, grid = self$grid)
       }
       if (self$id == 1) {
         self$split.feature.parent = NA
@@ -404,20 +409,20 @@ Node = R6::R6Class("Node", list(
         self$intImp.parent = NA
       }
       tryCatch({
-        split.res = search_best_split(Z = Z[self$subset.idx, ], Y = Y_curr,
+        split.res = search_best_split(Z = Z[self$subset.idx, ], Y = Y.curr,
           min.node.size = min.node.size, n.quantiles = n.quantiles)
 
         split.feature = split.res$split.feature[split.res$best.split][1]
         split.value = split.res$split.point[split.res$best.split][1]
         is.categorical = split.res$is.categorical[split.res$best.split][1]
 
-        z_sub = Z[[split.feature]][self$subset.idx]
+        z.sub = Z[[split.feature]][self$subset.idx]
         if (is.categorical) {
-          idx.left = self$subset.idx[which(z_sub == split.value)]
-          idx.right = self$subset.idx[which(z_sub != split.value)]
+          idx.left = self$subset.idx[which(z.sub == split.value)]
+          idx.right = self$subset.idx[which(z.sub != split.value)]
         } else {
-          idx.left = self$subset.idx[which(z_sub <= split.value)]
-          idx.right = self$subset.idx[which(z_sub > split.value)]
+          idx.left = self$subset.idx[which(z.sub <= split.value)]
+          idx.right = self$subset.idx[which(z.sub > split.value)]
         }
         if (length(idx.left) == 0) idx.left = 0
         if (length(idx.right) == 0) idx.right = 0
@@ -434,12 +439,15 @@ Node = R6::R6Class("Node", list(
           }
         }
 
-        if (effect.method == "PD") {
-          Y_curr_left = re_mean_center_ice(Y = Y, idx = idx.left, grid = grid.left)
-          Y_curr_right = re_mean_center_ice(Y = Y, idx = idx.right, grid = grid.right)
+        if (effect.method == "pd") {
+          Y.curr.left = re_mean_center_ice(Y = Y, idx = idx.left, grid = grid.left)
+          Y.curr.right = re_mean_center_ice(Y = Y, idx = idx.right, grid = grid.right)
         }
-        left.objective.value = node_heterogeneity(Y_curr_left)
-        right.objective.value = node_heterogeneity(Y_curr_right)
+        left.objective.value.j = node_heterogeneity(Y.curr.left)
+        right.objective.value.j = node_heterogeneity(Y.curr.right)
+        intImp.j = (self$objective.value.j - left.objective.value.j - right.objective.value.j) / objective.value.root.j
+        left.objective.value = sum(left.objective.value.j, na.rm = TRUE)
+        right.objective.value = sum(right.objective.value.j, na.rm = TRUE)
         intImp = (self$objective.value - left.objective.value - right.objective.value) / objective.value.root
 
         # threshold for root node: impr.par; for child node: intImp(from parent node) * impr.par
@@ -450,17 +458,24 @@ Node = R6::R6Class("Node", list(
           self$split.feature = split.feature
           self$split.value = if (is.categorical) split.value else as.numeric(split.value)
           self$intImp = intImp
+          self$intImp.j = intImp.j
         }
         left.child = Node$new(id = 2 * self$id, depth = self$depth + 1,
           subset.idx = idx.left, grid = grid.left, id.parent = self$id,
           child.type = if (is.factor(Z[[self$split.feature]])) "==" else "<=",
-          objective.value.parent = self$objective.value, intImp = self$intImp,
-          objective.value = left.objective.value, improvement.met = self$improvement.met)
+          objective.value.parent = self$objective.value,
+          objective.value = left.objective.value,
+          objective.value.j = left.objective.value.j,
+          intImp = self$intImp, intImp.j = self$intImp.j,
+          improvement.met = self$improvement.met)
         right.child = Node$new(id = 2 * self$id + 1, depth = self$depth + 1,
           subset.idx = idx.right, grid = grid.right, id.parent = self$id,
           child.type = if (is.factor(Z[[self$split.feature]])) "!=" else ">",
-          objective.value.parent = self$objective.value, intImp = self$intImp,
-          objective.value = right.objective.value, improvement.met = self$improvement.met)
+          objective.value.parent = self$objective.value,
+          objective.value = right.objective.value,
+          objective.value.j = right.objective.value.j,
+          intImp = self$intImp, intImp.j = self$intImp.j,
+          improvement.met = self$improvement.met)
         left.child$split.feature.parent = right.child$split.feature.parent = self$split.feature
         left.child$split.value.parent = right.child$split.value.parent = self$split.value
         left.child$intImp.parent = right.child$intImp.parent = self$intImp

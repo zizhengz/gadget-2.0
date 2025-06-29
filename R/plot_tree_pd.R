@@ -1,51 +1,68 @@
-plot_tree_pd = function(tree, effect, target.feature.name, color_ice = "lightblue", color_pd = "lightcoral", show.plot = TRUE) {
-  plot_list = list()
+plot_tree_pd = function(tree, effect, data, target.feature.name,
+                        color.ice = "lightblue", color.pd = "lightcoral",
+                        show.plot = FALSE, show.point = FALSE, mean.center = TRUE) {
+  plot.list = list()
   for (depth in 1:length(tree)) {
-    prepared_data = prepare_plot_data_PD(effect = effect, tree = tree, depth = depth)
-    plots_at_depth = list()
-    for (node_idx in seq_along(tree[[depth]])) {
-      node = tree[[depth]][[node_idx]]
+    prepared.data = prepare_plot_data_pd(effect = effect, tree = tree, depth = depth,
+                                         mean.center = mean.center)
+    plots.at.depth = list()
+    for (node.idx in seq_along(tree[[depth]])) {
+      node = tree[[depth]][[node.idx]]
       if (!is.null(node)) {
-        # make title
-        n_samples = length(node$subset.idx)
-        split_condition = NULL
+        #### make title ####
+        n.samples = length(node$subset.idx)
+        split.condition = NULL
         if (depth == 1) {
-          title = paste0("Root node", " (N = ", n_samples, ")")
+          title = paste0("Root node", " (N = ", n.samples, ")")
         } else {
-          parent_node = find_parent_by_id(tree[[depth - 1]], node$id.parent)
-          op = choose_operator(parent_node, node)
-          path_conditions = track_split_condition(node, tree)
-          if (length(path_conditions) > 0) {
-            split_condition = paste(path_conditions, collapse = " & ")
+          parent.node = find_parent_by_id(tree[[depth - 1]], node$id.parent)
+          op = choose_operator(parent.node, node)
+          path.conditions = track_split_condition(node, tree)
+          if (length(path.conditions) > 0) {
+            split.condition = paste(path.conditions, collapse = " & ")
           } else {
-            split_condition = NULL
+            split.condition = NULL
           }
-          title = paste0(depth - 1, ".Split results: ", split_condition, " (N = ", n_samples, ")")
+          title = paste0(depth - 1, ".Split results: ", split.condition, " (N = ", n.samples, ")")
         }
 
-        # make plots
-        ymin = min(unlist(prepared_data), na.rm = TRUE)
-        ymax = max(unlist(prepared_data), na.rm = TRUE)
-        y_range = ymax - ymin
-        ymax = ymax + 0.2 * y_range
+        ##### make plots ####
+        ymin.data = min(data[[target.feature.name]], na.rm = TRUE)
+        ymax.data = max(data[[target.feature.name]], na.rm = TRUE)
+        ymin.effect = min(unlist(prepared.data), na.rm = TRUE)
+        ymax.effect = max(unlist(prepared.data), na.rm = TRUE)
+        if (show.point) {
+          ymax = max(ymax.data, ymax.effect)
+          ymin = min(ymin.data, ymin.effect)
+          y.range = ymax - ymin
+          ymax = ymax + 0.2 * y.range
+        } else {
+          ymax = ymax.effect
+          ymin = ymin.effect
+          y.range = ymax - ymin
+          ymax = ymax + 0.2 * y.range
+        }
 
-        plots = plot_regional_pd(prepared_data = prepared_data,
+        plots = plot_regional_pd(prepared.data = prepared.data,
+          origin.data = data,
           target.feature.name = target.feature.name,
-          node_idx = node_idx,
-          color_ice = color_ice,
-          color_pd = color_pd,
+          node.idx = node.idx,
+          color.ice = color.ice,
+          color.pd = color.pd,
           ymin = ymin, ymax = ymax,
-          split_condition = split_condition)
+          split.condition = split.condition,
+          show.point = show.point,
+          mean.center = mean.center)
 
-        p = patchwork::wrap_plots(plots, ncol = if (length(prepared_data) <= 3) length(prepared_data) else 2) +
+        p = patchwork::wrap_plots(plots, ncol = if (length(prepared.data) <= 3) length(prepared.data) else 2) +
           patchwork::plot_annotation(title = title) & theme(plot.title = element_text(hjust = 0.5))
 
         if (show.plot) print(p)
 
-        plots_at_depth[[paste0("Node_", node_idx)]] = p
+        plots.at.depth[[paste0("Node_", node.idx)]] = p
       }
     }
-    plot_list[[paste0("Depth_", depth)]] = plots_at_depth
+    plot.list[[paste0("Depth_", depth)]] = plots.at.depth
   }
-  return(plot_list)
+  return(plot.list)
 }

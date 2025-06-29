@@ -1,39 +1,56 @@
 extract_split_info = function(tree) {
-  list.split.criteria = lapply(tree, function(depth) {
+  list.split = lapply(tree, function(depth) {
     lapply(depth, function(node) {
       if (is.null(node)) {
-        df = NULL
+        tree.structure = NULL
+        heterogeneity.table = NULL
       } else if (node$improvement.met | node$stop.criterion.met | node$depth == length(tree)) {
-        df = data.frame("depth" = node$depth, "id" = node$id,
-          "objective.value" = node$objective.value,
-          "objective.value.parent" = node$objective.value.parent,
-          "intImp" = NA,
-          "intImp.parent" = node$intImp.parent,
-          "split.feature" = "final",
+        tree.structure = data.frame("depth" = node$depth, "id" = node$id,
+          "n.obs" = length(node$subset.idx),
+          "child.type" = if (node$id %% 2 == 0) "left" else "right",
+          "split.feature" = "none",
           "split.value" = NA,
-          "split.feature.parent" = node$split.feature.parent,
-          "node.final" = TRUE)
-      } else {
-        df = data.frame("depth" = node$depth, "id" = node$id,
           "objective.value" = node$objective.value,
+          "intImp" = NA,
+          "split.feature.parent" = node$split.feature.parent,
+          "split.value.parent" = node$split.value.parent,
           "objective.value.parent" = node$objective.value.parent,
-          "intImp" = node$intImp,
-          "intImp.parent" = node$intImp.parent,
+          "intImp_parent" = node$intImp.parent,
+          "is.final" = TRUE)
+        heterogeneity.table = as.data.frame(matrix(NA, nrow = 1, ncol = length(node$intImp.j)))
+        names(heterogeneity.table) = paste0("intImp.", names(node$intImp.j))
+      } else {
+        tree.structure = data.frame("depth" = node$depth, "id" = node$id,
+          "n.obs" = length(node$subset.idx),
+          "child.type" = ifelse(node$id == 1, "root", if (node$id %% 2 == 0) "left" else "right"),
           "split.feature" = node$split.feature,
           "split.value" = node$split.value,
+          "objective.value" = node$objective.value,
+          "intImp" = node$intImp,
           "split.feature.parent" = node$split.feature.parent,
-          "node.final" = FALSE)
+          "split.value.parent" = node$split.value.parent,
+          "objective.value.parent" = node$objective.value.parent,
+          "intImp_parent" = node$intImp.parent,
+          "is.final" = FALSE)
+        heterogeneity.table = as.data.frame(matrix(NA, nrow = 1, ncol = length(node$intImp.j)))
+        heterogeneity.table[1, ] = node$intImp.j
+        names(heterogeneity.table) = paste0("intImp.", names(node$intImp.j))
       }
-      df
+      res = cbind(tree.structure, heterogeneity.table)
+      res
     })
   })
-  # list.split.criteria = list.clean(list.split.criteria, function(x) length(x) == 0L, TRUE)
-  list.split.criteria = Filter(function(x) length(x) > 0L, list.split.criteria)
-  df.split.criteria = unlist(list.split.criteria, recursive = FALSE)
-  df.split.criteria = as.data.frame(do.call(rbind, df.split.criteria))
-  n.final = length(which(df.split.criteria$node.final == TRUE))
-  df.split.criteria$n.final = n.final
-  return(df.split.criteria)
+  list.split = Filter(function(x) length(x) > 0L, list.split)
+  df.split = unlist(list.split, recursive = FALSE)
+  df.split = as.data.frame(do.call(rbind, df.split))
+  all_cols = names(df.split)
+  intimp_pos = which(all_cols == "intImp")
+  intimp_dot_cols = grep("^intImp\\.", all_cols, value = TRUE)
+  intimp_dot_pos = match(intimp_dot_cols, all_cols)
+  cols_wo_dot = all_cols[-intimp_dot_pos]
+  new_order = append(cols_wo_dot, intimp_dot_cols, after = intimp_pos)
+  df.split = df.split[, new_order]
+  return(df.split)
 }
 
 # extract_split_info = function(tree, feat_name = NULL) {
