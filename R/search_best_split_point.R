@@ -42,11 +42,12 @@ search_best_split_point = function(z, Y, n.quantiles = NULL, is.categorical = FA
         Y.i = Y[[i]]
         Y.i.l = Y.i[idx, , drop = FALSE]
         Y.i.r = Y.i[-idx, , drop = FALSE]
-        SS.l = Rfast::colsums(Y.i.l^2)
-        SS.r = Rfast::colsums(Y.i.r^2)
+        #SS.l = Rfast::colsums(Y.i.l^2)
+        #SS.r = Rfast::colsums(Y.i.r^2)
         S.l = Rfast::colsums(Y.i.l)
         S.r = Rfast::colsums(Y.i.r)
-        sum(SS.l - S.l^2 / N.l, na.rm = TRUE) + sum(SS.r - S.r^2 / N.r, na.rm = TRUE)
+        #sum(SS.l - S.l^2 / N.l, na.rm = TRUE) + sum(SS.r - S.r^2 / N.r, na.rm = TRUE)
+        sum(- S.l^2 / N.l - S.r^2 / N.r, na.rm = TRUE)
       }, NA_real_), na.rm = TRUE)
     } else {
       sum(vapply(seq_along(Y.cumsum), function(i) {
@@ -54,9 +55,10 @@ search_best_split_point = function(z, Y, n.quantiles = NULL, is.categorical = FA
         Y.i2.cumsum = Y.cumsum[[i]]$Y.i2.cumsum
         S.l = Y.i.cumsum[N.l, ]
         S.r = Y.i.cumsum[N, ] - S.l
-        SS.l = Y.i2.cumsum[N.l, ]
-        SS.r = Y.i2.cumsum[N, ] - SS.l
-        sum(SS.l - S.l^2 / N.l, na.rm = TRUE) + sum(SS.r - S.r^2 / N.r, na.rm = TRUE)
+        #SS.l = Y.i2.cumsum[N.l, ]
+        #SS.r = Y.i2.cumsum[N, ] - SS.l
+        #sum(SS.l - S.l^2 / N.l, na.rm = TRUE) + sum(SS.r - S.r^2 / N.r, na.rm = TRUE)
+        sum(- S.l^2 / N.l - S.r^2 / N.r, na.rm = TRUE)
       }, NA_real_), na.rm = TRUE)
     }
   }, FUN.VALUE = NA_real_)
