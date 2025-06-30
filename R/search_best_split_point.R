@@ -26,7 +26,9 @@ search_best_split_point = function(z, Y, n.quantiles = NULL, is.categorical = FA
     }
     Y.cumsum = lapply(Y, function(Y.i) {
       Y.i = as.matrix(Y.i[ord, ])
-      list(Y.i.cumsum = Rfast::colCumSums(Y.i), Y.i2.cumsum = Rfast::colCumSums(Y.i^2))
+      #list(Y.i.cumsum = Rfast::colCumSums(Y.i), Y.i2.cumsum = Rfast::colCumSums(Y.i^2))
+      Y.i.cumsum = Rfast::colCumSums(Y.i)
+      Y.i.cumsum
     })
   }
   # calculate split objective: sum_j(R_j_l + R_j_r)
@@ -42,17 +44,18 @@ search_best_split_point = function(z, Y, n.quantiles = NULL, is.categorical = FA
         Y.i = Y[[i]]
         Y.i.l = Y.i[idx, , drop = FALSE]
         Y.i.r = Y.i[-idx, , drop = FALSE]
-        #SS.l = Rfast::colsums(Y.i.l^2)
-        #SS.r = Rfast::colsums(Y.i.r^2)
         S.l = Rfast::colsums(Y.i.l)
         S.r = Rfast::colsums(Y.i.r)
+        #SS.l = Rfast::colsums(Y.i.l^2)
+        #SS.r = Rfast::colsums(Y.i.r^2)
         #sum(SS.l - S.l^2 / N.l, na.rm = TRUE) + sum(SS.r - S.r^2 / N.r, na.rm = TRUE)
         sum(- S.l^2 / N.l - S.r^2 / N.r, na.rm = TRUE)
       }, NA_real_), na.rm = TRUE)
     } else {
       sum(vapply(seq_along(Y.cumsum), function(i) {
-        Y.i.cumsum = Y.cumsum[[i]]$Y.i.cumsum
-        Y.i2.cumsum = Y.cumsum[[i]]$Y.i2.cumsum
+        #Y.i.cumsum = Y.cumsum[[i]]$Y.i.cumsum
+        #Y.i2.cumsum = Y.cumsum[[i]]$Y.i2.cumsum
+        Y.i.cumsum = Y.cumsum[[i]]
         S.l = Y.i.cumsum[N.l, ]
         S.r = Y.i.cumsum[N, ] - S.l
         #SS.l = Y.i2.cumsum[N.l, ]
