@@ -25,6 +25,6 @@ Imports:
     Rfast (>= 2.1.5.1),
 RoxygenNote: 7.3.2
 Suggests: 
-    testthat (>= 3.0.0)
-    iml (>= 0.11.4)
+    testthat (>= 3.0.0),
+    iml (>= 0.11.4),
 Config/testthat/edition: 3

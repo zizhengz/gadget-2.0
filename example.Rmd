@@ -63,7 +63,7 @@ where $\varepsilon \sim \mathcal{N}(0, 0.3^2)$, and all covariates $x_1, x_2, x_
 
 This setup creates a nonlinear response surface with sharp localized directional changes depending on the signs of $x_3$ and $x_4$, making it suitable for evaluating interpretable model partitioning via ICE/PDP.
 
-```{r}
+```{r, echo=FALSE, results='hide'}
 n = 500
 set.seed(123)
 create_xor = function(n, seed){
@@ -214,4 +214,4 @@ These enhancements will further improve the interpretability, usability, and sca
 The following figure shows the structure and flow of core functions and objects in the GADGET package.
 
 ```{r, echo=FALSE, out.width="100%", fig.align='center'}
-knitr::include_graphics("core_functions.svg")
+knitr::include_graphics("function_relationship.png")
