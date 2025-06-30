@@ -10,10 +10,13 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
 ```
 
 ```{r}
+library(ISLR2)
 library(mlr)
+library(mlr3)
+library(mlr3learners)
+library(mlr3verse)
+library(mlr3tuning)
 library(iml)
-library(nnet)
-library(GADGET)
 ```
 
 ## Overview of the GADGET Package
@@ -53,15 +56,10 @@ y =
 +3x_1, & \text{if } x_3 > 0 \\\\
 -3x_1, & \text{if } x_3 \leq 0
 \end{cases}
-+
-\begin{cases}
-+3x_2, & \text{if } x_4 > 0 \\\\
--3x_2, & \text{if } x_4 \leq 0
-\end{cases}
 + x_3 + \varepsilon
 $$
 
-where $\varepsilon \sim \mathcal{N}(0, 0.3^2)$, and all covariates $x_1, x_2, x_3, x_4 \sim \mathcal{U}(-1, 1)$ independently.
+where $\varepsilon \sim \mathcal{N}(0, 0.3^2)$, and all covariates $x_1, x_2, x_3 \sim \mathcal{U}(-1, 1)$ independently.
 
 This setup creates a nonlinear response surface with sharp localized directional changes depending on the signs of $x_3$ and $x_4$, making it suitable for evaluating interpretable model partitioning via ICE/PDP.
 
@@ -72,48 +70,27 @@ create_xor = function(n, seed){
   x2 = runif(n, -1, 1)
   x3 = runif(n, -1, 1)
   x1 = runif(n, -1, 1)
-  x4 = runif(n, -1, 1)
-  y = ifelse(x3>0, 3*x1, -3*x1) + ifelse(x4>0, 3*x2, -3*x2) + x3 + rnorm(n, sd = 0.3)
-  data.frame(x1, x2, x3, x4, y)
+  y = ifelse(x3>0, 3*x1, -3*x1) + x3 + rnorm(n, sd = 0.3)
+  data.frame(x1, x2, x3, y)
 }
 syn.data = create_xor(n, seed)
-X = syn.data[, setdiff(names(syn.data), "y")]
-features = colnames(X)
-head(syn.data)
-```
-
-### Modelling
-
-We train a feedforward neural network on the synthetic data using the `mlr` package. Hyperparameters are tuned via 5-fold cross-validation over a grid of values for:
-
--   `decay`: weight decay (regularization strength)
--   `size`: number of hidden units
-
-The best combination is selected based on mean squared error (MSE), mean absolute error (MAE), and $R^2$. The final model is retrained on the full dataset, and its predictive performance is evaluated on a large test set. The prediction function is defined to interface with interpretation tools later on.
-
-```{r, message = FALSE, results = 'hide'}
-task = makeRegrTask(data = syn.data, target = "y")
-
-# tune Neural Network
+syn.X = syn.data[, setdiff(names(syn.data), "y")]
+syn.features = colnames(syn.X)
 set.seed(123)
+syn.task = makeRegrTask(data = syn.data, target = "y")
 ps = makeParamSet(
   makeDiscreteParam("decay", values = c(0.5, 0.1, 1e-2, 1e-3, 1e-4, 1e-5)),
   makeDiscreteParam("size", values = c(3, 5, 10, 20, 30))
 )
 ctrl = makeTuneControlGrid()
 rdesc = makeResampleDesc("CV", iters = 5L)
-res = tuneParams(makeLearner("regr.nnet",  maxit = 1000), task = task, resampling = rdesc,
-                 par.set = ps, control = ctrl,  measures = list(mlr::mse, mlr::mae, mlr::rsq))
-
-# fit Neural Network with best found HP on all training data
+res = tuneParams(makeLearner("regr.nnet", maxit = 1000), task = syn.task, resampling = rdesc,
+  par.set = ps, control = ctrl, measures = list(mlr::mse, mlr::mae, mlr::rsq))
 set.seed(123)
-lrn = makeLearner("regr.nnet",  maxit = 1000,  size = res$x$size, decay = res$x$decay, trace = F)
-model = mlr::train(task = task, learner = lrn)
-
-testset = create_xor(n = 10000, seed=234)
-pred = predict(model, newdata = testset)$data
-measureRSQ(pred$truth, pred$response)
-predict.function = function(model, newdata) predict(model, newdata = newdata)$data$response
+syn.lrn = makeLearner("regr.nnet", maxit = 1000, size = res$x$size, decay = res$x$decay, trace = F)
+syn.model = mlr::train(task = syn.task, learner = syn.lrn)
+syn.predictor = Predictor$new(syn.model, data = syn.data[which(names(syn.data) != "y")], y = syn.data$y)
+syn.effect = FeatureEffects$new(syn.predictor, grid.size = 20, method = "ice")
 ```
 
 ### Feature effects and tree building
@@ -125,41 +102,22 @@ Next, we apply `compute_tree()` from the GADGET package to build an interpretabl
 The set `Z` specifies contextual features that may influence the behavior of the features of interest. The resulting tree identifies regions with distinct interaction patterns in model predictions.
 
 ```{r}
-syn.predictor = Predictor$new(model, data = syn.data[which(names(syn.data)!="y")], y = syn.data$y)
-
-syn.effect = FeatureEffects$new(syn.predictor, grid.size = 20, method = "ice")
-
-syn.tree = compute_tree(effect = syn.effect,
-                        testdata = syn.data,
-                        model = model, # required only when using SHAP or ALE-based objectives.
-                        objective = "SS_L2_pd", 
-                        Z = c("x1", "x2", "x3", "x4"), # features assumed to interact with the features of interest
-                        target.feature = "y",
-                        n.split = 3, 
-                        impr.par = 0.1,
-                        n.quantiles = 50, 
-                        min.split = 1)
-```
-
-### Tree visualization
-
-The following plots visualize regional ICE and PDP for each split node. All plots share the same y-axis range and show feature-specific effects
-
-```{r}
-# extract full tree structure
-extract_split_criteria(tree = syn.tree)
-
-# extract tree structure for one element in S (features of interest)
-extract_split_criteria(tree = syn.tree, feat_name = "x1")
-
-# create all plots by one call
-plots = plot_tree(tree = syn.tree, effect = syn.effect,
-                  color_ice = "lightblue", color_pd = "lightcoral",
-                  target.feature = "y", show.plot = TRUE, save.plot = FALSE,
-                  path = ".", file.prefix = "tree_plot")
-
-# visulize splits
-plot_tree_structure(tree = syn.tree)
+library(GADGET)
+syn.tree = build_tree(effect = syn.effect, 
+                      data = syn.data, 
+                      effect.method = "pd",
+                      target.feature.name = "y",
+                      split.feature = NULL,
+                      n.split = 2, 
+                      impr.par = 0.1,
+                      n.quantiles = NULL, 
+                      min.node.size = 1)
+syn.plot = plot_tree_pd(syn.tree, syn.effect, syn.data, 
+                        target.feature.name = "y",
+                        show.plot = T, show.point = T, mean.center = T)
+plot_2_1 = plot_node_pd(syn.plot, depth = 2, node.idx = 1)
+plot_tree_structure(syn.tree)
+extract_split_info(syn.tree)
 ```
 
 ## Bikeshare data
@@ -173,67 +131,57 @@ The feature set includes numeric (e.g., `temp`, `windspeed`) and categorical var
 To ensure model robustness, we remove the single observation with `"heavy rain/snow"` in the `weathersit` variable, as it could distort model fitting due to its rarity.
 
 ```{r}
-library(ISLR2)
 data(Bikeshare)
-bike <- data.table(Bikeshare)
+bike = data.table(Bikeshare)
 bike[, hr := as.numeric(as.character(hr))]
 bike[, workingday := as.factor((workingday))]
 bike[, season := as.factor(season)]
 
 # feature space
-X <- bike[, .(day, hr, temp, windspeed, workingday, hum, season, weathersit, atemp, casual)]
+bike.X = bike[, .(day, hr, temp, windspeed, workingday, hum, season, weathersit, atemp, casual)]
 
 # target
-y <- bike$bikers
+bike.y = bike$bikers
 
 # analyzed dataset
-train1 = cbind(X, "cnt" = y)
-
+train1 = cbind(bike.X, "cnt" = bike.y)
 # remove data point with weathersit = heavy rain/snow (only one occurence) to use lm within benchmark
-bike.data = as.data.frame(train1)[-which(train1$weathersit=="heavy rain/snow"),]
+bike.data = as.data.frame(train1)[-which(train1$weathersit == "heavy rain/snow"), ]
 bike.data$weathersit = droplevels(bike.data$weathersit)
-```
 
-### Modelling
-
-We train a **random forest** regression model using the `mlr` package to predict hourly bike counts. The model is trained on the cleaned Bikeshare dataset with all available predictors.
-
-After training, the model is wrapped in an `iml::Predictor` object, which standardizes the interface for feature effect computations and interpretability.
-
-```{r}
-# create Task
 set.seed(123)
+Bike.task = TaskRegr$new(id = "bike", backend = bike.data, target = "cnt")
+Bike.learner = lrn("regr.ranger")
+Bike.learner$train(Bike.task)
 
-task = makeRegrTask(id = "bike", data = bike.data, target = "cnt")
+bike.X = Bike.task$data(cols = Bike.task$feature_names)
+bike.y = Bike.task$data(cols = Bike.task$target_names)[[1]]
 
-X = bike.data[,setdiff(colnames(bike.data), "cnt")]
-
-rf = mlr::train(task = task, learner = makeLearner("regr.ranger"))
-bike.predictor = Predictor$new(rf, data = X, y = task$env$data$cnt)
+Bike.predictor = Predictor$new(model = Bike.learner, data = bike.X[1:3500,], y = bike.y[1:3500])
 ```
 
 ### Feature effects and tree building
 
 ```{r}
-library(future)
-plan(sequential)
-options(future.globals.maxSize = 2 * 1024^3)
+effect_bike_single = FeatureEffect$new(Bike.predictor, method = "ice",
+  feature = "hr",
+  grid.size = 20)
 
-# here we specify the only feature of interest: hr
-bike.effect = FeatureEffects$new(bike.predictor, method = "ice", grid.size = 50, features = "hr")
+bike_tree = build_tree(effect_bike_single, bike.data[1:3500,], 
+                       effect.method = "pd",
+                       split.feature = c("workingday", "temp"),
+                       target.feature.name = "cnt", 
+                       n.split = 2,
+                       impr.par = 0.1,
+                       min.node.size = 50,
+                       n.quantiles = NULL)
 
-bike.tree = compute_tree(bike.effect, testdata = bike.data, objective = "SS_L2_pd",
-                    Z = c("workingday","temp"), target.feature = "cnt",
-                    n.split = 2, impr.par = 0.01, n.quantiles = 100,
-                    min.split = 50)
-```
-
-### Tree visualization
-
-```{r}
-extract_split_criteria(bike.tree)
-plot_tree_structure(bike.tree)
-bike.plots = plot_tree(bike.tree, bike.effect, target.feature = "cnt")
+plot = plot_tree_pd(bike_tree, effect_bike_single, bike.data[1:3500,], 
+                    target.feature.name = "cnt",
+                    show.plot = T, show.point = T, mean.center = T)
+plot_2_1 = plot_node_pd(plot, depth = 2, node.idx = 1)
+plot_tree_structure(bike_tree)
+extract_split_info(bike_tree)
 ```
 
 ## TODO
