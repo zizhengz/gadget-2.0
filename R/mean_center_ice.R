@@ -1,6 +1,6 @@
-mean_center_ice = function(effect, mean.center = TRUE) {
+mean_center_ice = function(effect, feature.set,  mean.center = TRUE) {
   effect.results = effect$results
-  # for effect.results using FeatureEffect$new()
+  # for effect.result using FeatureEffect$new()
   if (class(effect.results) == "data.frame") {
     Y = effect.results
     feat = colnames(Y)[1]
@@ -16,6 +16,11 @@ mean_center_ice = function(effect, mean.center = TRUE) {
     names(Y) = feat
     # for effect.results using FeatureEffects$new()
   } else if (class(effect.results) == "list") {
+    if (!is.null(feature.set)) {
+      checkmate::assert_character(feature.set)
+      features = names(effect.results) %in% feature.set
+      effect.results = effect.results[features]
+    }
     Y = lapply(effect.results, function(feat) {
       Y.i = feat
       if (is.factor(Y.i$.borders)) Y.i$.borders = as.numeric(as.character(Y.i$.borders))

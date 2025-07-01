@@ -1,4 +1,4 @@
-build_tree = function(effect, data, effect.method = "pd", split.feature = NULL,
+build_tree = function(effect, data, effect.method = "pd", feature.set = NULL, split.feature = NULL,
   target.feature.name, n.split = 2, impr.par = 0.1,
   min.node.size = 10, n.quantiles = NULL) {
 
@@ -7,13 +7,15 @@ build_tree = function(effect, data, effect.method = "pd", split.feature = NULL,
   if (effect.method == "pd") {
     prepared.data = prepare_split_data_pd(effect = effect, data = data,
       target.feature.name = target.feature.name,
-      split.feature = split.feature)
+      feature.set = feature.set, split.feature = split.feature)
     Z = prepared.data$Z
     Y = prepared.data$Y
     grid = prepared.data$grid
   }
   objective.value.root.j = node_heterogeneity(Y)
   objective.value.root = sum(objective.value.root.j, na.rm = TRUE)
+  #semi.objective.value.root.j = node_heterogeneity(Y, full.formula = FALSE)
+  #semi.objective.value.root = sum(semi.objective.value.root.j, na.rm = TRUE)
   # Initialize the parent node of the tree
   parent = Node$new(id = 1, depth = 1, subset.idx = seq_len(nrow(Z)), grid = grid,
     objective.value.parent = NA, objective.value = objective.value.root, intImp.j = NULL,

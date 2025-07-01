@@ -1,10 +1,10 @@
-plot_tree_pd = function(tree, effect, data, target.feature.name,
+plot_tree_pd = function(tree, effect, data, target.feature.name, feature.set = NULL,
                         color.ice = "lightblue", color.pd = "lightcoral",
                         show.plot = FALSE, show.point = FALSE, mean.center = TRUE) {
   plot.list = list()
   for (depth in 1:length(tree)) {
     prepared.data = prepare_plot_data_pd(effect = effect, tree = tree, depth = depth,
-                                         mean.center = mean.center)
+                                         feature.set = feature.set, mean.center = mean.center)
     plots.at.depth = list()
     for (node.idx in seq_along(tree[[depth]])) {
       node = tree[[depth]][[node.idx]]
