@@ -1,4 +1,4 @@
-prepare_split_data_pd = function(effect, data, target.feature.name = NULL, split.feature = NULL) {
+prepare_split_data_pd = function(effect, data, target.feature.name = NULL, feature.set = NULL, split.feature = NULL) {
   checkmate::assert_data_frame(data)
   if (is.null(target.feature.name) || target.feature.name == "") {
     stop("Please choose a feature name from your data as 'target.feature.name'.")
@@ -12,11 +12,11 @@ prepare_split_data_pd = function(effect, data, target.feature.name = NULL, split
   } else {
     X
   }
-  for (col in length(Z)) {
-    if (!is.factor(Z[, col])) {
-      Z[, col] = as.numeric(Z[, col])
+  for (col in names(Z)) {
+    if (is.character(Z[[col]])) {
+      Z[[col]] = factor(Z[[col]])
     }
   }
-  wide.mean.center = mean_center_ice(effect)
+  wide.mean.center = mean_center_ice(effect = effect, feature.set = feature.set)
   return(list(Z = Z, Y = wide.mean.center$Y, grid = wide.mean.center$grid))
 }
