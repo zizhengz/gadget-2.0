@@ -1,0 +1,210 @@
+---
+title: "Untitled"
+author: "Zizheng Zhang"
+date: "2025-07-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+$$
+\begin{aligned}
+SSE &= \sum_{i=1}^n(y_i-\bar{y})^2\\
+&= \sum_{i=1}^ny_i^2-2\bar{y}\sum_{i=1}^ny_i+\sum^n\bar{y}^2\\
+&= \sum_{i=1}^ny_i^2-2\bar{y}n\bar{y}+n\bar{y}^2\\
+&= \sum_{i=1}^ny_i^2 - n\bar{y}^2\\
+&= \sum_{i=1}^ny_i^2-n(\frac{\sum_{i=1}^ny_i}{n})^2\\
+&= \sum_{i=1}^ny_i^2-\frac{1}{n}(\sum_{i=1}^ny_i)^2\\
+&= SS -\frac{S^2}{n}
+\end{aligned}
+$$
+
+$$
+\begin{aligned}
+SSE_{Reduction} &= SSE_{parent}-SSE_{left}-SSE_{right}\\
+&= SS_{parent} -\frac{S_{parent}^2}{n_{parent}}-(SS_{left} -\frac{S_{left}^2}{n_{left}})-(SS_{right} -\frac{S_{right}^2}{n_{right}})
+\end{aligned}
+$$
+
+Since $$n\_{parent} = n\_{left} + n\_{right}\\ SS\_{parent} = SS\_{left} + SS\_{right}$$
+
+Then $$ 
+SSE\_{Reduction} = -\frac{S_{parent}^2}{n_{parent}} +\frac{S_{left}^2}{n_{left}} +\frac{S_{right}^2}{n_{right}}\\ max(SSE\_{Reduction}) = max(\frac{S_{left}^2}{n_{left}} +\frac{S_{right}^2}{n_{right}})=min(-\frac{S_{left}^2}{n_{left}} -\frac{S_{right}^2}{n_{right}}) 
+$$
+
+```{r}
+# Example
+library(data.table)
+library(ranger)
+library(iml)
+library(tidyverse)
+library(Rcpp)
+library(devtools)
+library(microbenchmark)
+library(ggplot2)
+load_all()
+
+sim_set_up = function(n, seed = 1) {
+  set.seed(seed)
+  x1 = round(runif(n, -1, 1), 1)
+  x2 = round(runif(n, -1, 1), 3)
+  x3 = as.factor(sample(c(0, 1), size = n, replace = TRUE, prob = c(0.5, 0.5)))
+  x4 = sample(c(0, 1), size = n, replace = TRUE, prob = c(0.7, 0.3))
+  
+  # noisy vars
+  x5 = sample(c(0, 1), size = n, replace = TRUE, prob = c(0.5, 0.5))
+  x6 = rnorm(n, mean = 1, sd = 5)
+  x7 = round(rnorm(n, mean = 10, sd = 10), 2)
+  x8 = round(rnorm(n, mean = 100, sd = 15), 4)
+  x9 = round(rnorm(n, mean = 1000, sd = 20), 7)
+  x10 = rnorm(n, mean = 10000, sd = 25)
+  
+  # target
+  y = 0.2*x1 - 8*x2 + ifelse(x3 == 0, I(16*x2), 0) + ifelse(x1 > 0, I(8*x2), 0) + 2*x8
+  eps = rnorm(n, 0, 0.1*sd(y))
+  y = y + eps
+  
+  dat = data.frame(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10,y)
+  X = dat[, setdiff(colnames(dat), "y")]
+  
+  # Fit model and compute ICE for x2
+  mod = ranger(y ~ ., data = dat, num.trees = 100)
+  pred = function(model, newdata) predict(model, newdata)$predictions
+  model = Predictor$new(mod, data = X, y = dat$y, predict.function = pred)
+  eff.single = FeatureEffect$new(model, method = "ice", grid.size = 20, feature = "x2")
+  eff.multi = FeatureEffects$new(model, method = "ice", grid.size = 20, feature = c("x1", "x2", "x3"))
+  res = list(dat = dat, effect.single = eff.single, effect.multi = eff.multi)
+  return(res)
+}
+
+prepare_data = function(effect, dat, target.feature = "y") {
+  prep = prepare_split_data_pd(effect, data = dat, target.feature.name = target.feature)
+  list(Z = prep$Z, Y = prep$Y, grid = prep$grid)
+}
+
+run_split_test = function(n, times = 50) {
+  sim = sim_set_up(n)
+  dat = sim$dat
+
+  data.single = prepare_data(sim$effect.single, dat)
+  Z.single = data.single$Z
+  Y.single = data.single$Y
+  
+  data.multi = prepare_data(sim$effect.multi, dat)
+  Z.multi = data.multi$Z
+  Y.multi = data.multi$Y
+  
+  cat("\n--- Running full split search on single feature 'x2' ---\n")
+  bench.single = microbenchmark(
+    R   = search_best_split(Z.single, Y.single, min.node.size = 1, n.quantiles = 10),
+    Cpp = search_best_split_cpp(Z.single, Y.single, min_node_size = 1, n_quantiles = 10),
+    times = times
+  )
+  p1 = autoplot(bench.single) +
+    ggtitle(paste("Full Feature Split Search on single feature 'x2' — n =", n)) +
+    ylab("Time (ms)") +
+    xlab("Method") +
+    theme_minimal()
+  print(bench.single)
+  print(p1)
+
+  cat("\n--- Running full split search on multiple features 'x1, x2, x3' ---\n")
+  bench.multi = microbenchmark(
+    R   = search_best_split(Z.multi, Y.multi, min.node.size = 1, n.quantiles = 10),
+    Cpp = search_best_split_cpp(Z.multi, Y.multi, min_node_size = 1, n_quantiles = 10),
+    times = times
+  )
+  p2 = autoplot(bench.multi) +
+    ggtitle(paste("Full Feature Split Search on multiple features 'x1, x2, x3' — n =", n)) +
+    ylab("Time (ms)") +
+    xlab("Method") +
+    theme_minimal()
+  print(bench.multi)
+  print(p2)
+  
+  return(list(
+    n = n,
+    bench.single = bench.single,
+    bench.multi = bench.multi,
+    plot.single = p1,
+    plot.multi = p2
+  ))
+}
+
+sourceCpp("search_best_split.cpp", rebuild = TRUE)
+
+res1000 = run_split_test(n = 1000)
+res5000 = run_split_test(n = 5000)
+res10000 = run_split_test(n = 10000)
+
+collect_benchmark_results = function(...) {
+  res.list = list(...)
+  rows = list()
+  
+  for (res in res.list) {
+    n_val = res$n
+    
+    df.single = as.data.frame(res$bench.single)
+    df.single$task = "Single Feature (x2)"
+    df.single$n = n_val
+    
+    df.multiple = as.data.frame(res$bench.multi)
+    df.multiple$task = "Multiple Feature (x1 x2 x3)"
+    df.multiple$n = n_val
+    
+    rows[[length(rows) + 1]] = rbind(df.single, df.multiple)
+  }
+  
+  final.df = do.call(rbind, rows)
+  
+  final.df$time_ms = final.df$time / 1e6
+  
+  final.df = final.df[, c("task", "n", "expr", "time_ms")]
+  
+  return(final.df)
+}
+
+bench_all = collect_benchmark_results(res1000, res5000, res10000)
+
+ggplot(bench_all, aes(x = n, y = time_ms, color = expr)) +
+  geom_boxplot(aes(group = interaction(n, expr))) +
+  facet_wrap(~ task, scales = "free_y") +
+  ylab("Time (ms)") + xlab("Sample Size (n)") +
+  ggtitle("R vs C++ Split Search Benchmark") +
+  theme_minimal()
+
+# prepared.data.single = prepare_split_data_pd(effect = effect.single, data = dat, target.feature.name = "y")
+#  Z.single = prepared.data.single$Z
+#  Y.single = prepared.data.single$Y
+#  grid.single = prepared.data.single$grid
+# 
+#  prepared.data.multiple = prepare_split_data_pd(effect = effect.multiple, data = dat, target.feature.name = "y")
+#  Z.multiple = prepared.data.multiple$Z
+#  Y.multiple = prepared.data.multiple$Y
+#  grid.multiple = prepared.data.multiple$grid
+# 
+# # check output
+#  search_best_split_point(dat$x2, Y, min.node.size = 1)
+#  search_best_split_point_cpp(dat$x2, Y, min_node_size = 1)
+# 
+# # check output
+#  search_best_split(Z, Y, min.node.size = 1, n.quantiles = NULL)
+#  search_best_split_cpp(Z, Y, min_node_size = 1, n_quantiles = NULL)
+# 
+# 
+# # speed test
+#  microbenchmark(
+#    search_best_split_point(dat$x2, Y, min.node.size = 1),
+#    search_best_split_point_cpp(dat$x2, Y, min_node_size = 1),
+#    times = 100
+#  )
+# 
+# # speed test
+#  microbenchmark(
+#    search_best_split(Z, Y, min.node.size = 1, n.quantiles = NULL),
+#    search_best_split_cpp(Z, Y, min_node_size = 1, n_quantiles = NULL),
+#    times = 100
+#  )
+```
