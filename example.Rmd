@@ -102,7 +102,7 @@ Next, we apply `compute_tree()` from the GADGET package to build an interpretabl
 The set `Z` specifies contextual features that may influence the behavior of the features of interest. The resulting tree identifies regions with distinct interaction patterns in model predictions.
 
 ```{r}
-library(GADGET)
+library(gadget)
 syn.tree = build_tree(effect = syn.effect, 
                       data = syn.data, 
                       effect.method = "pd",

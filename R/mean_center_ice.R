@@ -1,11 +1,9 @@
 mean_center_ice = function(effect, feature.set,  mean.center = TRUE) {
   effect.results = effect$results
-  # for effect.result using FeatureEffect$new()
-  if (class(effect.results) == "data.frame") {
+  if (inherits(effect.results, "data.frame")) {
     Y = effect.results
     feat = colnames(Y)[1]
-    # if the grid values are factor
-    if (is.factor(Y$feat)) Y$feat = as.numeric(as.character(Y$feat))
+    if (is.factor(Y$feat)) Y$feat = factor_to_numeric(Y$feat)
     Y = tidyr::pivot_wider(Y, names_from = feat, values_from = .value)
     Y = Y[, setdiff(colnames(Y), c(".type", ".id"))]
     if (mean.center) Y = Y - rowMeans(Y, na.rm = TRUE)
@@ -14,16 +12,21 @@ mean_center_ice = function(effect, feature.set,  mean.center = TRUE) {
     names(grid) = feat
     Y = list(Y)
     names(Y) = feat
-    # for effect.results using FeatureEffects$new()
-  } else if (class(effect.results) == "list") {
+  } else if (inherits(effect.results, "list")) {
     if (!is.null(feature.set)) {
-      checkmate::assert_character(feature.set)
+      available_features = names(effect.results)
+      missing_features = setdiff(feature.set, available_features)
+      if (length(missing_features) > 0) {
+        stop(sprintf("Features not found in effect results: %s. Available features: %s", 
+                    paste(missing_features, collapse = ", "),
+                    paste(available_features, collapse = ", ")))
+      }
       features = names(effect.results) %in% feature.set
       effect.results = effect.results[features]
     }
     Y = lapply(effect.results, function(feat) {
       Y.i = feat
-      if (is.factor(Y.i$.borders)) Y.i$.borders = as.numeric(as.character(Y.i$.borders))
+      if (is.factor(Y.i$.borders)) Y.i$.borders = factor_to_numeric(Y.i$.borders)
       Y.i = tidyr::pivot_wider(Y.i, names_from = .borders, values_from = .value)
       Y.i = Y.i[, setdiff(colnames(Y.i), c(".type", ".id", ".feature"))]
       if (mean.center) Y.i = Y.i - rowMeans(Y.i, na.rm = TRUE)

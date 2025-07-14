@@ -24,35 +24,28 @@ prepare_layout_data = function(tree) {
   layout = do.call(rbind.data.frame, rows)
   rownames(layout) = NULL
   layout$label = NA
-  for (i in seq_len(nrow(layout))) {
+  for (i in layout$node.id) {
     path_conditions = c()
-    current = layout[i, ]
+    current = layout[layout$node.id == i, ]
     while (!is.na(current$id.parent)) {
       parent = layout[layout$node.id == current$id.parent, ]
       if (nrow(parent) != 1) break
-      op = switch(current$child.type,
-        "<=" = {
-          "≤"
-        }, ">" = {
-          ">"
-        }, "==" = {
-          "="
-        }, "!=" = {
-          "≠"
-        }
-      )
+      op = current$child.type
       cond = paste0(parent$split.feature, " ", op, " ", round(as.numeric(parent$split.value), 2))
       path_conditions = c(cond, path_conditions)
       current = parent
     }
-    if (!is.na(layout$split.feature[i])) {
-      cond_self = paste0(layout$split.feature[i], " ", ifelse(layout$child.type[i + 1] == "==", "=", "≤"), " ", round(as.numeric(layout$split.value[i]), 2))
-      path_conditions = paste0(cond_self, "\nheter.reduction: ", round(layout$intImp[i], 3))
+    this = layout[layout$node.id == i, ]
+    child_row = which(layout$node.id == 2 * i)
+    child_type = if (length(child_row) > 0) layout$child.type[child_row] else NA_character_
+    if (!is.na(this$split.feature)) {
+      cond_self = paste0(this$split.feature, " ", ifelse(child_type == "<=", "<=", "="), " ", round(as.numeric(this$split.value), 2))
+      path_conditions = paste0(cond_self, "\nheter.reduction: ", round(this$intImp, 3))
     } else {
       path_conditions = path_conditions
     }
-    layout$label[i] = paste0("id:", layout$node.id[i], "  #obs: ", layout$N[i], "\n",
-                             paste(path_conditions, collapse = " \n& "))
+    layout[layout$node.id == i, ]$label = paste0("depth_", this$depth, "_id_", i, "  #obs: ", this$N, "\n",
+      paste(path_conditions, collapse = " \n& "))
   }
   return(layout)
 }

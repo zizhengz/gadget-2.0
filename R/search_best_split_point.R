@@ -1,9 +1,21 @@
-search_best_split_point = function(z, Y, n.quantiles = NULL, is.categorical = FALSE, min.node.size) {
-  checkmate::assert_vector(z)
-  checkmate::assert_list(Y)
+search_best_split_point = function(z, Y, n.quantiles = NULL, min.node.size, is.categorical = FALSE) {
   N = nrow(Y[[1]])
   # create split points candidates
   if (is.categorical) {
+    # method for handling categorical splits correctly
+    # if (is.ordered(z)) {
+    #   z = droplevels(z)
+    #   if (length(levels(z)) <= 1) {
+    #     return(data.frame(split.point = NA, split.objective = Inf))
+    #   }
+    #   splits = lapply(1:(length(levels(z)) - 1), function(i) levels(z)[1:i])
+    # } else {
+    #   z = droplevels(z)
+    #   if (length(levels(z)) <= 1) {
+    #     return(data.frame(split.point = NA, split.objective = Inf))
+    #   }
+    #   splits = levels(z)[1:length(levels(z)) - 1]
+    # }
     z = droplevels(z)
     if (length(levels(z)) <= 1) {
       return(data.frame(split.point = NA, split.objective = Inf))
@@ -15,7 +27,7 @@ search_best_split_point = function(z, Y, n.quantiles = NULL, is.categorical = FA
     ord = order(z)
     z = z[ord]
     if (!is.null(n.quantiles)) {
-      if (length(unique(z)) < 10) {
+      if (length(unique(z)) < n.quantiles) {
         splits = unique(z)
       } else {
         qprobs = seq(0, 1, length.out = n.quantiles + 2)[-c(1, n.quantiles + 2)]
@@ -26,7 +38,6 @@ search_best_split_point = function(z, Y, n.quantiles = NULL, is.categorical = FA
     }
     Y.cumsum = lapply(Y, function(Y.i) {
       Y.i = as.matrix(Y.i[ord, ])
-      #list(Y.i.cumsum = Rfast::colCumSums(Y.i), Y.i2.cumsum = Rfast::colCumSums(Y.i^2))
       Y.i.cumsum = Rfast::colCumSums(Y.i)
       Y.i.cumsum
     })
@@ -46,21 +57,13 @@ search_best_split_point = function(z, Y, n.quantiles = NULL, is.categorical = FA
         Y.i.r = Y.i[-idx, , drop = FALSE]
         S.l = Rfast::colsums(Y.i.l)
         S.r = Rfast::colsums(Y.i.r)
-        #SS.l = Rfast::colsums(Y.i.l^2)
-        #SS.r = Rfast::colsums(Y.i.r^2)
-        #sum(SS.l - S.l^2 / N.l, na.rm = TRUE) + sum(SS.r - S.r^2 / N.r, na.rm = TRUE)
         sum(- S.l^2 / N.l - S.r^2 / N.r, na.rm = TRUE)
       }, NA_real_), na.rm = TRUE)
     } else {
       sum(vapply(seq_along(Y.cumsum), function(i) {
-        #Y.i.cumsum = Y.cumsum[[i]]$Y.i.cumsum
-        #Y.i2.cumsum = Y.cumsum[[i]]$Y.i2.cumsum
         Y.i.cumsum = Y.cumsum[[i]]
         S.l = Y.i.cumsum[N.l, ]
         S.r = Y.i.cumsum[N, ] - S.l
-        #SS.l = Y.i2.cumsum[N.l, ]
-        #SS.r = Y.i2.cumsum[N, ] - SS.l
-        #sum(SS.l - S.l^2 / N.l, na.rm = TRUE) + sum(SS.r - S.r^2 / N.r, na.rm = TRUE)
         sum(- S.l^2 / N.l - S.r^2 / N.r, na.rm = TRUE)
       }, NA_real_), na.rm = TRUE)
     }
@@ -68,7 +71,7 @@ search_best_split_point = function(z, Y, n.quantiles = NULL, is.categorical = FA
 
   best = which.min(split.objective)
   best.split.point = splits[best]
-  if (!is.categorical) {
+  if (!is.factor(z)) {
     right = min(z[which(z > best.split.point)])
     left = max(z[which(z <= best.split.point)])
     best.split.point = (left + right) / 2

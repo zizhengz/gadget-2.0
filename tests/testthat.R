@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(GADGET)
+library(gadget)
 
-test_check("GADGET")
+test_check("gadget")

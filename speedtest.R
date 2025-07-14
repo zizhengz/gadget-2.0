@@ -1,4 +1,3 @@
-# Example
 library(data.table)
 library(ranger)
 library(iml)
@@ -27,9 +26,6 @@ eps = rnorm(n, 0, 0.1*sd(y))
 y = y + eps
 
 dat = data.frame(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10,y)
-#dat = cbind(dat, dat, dat, dat, dat, dat, dat, dat, dat, dat)
-#dat = cbind(dat, dat, dat, dat, dat, dat, dat, dat, dat, dat, y)
-#colnames(dat) = c(paste0("x", 1:1000), "y")
 X = dat[, setdiff(colnames(dat), "y")]
 
 # Fit model and compute ICE for x2
@@ -38,59 +34,17 @@ pred = function(model, newdata) predict(model, newdata)$predictions
 model = Predictor$new(mod, data = X, y = dat$y, predict.function = pred)
 effect = FeatureEffect$new(model, method = "ice", grid.size = 20, feature = "x2")
 
-# Center ICE curves
-eff = as.data.table(effect$results)
-eff = as.data.frame(eff[, .value := (.value - mean(.value)), by = c(".type", ".id")])
+tree = gadgetTree$new(strategy = pdStrategy$new(), n.split = 5)
+tree$fit(effect, dat, target.feature.name = "y")
+dt = data.table::rbindlist(tree$split_benchmark)
+print(dt)
+boxplot(time ~ depth, data = dt, main = "Distribution of split time per layer")
 
-# Get ICE values and arrange them in a horizontal matrix
-Yice = spread(eff, x2, .value)
-Yice = Yice[, setdiff(colnames(Yice), c(".type", ".id"))]
-Yice = as.matrix(Yice)
-
-str(X) # contains our feature values
-str(Yice) # contains ICE values for each grid point
-
-#sp = best_split(X, Yice)
-#sp
-
-
-# library(checkmate)
-# split = build_tree(effect, data = dat, target.feature.name = "y", n.split = 1)
-# split[[2]][[1]]$objective.value + split[[2]][[2]]$objective.value
-# split
-
-library(Rcpp)
-library(devtools)
-load_all()
-#split = build_tree(effect, data = dat, target.feature.name = "y", n.split = 1)
-prepared.data = prepare_split_data_pd(effect = effect, data = dat, target.feature.name = "y")
-Z = prepared.data$Z
-Y = prepared.data$Y
-grid = prepared.data$grid
-
-#
-sourceCpp("search_best_split.cpp", rebuild = TRUE)
-
-# check output
-search_best_split_point(dat$x2, Y, min.node.size = 1)
-search_best_split_point_cpp(dat$x2, Y, min_node_size = 1)
-
-# check output
-search_best_split(Z, Y, min.node.size = 1, n.quantiles = NULL)
-search_best_split_cpp(Z, Y, min_node_size = 1, n_quantiles = NULL)
-# best_split(X, Yice)
-
-library(microbenchmark)
-# speed test
-microbenchmark(
-  search_best_split_point(dat$x2, Y, min.node.size = 1),
-  search_best_split_point_cpp(dat$x2, Y, min_node_size = 1),
-  times = 50
-)
-
-# speed test
-microbenchmark(
-  search_best_split(Z, Y, min.node.size = 1, n.quantiles = NULL),
-  search_best_split_cpp(Z, Y, min_node_size = 1, n_quantiles = NULL),
-  times = 50
-)
+tree$plot_tree_structure()
+tree$extract_split_info()
+tree$plot(effect, dat, target.feature.name = "y",
+          show.plot = TRUE, show.point = FALSE, mean.center = FALSE,
+          depth = 6,
+          node.id = c(48,49),
+          features = c("hr","workingday")
+          )

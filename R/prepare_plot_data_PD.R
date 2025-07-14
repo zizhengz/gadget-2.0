@@ -17,7 +17,7 @@ prepare_plot_data_pd = function(effect, tree, depth, feature.set, mean.center) {
       Y.i$node[subset.idx] = node.idx
       if (length(grid.i.curr) < length(grid.i.total)) {
         Y.i[subset.idx, which(!(grid.i.total %in% grid.i.curr))] = NA
-        if (mean.center){
+        if (mean.center && length(grid.i.curr) > 1){
           Y.i[subset.idx, grid.i.total] = Y.i[subset.idx, grid.i.total] - rowMeans(Y.i[subset.idx, grid.i.total], na.rm = TRUE)
         }
       }

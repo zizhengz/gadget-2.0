@@ -22,7 +22,6 @@ plot_tree_structure = function(tree) {
       label.size = 0.3,
       label.r = unit(0.1, "lines")
     ) +
-    #scale_fill_brewer(palette = "Set2") +
     scale_fill_manual(values = hcl.colors(n = length(tree), palette = "Set2")) +
     theme_void() +
     scale_y_reverse(expand = expansion(mult = c(0.01, 0.01))) +
