@@ -85,7 +85,3 @@ syn.tree$plot_tree_structure()
 syn.tree$extract_split_info()
 syn.tree$plot(syn.effect, syn.data, target.feature.name = "y", depth = 2, node.id = 2)
 
-
-test_data <- data.frame(x = 1:10, y = 1:10)
-test_result <- search_best_split_cpp(Z = test_data, Y = list(matrix(1:20, ncol=2)), min_node_size = 2)
-print(test_result)
