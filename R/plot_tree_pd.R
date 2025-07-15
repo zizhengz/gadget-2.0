@@ -6,7 +6,6 @@ plot_tree_pd = function(tree, effect, data, target.feature.name,
   # Pre-process data once for all depths
   wide.mean.center = mean_center_ice(effect, feature.set = features, mean.center = mean.center)
   Y = wide.mean.center$Y
-  feature.name = names(Y)
   grid.total = wide.mean.center$grid
 
   # Pre-calculate all node data
@@ -117,7 +116,7 @@ create_node_title = function(node, depth_idx, tree) {
   if (depth_idx == 1) {
     return(paste0("Root node", " (N = ", n.samples, ")"))
   }
-  parent.node = find_parent_by_id(tree[[depth_idx - 1]], node$id.parent)
+  #parent.node = find_parent_by_id(tree[[depth_idx - 1]], node$id.parent)
   path.conditions = track_split_condition(node, tree)
   split.condition = if (length(path.conditions) > 0) paste(path.conditions, collapse = " & ") else NULL
   paste0(depth_idx - 1, ".Split results: ", split.condition, " (N = ", n.samples, ")")

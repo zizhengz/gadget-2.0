@@ -7,211 +7,123 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
-```
-
-```{r}
-library(ISLR2)
-library(mlr)
+library(gadget)
+library(iml)
 library(mlr3)
 library(mlr3learners)
-library(mlr3verse)
-library(mlr3tuning)
-library(iml)
 ```
 
-## Overview of the GADGET Package
+## Overview of the gadget Package
 
-This document demonstrates the use of the **GADGET** package to build interpretable trees based on local feature effects. We showcase both synthetic XOR data and a real-world Bikeshare dataset.
+The **gadget** package provides a framework for building interpretable, regionally-partitioned decision trees based on local feature effect estimates (such as ICE or PDP curves). The core workflow is as follows:
 
-The **GADGET** (Generalized Additive Decomposition for Global Explanation Trees) package provides interpretable model explanation through regionally partitioned trees, built upon local feature effect estimates. In this notebook, we demonstrate how GADGET can be used to construct and visualize global explanations from local interpretation methods such as **ICE** (Individual Conditional Expectation) or **PDP** (Partial Dependence Plots).
+-   **Feature Effect Calculation**: Use external tools (e.g., the `iml` package) to compute local feature effects for a fitted machine learning model.
+-   **Tree Construction**: Instantiate a `gadgetTree` object and use its `$fit()` method to recursively partition the data space, optimizing for regional homogeneity in feature effects. Each node is represented by a `Node` object.
+-   **Visualization**: Use the tree's `$plot()` and `$plot_tree_structure()` methods to visualize the partial dependence or ICE behavior of features in each region of the tree, and the tree topology and splits.
+-   **Split Information Extraction**: Use the tree's `$extract_split_info()` method to summarize the split criteria, node statistics, and regional effect heterogeneity for interpretation and reporting.
 
-The following core functions are provided to users:
-
--   `compute_tree()`\
-    Constructs a recursive explanation tree by optimizing an objective function (e.g., ICE-based or PDP-based L2 reduction) at each node. It supports both numeric and categorical features and allows flexible control over split granularity and minimal node sizes.
-
--   `extract_split_criteria()` Summarizes the full structure of the computed explanation tree, including split features, values, node depth, and objective improvement. It can also extract criteria related to a specific feature.
-
--   `plot_tree()` Visualizes the ICE or PDP behavior of each feature in the tree across split regions. Regional plots help users interpret how a model behaves differently across subgroups.
-
--   `plot_tree_structure()` Draws the structure of the explanation tree itself, with node annotations and split conditions.
-
-This notebook walks through two examples:
-
-1.  A **synthetic XOR-like dataset** to illustrate behavior in controlled settings with known interactions.
-
-2.  The **Bikeshare dataset** from the ISLR2 package, demonstrating usage on real-world, heterogeneous data.
-
-The GADGET package is especially useful when interpreting black-box models (e.g., neural networks, random forests) in terms of their localized behavior across feature space.
+The package is modular and extensible: different effect strategies (e.g., partial dependence, accumulated local effects) can be implemented by extending the strategy interface. This design allows users to interpret complex black-box models by partitioning the feature space into regions with distinct, interpretable effect patterns.
 
 ## Synthetic data
 
-### Data generation
+### Get feature effects 
 
-The synthetic data set is constructed to mimic an XOR-like interaction structure with noise. The response variable y is defined as:
-
-$$
-y = 
-\begin{cases}
-+3x_1, & \text{if } x_3 > 0 \\\\
--3x_1, & \text{if } x_3 \leq 0
-\end{cases}
-+ x_3 + \varepsilon
-$$
-
-where $\varepsilon \sim \mathcal{N}(0, 0.3^2)$, and all covariates $x_1, x_2, x_3 \sim \mathcal{U}(-1, 1)$ independently.
-
-This setup creates a nonlinear response surface with sharp localized directional changes depending on the signs of $x_3$ and $x_4$, making it suitable for evaluating interpretable model partitioning via ICE/PDP.
-
-```{r, echo=FALSE, results='hide'}
+```{r}
+set.seed(123)
 n = 500
-set.seed(123)
-create_xor = function(n, seed){
-  x2 = runif(n, -1, 1)
-  x3 = runif(n, -1, 1)
-  x1 = runif(n, -1, 1)
-  y = ifelse(x3>0, 3*x1, -3*x1) + x3 + rnorm(n, sd = 0.3)
-  data.frame(x1, x2, x3, y)
-}
-syn.data = create_xor(n, seed)
-syn.X = syn.data[, setdiff(names(syn.data), "y")]
-syn.features = colnames(syn.X)
-set.seed(123)
-syn.task = makeRegrTask(data = syn.data, target = "y")
-ps = makeParamSet(
-  makeDiscreteParam("decay", values = c(0.5, 0.1, 1e-2, 1e-3, 1e-4, 1e-5)),
-  makeDiscreteParam("size", values = c(3, 5, 10, 20, 30))
-)
-ctrl = makeTuneControlGrid()
-rdesc = makeResampleDesc("CV", iters = 5L)
-res = tuneParams(makeLearner("regr.nnet", maxit = 1000), task = syn.task, resampling = rdesc,
-  par.set = ps, control = ctrl, measures = list(mlr::mse, mlr::mae, mlr::rsq))
-set.seed(123)
-syn.lrn = makeLearner("regr.nnet", maxit = 1000, size = res$x$size, decay = res$x$decay, trace = F)
-syn.model = mlr::train(task = syn.task, learner = syn.lrn)
-syn.predictor = Predictor$new(syn.model, data = syn.data[which(names(syn.data) != "y")], y = syn.data$y)
+x1 = runif(n, -1, 1)
+x2 = runif(n, -1, 1)
+x3 = runif(n, -1, 1)
+y = ifelse(x3 > 0, 3 * x1, -3 * x1) + x3 + rnorm(n, sd = 0.3)
+syn.data = data.frame(x1, x2, x3, y)
+
+syn.task = TaskRegr$new("xor", backend = syn.data, target = "y")
+syn.learner = lrn("regr.ranger")
+syn.learner$train(syn.task)
+syn.predictor = Predictor$new(syn.learner, data = syn.data[, c("x1", "x2", "x3")], y = syn.data$y)
 syn.effect = FeatureEffects$new(syn.predictor, grid.size = 20, method = "ice")
 ```
 
-### Feature effects and tree building
-
-We first use the `iml` package to compute **Individual Conditional Expectation (ICE)** curves for each feature based on the trained neural network model. These ICE curves capture local prediction behavior.
-
-Next, we apply `compute_tree()` from the GADGET package to build an interpretable explanation tree. The tree partitions the data into regions where the PDP (partial dependence) behavior is relatively homogeneous, as measured by the objective function `"SS_L2_pd"`.
-
-The set `Z` specifies contextual features that may influence the behavior of the features of interest. The resulting tree identifies regions with distinct interaction patterns in model predictions.
+### Fit and visualize the explanation tree
 
 ```{r}
-library(gadget)
-syn.tree = build_tree(effect = syn.effect, 
-                      data = syn.data, 
-                      effect.method = "pd",
-                      target.feature.name = "y",
-                      split.feature = NULL,
-                      n.split = 2, 
-                      impr.par = 0.1,
-                      n.quantiles = NULL, 
-                      min.node.size = 1)
-syn.plot = plot_tree_pd(syn.tree, syn.effect, syn.data, 
-                        target.feature.name = "y",
-                        show.plot = T, show.point = T, mean.center = T)
-plot_2_1 = plot_node_pd(syn.plot, depth = 2, node.idx = 1)
-plot_tree_structure(syn.tree)
-extract_split_info(syn.tree)
+tree = gadgetTree$new(strategy = pdStrategy$new(), n.split = 2, impr.par = 0.1, min.node.size = 1)
+tree$fit(syn.effect, syn.data, target.feature.name = "y")
+tree$plot(syn.effect, syn.data, target.feature.name = "y",
+          show.plot = TRUE, show.point = TRUE, mean.center = TRUE)
+tree$plot_tree_structure()
+tree$extract_split_info()
 ```
 
 ## Bikeshare data
 
-### Data processing
-
-We load the **Bikeshare** dataset from the ISLR2 package, which contains hourly bike rental counts along with weather and calendar-related features.
-
-The feature set includes numeric (e.g., `temp`, `windspeed`) and categorical variables (e.g., `season`, `workingday`). The response variable is `bikers`, representing the number of rented bikes.
-
-To ensure model robustness, we remove the single observation with `"heavy rain/snow"` in the `weathersit` variable, as it could distort model fitting due to its rarity.
+### Get feature effects 
 
 ```{r}
+library(ISLR2)
 data(Bikeshare)
-bike = data.table(Bikeshare)
-bike[, hr := as.numeric(as.character(hr))]
-bike[, workingday := as.factor((workingday))]
-bike[, season := as.factor(season)]
+bike = data.table(Bikeshare[sample(1:8645, 1000), ])
 
-# feature space
-bike.X = bike[, .(day, hr, temp, windspeed, workingday, hum, season, weathersit, atemp, casual)]
-
-# target
+bike.X = bike[, .(day, hr, temp, windspeed, weekday, workingday, hum, season, mnth, holiday, registered, weathersit, atemp, casual)]
 bike.y = bike$bikers
-
-# analyzed dataset
-train1 = cbind(bike.X, "cnt" = bike.y)
-# remove data point with weathersit = heavy rain/snow (only one occurence) to use lm within benchmark
-bike.data = as.data.frame(train1)[-which(train1$weathersit == "heavy rain/snow"), ]
-bike.data$weathersit = droplevels(bike.data$weathersit)
+train = cbind(bike.X, "target" = bike.y)
+bike.data = as.data.frame(train)
 
 set.seed(123)
-Bike.task = TaskRegr$new(id = "bike", backend = bike.data, target = "cnt")
-Bike.learner = lrn("regr.ranger")
-Bike.learner$train(Bike.task)
+bike.task = TaskRegr$new(id = "bike", backend = bike.data, target = "target")
+bike.learner = lrn("regr.ranger")
+bike.learner$train(bike.task)
 
-bike.X = Bike.task$data(cols = Bike.task$feature_names)
-bike.y = Bike.task$data(cols = Bike.task$target_names)[[1]]
+bike.X = bike.task$data(cols = bike.task$feature_names)
+bike.y = bike.task$data(cols = bike.task$target_names)[[1]]
 
-Bike.predictor = Predictor$new(model = Bike.learner, data = bike.X[1:3500,], y = bike.y[1:3500])
+bike.predictor = Predictor$new(model = bike.learner, data = bike.X, y = bike.y)
+
+effect_all = FeatureEffects$new(bike.predictor, method = "ice",
+  grid.size = 20)
 ```
 
-### Feature effects and tree building
+### Fit and visualize the explanation tree
 
 ```{r}
-effect_bike_single = FeatureEffect$new(Bike.predictor, method = "ice",
-  feature = "hr",
-  grid.size = 20)
+tree = gadgetTree$new(strategy = pdStrategy$new(), n.split = 5)
+tree$fit(effect_all, bike.data, target.feature.name = "target")
+tree$plot_tree_structure()
+tree$extract_split_info()
+tree$plot(effect_all, bike.data, target.feature.name = "target",
+  show.plot = TRUE, show.point = TRUE, mean.center = FALSE,
+  depth = 1,
+  node.id = c(1, 1),
+  features = c("temp", "workingday")
+)
+```
 
-bike_tree = build_tree(effect_bike_single, bike.data[1:3500,], 
-                       effect.method = "pd",
-                       split.feature = c("workingday", "temp"),
-                       target.feature.name = "cnt", 
-                       n.split = 2,
-                       impr.par = 0.1,
-                       min.node.size = 50,
-                       n.quantiles = NULL)
-
-plot = plot_tree_pd(bike_tree, effect_bike_single, bike.data[1:3500,], 
-                    target.feature.name = "cnt",
-                    show.plot = T, show.point = T, mean.center = T)
-plot_2_1 = plot_node_pd(plot, depth = 2, node.idx = 1)
-plot_tree_structure(bike_tree)
-extract_split_info(bike_tree)
+### Speed
+```{r}
+dt = data.table::rbindlist(tree$split_benchmark)
+print(dt)
+boxplot(time ~ depth, data = dt, main = "Distribution of split time per layer")
 ```
 
 ## TODO
 
-We outline several planned improvements and extensions to the GADGET package along two main directions:
+We are planning several improvements and extensions for the gadget package, focusing on both computational efficiency and user experience:
 
-### 🔧 Computational Efficiency
+### Computational Efficiency
 
--   **Objective optimization speed-up**: Consider integrating ideas from the **FAST** algorithm to accelerate computation of regional loss (e.g., L2 loss on ICE/PDP/ALE curves).
--   **Efficient SHAP value estimation**: Explore fast Shapley value approximation methods (provided by Julia).
+-   **Faster Split Search**: Integrate more efficient algorithms (e.g., C++ backend, vectorized operations) to accelerate the search for optimal splits, especially for large datasets and deep trees.
+-   **Benchmarking and Profiling**: Provide built-in tools to benchmark split times and visualize the computational cost per tree layer, helping users identify bottlenecks.
+-   **Parallelization**: Explore parallel computation for split evaluation and effect calculation to further speed up tree construction.
 
-### 🖼️ Visual Presentation & Interactivity
+### Visual Presentation & Interactivity
 
--   **Interactive tree plots**: Investigate combining `shiny` with `ggparty` to allow users to interactively explore split trees and node-level plots.
-    -   This will reduce clutter.
-    -   Users can expand/collapse nodes and selectively view ICE/PDP behavior.
+-   **Interactive Visualization**: Develop Shiny-based or web-based interactive tools for exploring tree structures and node-level effect plots, allowing users to dynamically select nodes, features, and regions.
+-   **Enhanced Plotting**: Improve the aesthetics and flexibility of tree and effect plots, including support for custom color schemes, annotations, and export options.
 
-### 📌 Additional Work
+### Additional Work
 
--   Complete and validate **ALE** and **SHAP**-based functions within the GADGET framework.
--   Extend **unit tests** beyond tree splitting:
-    -   ✅ Already implemented: unit tests for tree splitting helper functions (e.g., `find_best_binary_split`, `perform_split`, `generate_split_candidates`).
-    -   ⏳ Planned: test coverage for the main tree construction workflow (`compute_tree()`), visualization functions (`plot_tree()`, `plot_tree_structure()`), and general helpers (`extract_split_criteria()`).
--   Add more usage examples and inline documentation to enhance package usability.
+-   **Support for More Effect Types**: Extend the framework to support ALE (Accumulated Local Effects), SHAP, and other effect strategies, making the tree construction more general and powerful.
+-   **Comprehensive Unit Testing**: Expand unit tests to cover the entire tree construction workflow, visualization, and utility functions, ensuring robustness and reliability.
+-   **Documentation and Examples**: Add more usage examples, inline documentation, and vignettes to make the package more accessible to new users and practitioners.
 
-These enhancements will further improve the interpretability, usability, and scalability of the GADGET package for both academic and applied use cases.
-
-### GADGET Architecture Diagram
-
-The following figure shows the structure and flow of core functions and objects in the GADGET package.
-
-```{r, echo=FALSE, out.width="100%", fig.align='center'}
-knitr::include_graphics("function_relationship.png")
+These enhancements aim to make gadget a more efficient, flexible, and user-friendly tool for interpretable machine learning and model diagnostics.

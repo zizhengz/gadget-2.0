@@ -1,5 +1,5 @@
 prepare_plot_data_pd = function(effect, tree, depth, feature.set, mean.center) {
-  effect.results = effect$results
+  #effect.results = effect$results
   wide.mean.center = mean_center_ice(effect, feature.set = feature.set, mean.center = mean.center)
   Y = wide.mean.center$Y
   feature.name = names(Y)

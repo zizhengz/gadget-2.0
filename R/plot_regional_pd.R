@@ -6,7 +6,7 @@ plot_regional_pd = function(prepared.data, origin.data, target.feature.name, nod
     subset.idx = which(data$node == node.idx)
     data.subset = data[subset.idx, ]
     origin.data.subset = origin.data[subset.idx, ]
-    if (is.factor(origin.data.subset[[feat]])) {
+    if (feat %in% colnames(origin.data.subset) && is.factor(origin.data.subset[[feat]])) {
       origin.data.subset[[feat]] = factor_to_numeric(origin.data.subset[[feat]])
     }
 
@@ -53,22 +53,20 @@ plot_regional_pd = function(prepared.data, origin.data, target.feature.name, nod
     # check if we can draw lines
     noline = length(unique(plot.data$grid[!is.na(plot.data$value)])) < 2
 
-    # create plot
-    p = ggplot(plot.data, aes(x = grid, y = value, group = id, color = type)) +
-      {
-        if (!noline) geom_line(alpha = 0.9, linewidth = 0.5, linetype = "dotted", na.rm = TRUE)
-      } +
-      {
-        if (noline) geom_point(size = 1, shape = 4, na.rm = TRUE)
-      } +
-      {
-        if (!noline) geom_line(data = subset(plot.data, type == "PDP"), linewidth = 0.8)
-      } +
-      {
-        if (noline) geom_point(size = 3, shape = 4, na.rm = TRUE)
-      } +
-      geom_point(data = origin.data.subset, aes_string(x = feat, y = target.feature.name),
-        alpha = if (show.point) 0.3 else 0, size = 0.8, inherit.aes = FALSE) +
+    p = ggplot(plot.data, aes(x = .data[["grid"]], y = .data[["value"]], group = .data[["id"]], color = .data[["type"]]))
+    if (!noline) {
+      p = p + geom_line(alpha = 0.9, linewidth = 0.5, linetype = "dotted", na.rm = TRUE)
+      p = p + geom_line(data = subset(plot.data, type == "PDP"), linewidth = 0.8)
+    } else {
+      p = p + geom_point(size = 1, shape = 4, na.rm = TRUE)
+      p = p + geom_point(data = subset(plot.data, type == "PDP"), size = 3, shape = 4, na.rm = TRUE)
+    }
+    if (feat %in% colnames(origin.data.subset)) {
+      p = p + geom_point(data = origin.data.subset,
+                         aes(x = .data[[feat]], y = .data[[target.feature.name]]),
+                         alpha = if (show.point) 0.3 else 0, size = 0.8, inherit.aes = FALSE)
+    }
+    p = p +
       scale_color_manual(values = c("ICE" = color.ice, "PDP" = color.pd),
         labels = c("ICE" = if (mean.center) "Mean centered ICE" else "ICE",
           "PDP" = if (mean.center) "Mean centered PDP" else "PDP")) +
