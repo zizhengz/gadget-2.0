@@ -31,7 +31,7 @@ prepare_layout_data = function(tree) {
       parent = layout[layout$node.id == current$id.parent, ]
       if (nrow(parent) != 1) break
       op = current$child.type
-      cond = paste0(parent$split.feature, " ", op, " ", round(as.numeric(parent$split.value), 2))
+      cond = paste0(parent$split.feature, " ", op, " ", round(as.numeric(parent$split.value), 3))
       path_conditions = c(cond, path_conditions)
       current = parent
     }
@@ -39,7 +39,7 @@ prepare_layout_data = function(tree) {
     child_row = which(layout$node.id == 2 * i)
     child_type = if (length(child_row) > 0) layout$child.type[child_row] else NA_character_
     if (!is.na(this$split.feature)) {
-      cond_self = paste0(this$split.feature, " ", ifelse(child_type == "<=", "<=", "="), " ", round(as.numeric(this$split.value), 2))
+      cond_self = paste0(this$split.feature, " ", ifelse(child_type == "<=", "<=", "="), " ", round(as.numeric(this$split.value), 3))
       path_conditions = paste0(cond_self, "\nheter.reduction: ", round(this$intImp, 3))
     } else {
       path_conditions = path_conditions
