@@ -1,4 +1,3 @@
-#Rcpp::sourceCpp("search_best_split.cpp", rebuild = TRUE)
 search_best_split = function(Z, Y, min.node.size, n.quantiles) {
   t1 = proc.time()
   res = data.table::rbindlist(

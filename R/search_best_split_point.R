@@ -20,7 +20,7 @@ search_best_split_point = function(z, Y, n.quantiles = NULL, min.node.size, is.c
     if (length(levels(z)) <= 1) {
       return(data.frame(split.point = NA, split.objective = Inf))
     }
-    splits = levels(z)[seq_len(levels(z)) - 1]
+    splits = levels(z)[1:length(levels(z)) - 1]
     Y = lapply(Y, function(Y.i) as.matrix(Y.i))
   } else {
     # sort z in increasing order
