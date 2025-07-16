@@ -1,11 +1,11 @@
 /**
  * @file search_best_split.cpp
  * @brief Fast tree splitting implementation using C++ and Armadillo
- * 
- * This file implements efficient tree splitting algorithms for the GADGET package.
+ *
+ * This file implements efficient tree splitting algorithms for the gadget package.
  * It provides both categorical and numerical splitting with optimized performance.
- * 
- * @author GADGET Development Team
+ *
+ * @author gadget Development Team
  * @version 1.0
  */
 
@@ -22,10 +22,10 @@ using namespace Rcpp;
 
 /**
  * @brief Remove duplicates from a numeric vector efficiently
- * 
+ *
  * Uses std::set for O(n log n) complexity without tree allocations.
  * This is more efficient than the commented alternative below.
- * 
+ *
  * @param x Input numeric vector
  * @return NumericVector with unique values in sorted order
  */
@@ -41,11 +41,11 @@ inline NumericVector unique_cpp(NumericVector x) {
 
 /**
  * @brief Calculate R type-7 quantile for sorted vector
- * 
+ *
  * Implements R's type-7 quantile algorithm for sorted vectors.
  * This is the default quantile type in R and provides good
  * statistical properties for continuous data.
- * 
+ *
  * @param x Sorted numeric vector - passed by reference (&) to avoid copying
  * @param p Probability (0 <= p <= 1)
  * @return Quantile value
@@ -65,10 +65,10 @@ inline double quantile_type7(const NumericVector& x, double p) {  // & = referen
 
 /**
  * @brief Convert R object to Armadillo matrix with zero-copy when possible
- * 
+ *
  * Attempts to create an Armadillo view of the R matrix without copying data.
  * Falls back to conversion if the object is not a numeric matrix.
- * 
+ *
  * @param obj R object (matrix or convertible to matrix)
  * @return Armadillo matrix (zero copy)
  */
@@ -88,10 +88,10 @@ inline arma::mat arma_view(SEXP obj) {
 
 /**
  * @brief Internal function for finding the best split point for a single feature
- * 
+ *
  * This is the core splitting algorithm that handles both categorical and numerical
  * variables. It accepts preprocessed data for maximum efficiency.
- * 
+ *
  * @param z Feature vector (numeric or categorical)
  * @param Ym Vector of effect matrices (preprocessed) - passed by reference (&) to avoid copying
  * @param S_tot Vector of total sums for each effect matrix - passed by reference (&) to avoid copying
@@ -120,7 +120,7 @@ List search_best_split_point_cpp_internal(
     IntegerVector z_fac(z);
     CharacterVector lev = z_fac.attr("levels");
     const int K = lev.size();
-    
+
     // If only one level, no valid split possible
     if (K <= 1)
       return List::create(_["split.point"] = R_NaString,
@@ -144,7 +144,7 @@ List search_best_split_point_cpp_internal(
     // Evaluate each level as potential split (last level is reference)
     for (int k = 0; k < K - 1; ++k) {
       int NL = countL[k], NR = N - NL;
-      
+
       // Skip if either child node would be too small
       if (NL < min_node_size || NR < min_node_size) continue;
 
@@ -155,11 +155,11 @@ List search_best_split_point_cpp_internal(
         const arma::rowvec SR = S_tot[l] - SL;     // const = read-only reference to avoid copying
         obj += arma::accu( - SL%SL / NL - SR%SR / NR );
       }
-      
+
       // Update best split if this one is better
-      if (obj < best_obj) { 
-        best_obj = obj; 
-        best_level = as<std::string>(lev[k]); 
+      if (obj < best_obj) {
+        best_obj = obj;
+        best_level = as<std::string>(lev[k]);
       }
     }
 
@@ -185,7 +185,7 @@ List search_best_split_point_cpp_internal(
   } else {
     z_num = NumericVector(z);
   }
-  
+
   // Create sorted index and sorted values
   IntegerVector ord = Rcpp::seq(0, N - 1);
   std::sort(ord.begin(), ord.end(),
@@ -216,7 +216,7 @@ List search_best_split_point_cpp_internal(
     // Use all unique values as candidates
     splits = unique_cpp(z_sorted);
   }
-  
+
   // Check if we have any valid split candidates
   if (splits.size() == 0)
     return List::create(_["split.point"]     = NA_REAL,
@@ -237,14 +237,14 @@ List search_best_split_point_cpp_internal(
       }
     }
     int NL = idx, NR = N - NL;
-    
+
     // Skip if either child node would be too small
     if (NL < min_node_size || NR < min_node_size) continue;
 
     // Calculate objective function for this split
     double obj = 0.0;
     for (int l = 0; l < Ly; ++l) {
-      const arma::rowvec SR = S_tot[l] - SL[l];   
+      const arma::rowvec SR = S_tot[l] - SL[l];
       obj += arma::accu( - SL[l]%SL[l] / NL - SR%SR / NR );
     }
     if (obj < best_obj) { best_obj = obj; best_split = sp; }
@@ -271,11 +271,11 @@ List search_best_split_point_cpp_internal(
 
 /**
  * @brief Find the best split for all features in a dataset
- * 
+ *
  * This is the main exported function that evaluates all features and finds
  * the best split point for each one. It preprocesses the data once for
  * efficiency and returns a DataFrame with results for all features.
- * 
+ *
  * @param Z DataFrame of features
  * @param Y List of effect matrices
  * @param min_node_size Minimum number of observations per node
@@ -300,7 +300,7 @@ DataFrame search_best_split_cpp(
   NumericVector   split_runtime(p);
 
   // Preprocess all Y matrices' NaN values to avoid repeated processing
-  const int Ly = Y.size(); 
+  const int Ly = Y.size();
   std::vector<arma::mat> Ym(Ly);
   std::vector<arma::rowvec> S_tot(Ly);
   for (int l = 0; l < Ly; ++l) {
@@ -348,11 +348,11 @@ DataFrame search_best_split_cpp(
 
 /**
  * @brief Find the best split point for a single feature
- * 
+ *
  * This is a wrapper function that preprocesses the data and calls the
  * internal splitting function. It handles NaN values and converts data
  * to the format expected by the core algorithm.
- * 
+ *
  * @param z Feature vector (numeric or categorical)
  * @param Y List of response matrices
  * @param n_quantiles Number of quantiles for numerical splitting (optional)
@@ -372,12 +372,12 @@ List search_best_split_point_cpp(
   const int Ly = Y.size();
   std::vector<arma::mat> Ym(Ly);
   std::vector<arma::rowvec> S_tot(Ly);
-  
+
   for (int l = 0; l < Ly; ++l) {
     Ym[l] = arma_view(Y[l]);
     Ym[l].replace(arma::datum::nan, 0.0);  // Handle NaN values
     S_tot[l] = arma::sum(Ym[l], 0);        // Precompute column sums
   }
-  
+
   return search_best_split_point_cpp_internal(z, Ym, S_tot, n_quantiles, is_categorical, min_node_size);
 }
