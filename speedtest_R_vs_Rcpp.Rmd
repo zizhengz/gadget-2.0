@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
+### Set data
 ```{r}
 # Example
 library(data.table)
@@ -41,13 +41,13 @@ y = y + eps
 dat = data.frame(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10,y)
 X = dat[, setdiff(colnames(dat), "y")]
 
-# Fit model and compute ICE for x2
+# Fit model and compute ICE
 mod = ranger(y ~ ., data = dat, num.trees = 100)
 pred = function(model, newdata) predict(model, newdata)$predictions
 model = Predictor$new(mod, data = X, y = dat$y, predict.function = pred)
 effect = FeatureEffects$new(model, method = "ice", grid.size = 20)
 ```
-
+### Prepare split data
 ```{r}
 library(gadget)
 
@@ -56,18 +56,17 @@ Z = prepared.data$Z
 Y = prepared.data$Y
 grid = prepared.data$grid
 ```
-
-
+### Do split
 ```{r}
-# check output
 search_best_split_point(dat$x2, Y, min.node.size = 1)
 search_best_split_point_cpp(dat$x2, Y, min_node_size = 1)
+```
 
-# check output
+```{r}
 search_best_split(Z, Y, min.node.size = 1, n.quantiles = NULL)
 search_best_split_cpp(Z, Y, min_node_size = 1, n_quantiles = NULL)
 ```
-
+### Compare speed
 ```{r}
 library(microbenchmark)
 # speed test
