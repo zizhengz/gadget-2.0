@@ -2,91 +2,47 @@
 % Please edit documentation in R/gadgetTree.R
 \name{gadgetTree}
 \alias{gadgetTree}
-\title{gadgetTree: Generalized Additive Decision Tree (R6 class)}
+\title{gadgetTree: Generalized Additive Decomposition of Global Effects Tree (R6 class)}
 \description{
-Main class for growing, managing, and visualizing effect-based decision trees using a modular strategy (e.g., pdStrategy).
+gadgetTree: Generalized Additive Decomposition of Global Effects Tree (R6 class)
+
+gadgetTree: Generalized Additive Decomposition of Global Effects Tree (R6 class)
 }
 \details{
+Main class for growing, managing, and visualizing effect-based decision trees using a modular strategy (e.g., pdStrategy).
+
+
 This class manages the overall tree structure and delegates effect-specific operations (such as splitting and plotting) to the provided strategy object. It is the main entry point for fitting and visualizing effect-based decision trees in the gadget package.
 }
-\section{Fields}{
-
-\describe{
-  \item{strategy}{Strategy object (e.g., pdStrategy) that implements effect-specific logic.}
-  \item{root}{Root node of the tree (Node object).}
-  \item{tree}{List of lists representing the tree structure at each depth.}
-  \item{n.split}{Maximum number of splits (tree depth minus one).}
-  \item{impr.par}{Improvement threshold for splitting.}
-  \item{min.node.size}{Minimum number of samples required in a node to allow further splitting.}
-  \item{n.quantiles}{Number of quantiles for candidate split points (numeric features).}
-  \item{split_benchmark}{List of timing information for each split (for benchmarking).}
-}
-}
-
-\section{Methods}{
-
-\describe{
-  \item{initialize(strategy, n.split = 2, impr.par = 0.1, min.node.size = 10, n.quantiles = NULL)}{
-    Constructor for the tree object.
-    @param strategy (R6 object)\cr
-      Strategy object implementing effect-specific logic (e.g., pdStrategy).
-    @param n.split (integer(1))\cr
-      Maximum number of splits (tree depth minus one).
-    @param impr.par (numeric(1))\cr
-      Improvement threshold for splitting.
-    @param min.node.size (integer(1))\cr
-      Minimum number of samples required in a node to allow further splitting.
-    @param n.quantiles (integer(1) or NULL)\cr
-      Number of quantiles for candidate split points (numeric features). If NULL, use default.
-  }
-  \item{fit(effect, data, target.feature.name, feature.set = NULL, split.feature = NULL)}{
-    Fit the tree to the provided data and effect object.
-    @param effect (R6 object or list)\cr
-      Object containing feature effect results.
-    @param data (data.frame)\cr
-      Data frame containing features and the target variable.
-    @param target.feature.name (character(1))\cr
-      Name of the target feature to explain.
-    @param feature.set (character or NULL)\cr
-      Optional. Subset of features to use for effect calculation. If NULL, all features are used.
-    @param split.feature (character or NULL)\cr
-      Optional. Features to consider for splitting at each node. If NULL, all features are considered.
-    @return (gadgetTree object, invisibly)\cr
-      The fitted tree object.
-  }
-  \item{plot(effect, data, target.feature.name, depth = NULL, node.id = NULL, features = NULL, ...)}{
-    Visualize the tree structure and effect plots for each node.
-    @param effect (R6 object or list)\cr
-      Object containing feature effect results.
-    @param data (data.frame)\cr
-      Data frame.
-    @param target.feature.name (character(1))\cr
-      Name of the target feature to explain.
-    @param depth (integer or NULL)\cr
-      Depth(s) to visualize (optional).
-    @param node.id (integer or NULL)\cr
-      Node id(s) to visualize (optional).
-    @param features (character or NULL)\cr
-      Features to visualize (optional).
-    @param ... Additional plotting arguments.
-    @return (list)\cr
-      List of ggplot2 objects for different depths and nodes.
-  }
-  \item{plot_tree_structure()}{Visualize the tree structure as a graph.}
-  \item{extract_split_info()}{Extract split information for all nodes in the tree.}
-}
-}
-
 \examples{
 # Example: Fit and plot a PD tree using pdStrategy and gadgetTree
-# (Assuming effect and data are prepared)
-pd_strat <- pdStrategy$new()
-tree <- gadgetTree$new(strategy = pd_strat, n.split = 2)
+pd_strat = pdStrategy$new()
+tree = gadgetTree$new(strategy = pd_strat, n.split = 2)
 tree$fit(effect, data, target.feature.name = "target")
 tree$plot(effect, data, target.feature.name = "target")
 tree$plot_tree_structure()
-split_info <- tree$extract_split_info()
+split_info = tree$extract_split_info()
 
+}
+\keyword{internal}
+\section{Public fields}{
+\if{html}{\out{<div class="r6-fields">}}
+\describe{
+\item{\code{strategy}}{Strategy object (e.g., pdStrategy) that implements effect-specific logic.}
+
+\item{\code{root}}{Node object. Root node of the tree.}
+
+\item{\code{n.split}}{Integer. Maximum number of splits (tree depth minus one).}
+
+\item{\code{impr.par}}{Numeric. Improvement threshold for splitting.}
+
+\item{\code{min.node.size}}{Integer. Minimum number of samples required in a node to allow further splitting.}
+
+\item{\code{n.quantiles}}{Integer or NULL. Number of quantiles for candidate split points (numeric features).}
+
+\item{\code{split_benchmark}}{List. Timing information for each split (for benchmarking).}
+}
+\if{html}{\out{</div>}}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -103,6 +59,7 @@ split_info <- tree$extract_split_info()
 \if{html}{\out{<a id="method-gadgetTree-new"></a>}}
 \if{latex}{\out{\hypertarget{method-gadgetTree-new}{}}}
 \subsection{Method \code{new()}}{
+Constructor for the gadgetTree object.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{gadgetTree$new(
   strategy,
@@ -113,11 +70,27 @@ split_info <- tree$extract_split_info()
 )}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{strategy}}{Strategy object (e.g., pdStrategy) that implements effect-specific logic.}
+
+\item{\code{n.split}}{Integer. Maximum number of splits (tree depth minus one).}
+
+\item{\code{impr.par}}{Numeric. Improvement threshold for splitting.}
+
+\item{\code{min.node.size}}{Integer. Minimum number of samples required in a node to allow further splitting.}
+
+\item{\code{n.quantiles}}{Integer or NULL. Number of quantiles for candidate split points (numeric features).}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-gadgetTree-fit"></a>}}
 \if{latex}{\out{\hypertarget{method-gadgetTree-fit}{}}}
 \subsection{Method \code{fit()}}{
+Fit the tree to the provided data and effect object.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{gadgetTree$fit(
   effect,
@@ -128,11 +101,30 @@ split_info <- tree$extract_split_info()
 )}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{effect}}{R6 object or list. Object containing feature effect results.}
+
+\item{\code{data}}{Data frame. Data frame containing features and the target variable.}
+
+\item{\code{target.feature.name}}{Character(1). Name of the target feature to explain.}
+
+\item{\code{feature.set}}{Character or NULL. Optional. Subset of features to use for effect calculation. If NULL, all features are used.}
+
+\item{\code{split.feature}}{Character or NULL. Optional. Features to consider for splitting at each node. If NULL, all features are considered.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+gadgetTree object, invisibly. The fitted tree object.
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-gadgetTree-plot"></a>}}
 \if{latex}{\out{\hypertarget{method-gadgetTree-plot}{}}}
 \subsection{Method \code{plot()}}{
+Visualize the tree structure and effect plots for each node.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{gadgetTree$plot(
   effect,
@@ -145,24 +137,54 @@ split_info <- tree$extract_split_info()
 )}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{effect}}{R6 object or list. Object containing feature effect results.}
+
+\item{\code{data}}{Data frame. Data frame.}
+
+\item{\code{target.feature.name}}{Character(1). Name of the target feature to explain.}
+
+\item{\code{depth}}{Integer or NULL. Depth(s) to visualize (optional).}
+
+\item{\code{node.id}}{Integer or NULL. Node id(s) to visualize (optional).}
+
+\item{\code{features}}{Character or NULL. Features to visualize (optional).}
+
+\item{\code{...}}{Additional plotting arguments.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+List. List of ggplot2 objects for different depths and nodes.
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-gadgetTree-plot_tree_structure"></a>}}
 \if{latex}{\out{\hypertarget{method-gadgetTree-plot_tree_structure}{}}}
 \subsection{Method \code{plot_tree_structure()}}{
+Visualize the tree structure as a graph.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{gadgetTree$plot_tree_structure()}\if{html}{\out{</div>}}
 }
 
+\subsection{Returns}{
+NULL
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-gadgetTree-extract_split_info"></a>}}
 \if{latex}{\out{\hypertarget{method-gadgetTree-extract_split_info}{}}}
 \subsection{Method \code{extract_split_info()}}{
+Extract split information for all nodes in the tree.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{gadgetTree$extract_split_info()}\if{html}{\out{</div>}}
 }
 
+\subsection{Returns}{
+Data frame. Split information for all nodes.
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-gadgetTree-clone"></a>}}

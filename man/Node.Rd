@@ -4,150 +4,69 @@
 \alias{Node}
 \title{Node: Tree Node for Effect-based Decision Trees (R6 class)}
 \description{
-Represents a single node in an effect-based decision tree, storing split information, effect statistics, and child nodes.
+Node: Tree Node for Effect-based Decision Trees (R6 class)
+
+Node: Tree Node for Effect-based Decision Trees (R6 class)
 }
 \details{
+Represents a single node in an effect-based decision tree, storing split information, effect statistics, and child nodes.
+
+
 This class is used internally by gadgetTree and strategy objects to represent and manage nodes in effect-based decision trees. Each node stores split information, effect statistics, and references to its children.
 }
-\section{Fields}{
-
-\describe{
-  \item{id}{Integer. Node identifier within its depth level.}
-  \item{depth}{Integer. Depth of the node (root starts at 1).}
-  \item{subset.idx}{Integer vector. Row indices of data that fall into this node.}
-  \item{objective.value.j}{Numeric vector. Objective values for each feature in this node.}
-  \item{objective.value}{Numeric. Total objective value for this node.}
-  \item{objective.value.parent}{Numeric. Parent node's objective value.}
-  \item{grid}{Named list. Grid values for each feature in this node.}
-  \item{id.parent}{Integer or NULL. Parent node id.}
-  \item{child.type}{Character. Split direction ("<=", ">", "==", "!=").}
-  \item{split.feature}{Character. Feature used for splitting this node.}
-  \item{split.value}{Numeric or factor. Threshold or level used for splitting.}
-  \item{children}{List. Contains left and right child nodes (or NULL for terminal nodes).}
-  \item{stop.criterion.met}{Logical. Whether the minimal node size or improvement threshold has been reached.}
-  \item{improvement.met}{Logical. Whether the improvement threshold was not met.}
-  \item{intImp.j}{Numeric vector. Interaction importance for each feature.}
-  \item{intImp}{Numeric. Overall interaction importance for this node.}
-  \item{intImp.parent}{Numeric. Parent node's interaction importance.}
-  \item{strategy}{Strategy object. Used for effect-specific operations.}
-  \item{cache}{List. Stores cached values for fast re-computation.}
-}
-}
-
-\section{Methods}{
-
-\describe{
-  \item{initialize(id, depth, subset.idx, grid, ...)}{
-    Constructor for a node.
-    @param id (integer)\cr
-      Node identifier.
-    @param depth (integer or NULL)\cr
-      Node depth (root is 1).
-    @param subset.idx (integer vector)\cr
-      Row indices of data in this node.
-    @param grid (list)\cr
-      Grid values for each feature.
-    @param id.parent (integer or NULL)\cr
-      Parent node id.
-    @param child.type (character or NULL)\cr
-      Split direction.
-    @param objective.value.parent (numeric or NULL)\cr
-      Parent node's objective value.
-    @param objective.value.j (numeric vector or NULL)\cr
-      Objective values for each feature.
-    @param objective.value (numeric or NULL)\cr
-      Total objective value.
-    @param improvement.met (logical)\cr
-      Whether improvement threshold was not met.
-    @param intImp (numeric or NULL)\cr
-      Interaction importance.
-    @param intImp.j (numeric vector or NULL)\cr
-      Interaction importance for each feature.
-    @param strategy (object or NULL)\cr
-      Strategy object for effect-specific logic.
-  }
-  \item{split_node(Z, Y, objective.value.root.j, objective.value.root, min.node.size, n.quantiles, impr.par)}{
-    Split the node using the provided data and effect list.
-    @param Z (data.frame)\cr
-      Split feature set.
-    @param Y (list)\cr
-      Effect list.
-    @param objective.value.root.j (numeric vector)\cr
-      Root node's objective values for each feature.
-    @param objective.value.root (numeric)\cr
-      Root node's total objective value.
-    @param min.node.size (integer)\cr
-      Minimum node size.
-    @param n.quantiles (integer or NULL)\cr
-      Number of quantiles for candidate split points.
-    @param impr.par (numeric)\cr
-      Improvement threshold parameter.
-  }
-  \item{find_best_split(Z, Y.curr, min.node.size, n.quantiles)}{
-    Find the best split for the node using the effect list.
-    @param Z (data.frame)\cr
-      Split feature set.
-    @param Y.curr (list)\cr
-      Effect list for current node.
-    @param min.node.size (integer)\cr
-      Minimum node size.
-    @param n.quantiles (integer or NULL)\cr
-      Number of quantiles for candidate split points.
-    @return (list or NULL)\cr
-      Best split information or NULL if no valid split.
-  }
-  \item{create_children(Z, Y, split_info, objective.value.root.j, objective.value.root, impr.par)}{
-    Create left and right child nodes after splitting.
-    @param Z (data.frame)\cr
-      Split feature set.
-    @param Y (list)\cr
-      Effect list.
-    @param split_info (list)\cr
-      Information about the split.
-    @param objective.value.root.j (numeric vector)\cr
-      Root node's objective values for each feature.
-    @param objective.value.root (numeric)\cr
-      Root node's total objective value.
-    @param impr.par (numeric)\cr
-      Improvement threshold parameter.
-    @return (list)\cr
-      List containing left and right child nodes and split statistics.
-  }
-  \item{create_child_grids(split.feature, split.value, is.categorical)}{
-    Create grid values for left and right child nodes.
-    @param split.feature (character)\cr
-      Feature used for splitting.
-    @param split.value (numeric or factor)\cr
-      Value used for splitting.
-    @param is.categorical (logical)\cr
-      Whether the split feature is categorical.
-    @return (list)\cr
-      List with grid.left and grid.right.
-  }
-  \item{apply_split(split_info, children_info)}{
-    Update node with split and children information.
-    @param split_info (list)\cr
-      Information about the split.
-    @param children_info (list)\cr
-      Information about the children.
-  }
-  \item{get_cached_or_compute(key, compute_func)}{
-    Retrieve a cached value or compute and cache it.
-    @param key (character)\cr
-      Cache key.
-    @param compute_func (function)\cr
-      Function to compute the value if not cached.
-    @return Value from cache or computed.
-  }
-}
-}
-
 \examples{
 # Example: Creating a Node (typically done internally)
 # node <- Node$new(id = 1, depth = 1, subset.idx = 1:100, grid = list(feature1 = 1:10))
 
 }
 \keyword{internal}
+\section{Public fields}{
+\if{html}{\out{<div class="r6-fields">}}
+\describe{
+\item{\code{id}}{Integer. Node identifier within its depth level.}
+
+\item{\code{depth}}{Integer. Depth of the node (root starts at 1).}
+
+\item{\code{subset.idx}}{Integer vector. Row indices of data that fall into this node.}
+
+\item{\code{objective.value.j}}{Numeric vector. Objective values for each feature in this node.}
+
+\item{\code{objective.value}}{Numeric. Total objective value for this node.}
+
+\item{\code{objective.value.parent}}{Numeric. Parent node's objective value.}
+
+\item{\code{grid}}{Named list. Grid values for each feature in this node.}
+
+\item{\code{id.parent}}{Integer or NULL. Parent node id.}
+
+\item{\code{child.type}}{Character. Split direction ("<=", ">", "==", "!=").}
+
+\item{\code{split.feature}}{Character. Feature used for splitting this node.}
+
+\item{\code{split.feature.parent}}{Character. Parent node's split feature.}
+
+\item{\code{split.value}}{Numeric or factor. Threshold or level used for splitting.}
+
+\item{\code{split.value.parent}}{Numeric or factor. Parent node's split value.}
+
+\item{\code{children}}{List. Contains left and right child nodes (or NULL for terminal nodes).}
+
+\item{\code{stop.criterion.met}}{Logical. Whether the minimal node size or improvement threshold has been reached.}
+
+\item{\code{improvement.met}}{Logical. Whether the improvement threshold was not met.}
+
+\item{\code{intImp.j}}{Numeric vector. Interaction importance for each feature.}
+
+\item{\code{intImp}}{Numeric. Overall interaction importance for this node.}
+
+\item{\code{intImp.parent}}{Numeric. Parent node's interaction importance.}
+
+\item{\code{strategy}}{Strategy object. Used for effect-specific operations.}
+
+\item{\code{cache}}{List. Stores cached values for fast re-computation.}
+}
+\if{html}{\out{</div>}}
+}
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
@@ -165,6 +84,7 @@ This class is used internally by gadgetTree and strategy objects to represent an
 \if{html}{\out{<a id="method-Node-new"></a>}}
 \if{latex}{\out{\hypertarget{method-Node-new}{}}}
 \subsection{Method \code{new()}}{
+Constructor for a node.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Node$new(
   id,
@@ -183,11 +103,43 @@ This class is used internally by gadgetTree and strategy objects to represent an
 )}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{id}}{Integer. Node identifier.}
+
+\item{\code{depth}}{Integer or NULL. Node depth (root is 1).}
+
+\item{\code{subset.idx}}{Integer vector. Row indices of data in this node.}
+
+\item{\code{grid}}{List. Grid values for each feature.}
+
+\item{\code{id.parent}}{Integer or NULL. Parent node id.}
+
+\item{\code{child.type}}{Character or NULL. Split direction.}
+
+\item{\code{objective.value.parent}}{Numeric or NULL. Parent node's objective value.}
+
+\item{\code{objective.value.j}}{Numeric vector or NULL. Objective values for each feature.}
+
+\item{\code{objective.value}}{Numeric or NULL. Total objective value.}
+
+\item{\code{improvement.met}}{Logical. Whether improvement threshold was not met.}
+
+\item{\code{intImp}}{Numeric or NULL. Interaction importance.}
+
+\item{\code{intImp.j}}{Numeric vector or NULL. Interaction importance for each feature.}
+
+\item{\code{strategy}}{Object or NULL. Strategy object for effect-specific logic.}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Node-split_node"></a>}}
 \if{latex}{\out{\hypertarget{method-Node-split_node}{}}}
 \subsection{Method \code{split_node()}}{
+Recursively split the node using the provided data and effect list.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Node$split_node(
   Z,
@@ -196,62 +148,169 @@ This class is used internally by gadgetTree and strategy objects to represent an
   objective.value.root,
   min.node.size,
   n.quantiles,
-  impr.par
+  impr.par,
+  depth,
+  max.depth
 )}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{Z}}{Data frame. Split feature set.}
+
+\item{\code{Y}}{List. Effect list.}
+
+\item{\code{objective.value.root.j}}{Numeric vector. Root node's objective values for each feature.}
+
+\item{\code{objective.value.root}}{Numeric. Root node's total objective value.}
+
+\item{\code{min.node.size}}{Integer. Minimum node size.}
+
+\item{\code{n.quantiles}}{Integer or NULL. Number of quantiles for candidate split points.}
+
+\item{\code{impr.par}}{Numeric. Improvement threshold parameter.}
+
+\item{\code{depth}}{Integer. Current node depth.}
+
+\item{\code{max.depth}}{Integer. Maximum allowed tree depth.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+NULL
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Node-find_best_split"></a>}}
 \if{latex}{\out{\hypertarget{method-Node-find_best_split}{}}}
 \subsection{Method \code{find_best_split()}}{
+Find the best split for the node using the effect list.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Node$find_best_split(Z, Y.curr, min.node.size, n.quantiles)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{Z}}{Data frame. Split feature set.}
+
+\item{\code{Y.curr}}{List. Effect list for current node.}
+
+\item{\code{min.node.size}}{Integer. Minimum node size.}
+
+\item{\code{n.quantiles}}{Integer or NULL. Number of quantiles for candidate split points.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+List or NULL. Best split information or NULL if no valid split.
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Node-create_children"></a>}}
 \if{latex}{\out{\hypertarget{method-Node-create_children}{}}}
 \subsection{Method \code{create_children()}}{
+Create left and right child nodes after splitting.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Node$create_children(
   Z,
   Y,
-  split_info,
+  split.info,
   objective.value.root.j,
   objective.value.root,
   impr.par
 )}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{Z}}{Data frame. Split feature set.}
+
+\item{\code{Y}}{List. Effect list.}
+
+\item{\code{split.info}}{List. Information about the split.}
+
+\item{\code{objective.value.root.j}}{Numeric vector. Root node's objective values for each feature.}
+
+\item{\code{objective.value.root}}{Numeric. Root node's total objective value.}
+
+\item{\code{impr.par}}{Numeric. Improvement threshold parameter.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+List. Contains left and right child nodes and split statistics.
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Node-create_child_grids"></a>}}
 \if{latex}{\out{\hypertarget{method-Node-create_child_grids}{}}}
 \subsection{Method \code{create_child_grids()}}{
+Create grid values for left and right child nodes.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Node$create_child_grids(split.feature, split.value, is.categorical)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{split.feature}}{Character. Feature used for splitting.}
+
+\item{\code{split.value}}{Numeric or factor. Value used for splitting.}
+
+\item{\code{is.categorical}}{Logical. Whether the split feature is categorical.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+List. List with grid.left and grid.right.
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Node-apply_split"></a>}}
 \if{latex}{\out{\hypertarget{method-Node-apply_split}{}}}
 \subsection{Method \code{apply_split()}}{
+Update node with split and children information.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Node$apply_split(split_info, children_info)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Node$apply_split(split.info, children.info)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{split.info}}{List. Information about the split.}
+
+\item{\code{children.info}}{List. Information about the children.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+NULL
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Node-get_cached_or_compute"></a>}}
 \if{latex}{\out{\hypertarget{method-Node-get_cached_or_compute}{}}}
 \subsection{Method \code{get_cached_or_compute()}}{
+Retrieve a cached value or compute and cache it.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Node$get_cached_or_compute(key, compute_func)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{key}}{Character. Cache key.}
+
+\item{\code{compute_func}}{Function. Function to compute the value if not cached.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Value from cache or computed.
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Node-clone"></a>}}

@@ -2,9 +2,55 @@
 % Please edit documentation in R/effectStrategy.R
 \name{effectStrategy}
 \alias{effectStrategy}
-\title{effectStrategy (abstract base class for effect strategies)}
+\title{effectStrategy: Abstract Base Class for Effect Strategies (R6 class)}
 \description{
-Defines the interface for effect strategies (PD, ALE, SD, etc.).
+effectStrategy: Abstract Base Class for Effect Strategies (R6 class)
+
+effectStrategy: Abstract Base Class for Effect Strategies (R6 class)
+}
+\details{
+Provides the interface for effect-based tree strategies (e.g., pdStrategy, aleStrategy).
+This abstract class defines the required methods for any effect strategy implementation, including data preprocessing, node transformation, heterogeneity calculation, split search, tree fitting, and visualization.
+
+
+This class is intended to be subclassed by concrete effect strategies (e.g., pdStrategy, aleStrategy).
+All methods must be implemented in subclasses; calling them directly will result in an error.
+}
+\examples{
+# Example: Defining a custom effect strategy (skeleton)
+myStrategy = R6::R6Class(
+  "myStrategy",
+  inherit = effectStrategy,
+  public = list(
+    preprocess = function(effect, data, target.feature, feature.set = NULL, split.feature = NULL) {
+      ...
+    },
+    node_transform = function(Y, grid, idx) {
+      ...
+    },
+    heterogeneity = function(Y) {
+      ...
+    },
+    find_best_split = function(Z, Y, min.node.size, n.quantiles) {
+      ...
+    },
+    fit = function(tree_instance, effect, data, target.feature.name, ...) {
+      ...
+    },
+    plot = function(tree, effect, data, target.feature.name, ...) {
+      ...
+    }
+  )
+)
+
+}
+\keyword{internal}
+\section{Public fields}{
+\if{html}{\out{<div class="r6-fields">}}
+\describe{
+\item{\code{name}}{Character. Name of the strategy.}
+}
+\if{html}{\out{</div>}}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -14,6 +60,8 @@ Defines the interface for effect strategies (PD, ALE, SD, etc.).
 \item \href{#method-effectStrategy-node_transform}{\code{effectStrategy$node_transform()}}
 \item \href{#method-effectStrategy-heterogeneity}{\code{effectStrategy$heterogeneity()}}
 \item \href{#method-effectStrategy-find_best_split}{\code{effectStrategy$find_best_split()}}
+\item \href{#method-effectStrategy-fit}{\code{effectStrategy$fit()}}
+\item \href{#method-effectStrategy-plot}{\code{effectStrategy$plot()}}
 \item \href{#method-effectStrategy-clone}{\code{effectStrategy$clone()}}
 }
 }
@@ -21,6 +69,7 @@ Defines the interface for effect strategies (PD, ALE, SD, etc.).
 \if{html}{\out{<a id="method-effectStrategy-new"></a>}}
 \if{latex}{\out{\hypertarget{method-effectStrategy-new}{}}}
 \subsection{Method \code{new()}}{
+Initialize the strategy with name "abstract".
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{effectStrategy$new()}\if{html}{\out{</div>}}
 }
@@ -30,6 +79,7 @@ Defines the interface for effect strategies (PD, ALE, SD, etc.).
 \if{html}{\out{<a id="method-effectStrategy-preprocess"></a>}}
 \if{latex}{\out{\hypertarget{method-effectStrategy-preprocess}{}}}
 \subsection{Method \code{preprocess()}}{
+Preprocess input data and effect object. Must be implemented by subclasses.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{effectStrategy$preprocess(
   effect,
@@ -40,33 +90,150 @@ Defines the interface for effect strategies (PD, ALE, SD, etc.).
 )}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{effect}}{R6 object or list. Effect object, typically from FeatureEffect or FeatureEffects.}
+
+\item{\code{data}}{Data frame. Data frame containing all features and the target variable.}
+
+\item{\code{target.feature}}{Character(1). The name of the target feature in the data to explain.}
+
+\item{\code{feature.set}}{Character or NULL. Optional. Subset of features to use for effect calculation. If NULL, all features are used.}
+
+\item{\code{split.feature}}{Character or NULL. Optional. Features to consider for splitting at each node. If NULL, all features are considered.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+List. Preprocessed data for tree construction.
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-effectStrategy-node_transform"></a>}}
 \if{latex}{\out{\hypertarget{method-effectStrategy-node_transform}{}}}
 \subsection{Method \code{node_transform()}}{
+Node-level transformation of the effect list. Must be implemented by subclasses.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{effectStrategy$node_transform(Y, grid, idx)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{Y}}{List. Each element is an effect matrix for a feature.}
+
+\item{\code{grid}}{List. Feature grids.}
+
+\item{\code{idx}}{Integer. Sample indices for the current node.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+List. List of transformed effects.
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-effectStrategy-heterogeneity"></a>}}
 \if{latex}{\out{\hypertarget{method-effectStrategy-heterogeneity}{}}}
 \subsection{Method \code{heterogeneity()}}{
+Calculate the heterogeneity (e.g., sum of variances) of effects within the node. Must be implemented by subclasses.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{effectStrategy$heterogeneity(Y)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{Y}}{List. List of effect matrices.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Numeric. Numeric vector, heterogeneity for each feature.
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-effectStrategy-find_best_split"></a>}}
 \if{latex}{\out{\hypertarget{method-effectStrategy-find_best_split}{}}}
 \subsection{Method \code{find_best_split()}}{
+Find the best split point for a node. Must be implemented by subclasses.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{effectStrategy$find_best_split(Z, Y, min.node.size, n.quantiles)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{Z}}{Data frame. Split feature set.}
+
+\item{\code{Y}}{List. Effect matrices.}
+
+\item{\code{min.node.size}}{Integer(1). Minimum node size.}
+
+\item{\code{n.quantiles}}{Integer(1) or NULL. Optional. Number of quantiles to use for candidate split points (for numeric features). If NULL, use default.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+List. List with best split feature, split point, etc.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-effectStrategy-fit"></a>}}
+\if{latex}{\out{\hypertarget{method-effectStrategy-fit}{}}}
+\subsection{Method \code{fit()}}{
+Fit the effect-based tree. Must be implemented by subclasses.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{effectStrategy$fit(tree_instance, effect, data, target.feature.name, ...)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{tree_instance}}{gadgetTree object. Tree object instance.}
+
+\item{\code{effect}}{R6 object or list. Effect object.}
+
+\item{\code{data}}{Data frame. Data frame.}
+
+\item{\code{target.feature.name}}{Character(1). Target feature name.}
+
+\item{\code{...}}{Additional arguments.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+gadgetTree object, invisibly. The fitted tree object.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-effectStrategy-plot"></a>}}
+\if{latex}{\out{\hypertarget{method-effectStrategy-plot}{}}}
+\subsection{Method \code{plot()}}{
+Visualize the effect-based tree. Must be implemented by subclasses.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{effectStrategy$plot(tree, effect, data, target.feature.name, ...)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{tree}}{List. Tree structure as a list of Node objects.}
+
+\item{\code{effect}}{R6 object or list. Effect object.}
+
+\item{\code{data}}{Data frame. Data frame.}
+
+\item{\code{target.feature.name}}{Character(1). Target feature name.}
+
+\item{\code{...}}{Additional plotting arguments.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+List. List of plot objects.
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-effectStrategy-clone"></a>}}
