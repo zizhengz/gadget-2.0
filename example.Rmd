@@ -30,7 +30,7 @@ The package is modular and extensible: different effect strategies (e.g., partia
 
 ```{r}
 set.seed(123)
-n = 500
+n = 5000
 x1 = runif(n, -1, 1)
 x2 = runif(n, -1, 1)
 x3 = runif(n, -1, 1)
@@ -47,10 +47,10 @@ syn.effect = FeatureEffects$new(syn.predictor, grid.size = 20, method = "ice")
 ### Fit and visualize the explanation tree
 
 ```{r}
-tree = gadgetTree$new(strategy = pdStrategy$new(), n.split = 2, impr.par = 0.1, min.node.size = 1)
+tree = gadgetTree$new(strategy = pdStrategy$new(), n.split = 4, impr.par = 0.1, min.node.size = 1)
 tree$fit(syn.effect, syn.data, target.feature.name = "y")
 tree$plot(syn.effect, syn.data, target.feature.name = "y",
-          show.plot = TRUE, show.point = TRUE, mean.center = TRUE)
+  show.plot = TRUE, show.point = FALSE, mean.center = TRUE)
 tree$plot_tree_structure()
 tree$extract_split_info()
 ```
@@ -62,6 +62,7 @@ tree$extract_split_info()
 ```{r}
 library(ISLR2)
 data(Bikeshare)
+set.seed(123)
 bike = data.table(Bikeshare[sample(1:8645, 1000), ])
 
 bike.X = bike[, .(day, hr, temp, windspeed, weekday, workingday, hum, season, mnth, holiday, registered, weathersit, atemp, casual)]
@@ -86,23 +87,22 @@ effect_all = FeatureEffects$new(bike.predictor, method = "ice",
 ### Fit and visualize the explanation tree
 
 ```{r}
-tree = gadgetTree$new(strategy = pdStrategy$new(), n.split = 5)
+tree = gadgetTree$new(strategy = pdStrategy$new(), n.split = 4)
 tree$fit(effect_all, bike.data, target.feature.name = "target")
 tree$plot_tree_structure()
 tree$extract_split_info()
 tree$plot(effect_all, bike.data, target.feature.name = "target",
   show.plot = TRUE, show.point = TRUE, mean.center = FALSE,
-  depth = 1,
-  node.id = c(1, 1),
-  features = c("temp", "workingday")
+  depth = 4,
+  node.id = c(15, 14),
+  features = c("hr", "workingday")
 )
 ```
 
 ### Speed
 ```{r}
-dt = data.table::rbindlist(tree$split_benchmark)
-print(dt)
-boxplot(time ~ depth, data = dt, main = "Distribution of split time per layer")
+esi = tree$extract_split_info()
+boxplot(time ~ depth, data = esi, main = "Distribution of split time per depth")
 ```
 
 ## TODO
