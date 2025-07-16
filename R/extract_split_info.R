@@ -1,57 +1,94 @@
-extract_split_info = function(tree) {
-  list.split = lapply(tree, function(depth) {
-    lapply(depth, function(node) {
-      if (is.null(node)) {
-        tree.structure = NULL
-        heterogeneity.table = NULL
-      } else if (node$improvement.met | node$stop.criterion.met | node$depth == length(tree)) {
-        tree.structure = data.frame("depth" = node$depth, "id" = node$id,
-          "n.obs" = length(node$subset.idx),
-          "child.type" = if (node$id %% 2 == 0) "left" else "right",
-          "split.feature" = "none",
-          "split.value" = NA,
-          "objective.value" = node$objective.value,
-          "intImp" = NA,
-          "split.feature.parent" = node$split.feature.parent,
-          "split.value.parent" = node$split.value.parent,
-          "objective.value.parent" = node$objective.value.parent,
-          "intImp_parent" = node$intImp.parent,
-          "is.final" = TRUE)
-        heterogeneity.table = as.data.frame(matrix(NA, nrow = 1, ncol = length(node$intImp.j)))
-        names(heterogeneity.table) = paste0("intImp.", names(node$intImp.j))
-      } else {
-        tree.structure = data.frame("depth" = node$depth, "id" = node$id,
-          "n.obs" = length(node$subset.idx),
-          "child.type" = ifelse(node$id == 1, "root", if (node$id %% 2 == 0) "left" else "right"),
-          "split.feature" = node$split.feature,
-          "split.value" = node$split.value,
-          "objective.value" = node$objective.value,
-          "intImp" = node$intImp,
-          "split.feature.parent" = node$split.feature.parent,
-          "split.value.parent" = node$split.value.parent,
-          "objective.value.parent" = node$objective.value.parent,
-          "intImp_parent" = node$intImp.parent,
-          "is.final" = FALSE)
-        heterogeneity.table = as.data.frame(matrix(NA, nrow = 1, ncol = length(node$intImp.j)))
-        heterogeneity.table[1, ] = node$intImp.j
-        names(heterogeneity.table) = paste0("intImp.", names(node$intImp.j))
-      }
-      res = cbind(tree.structure, heterogeneity.table)
-      res
+#' extract_split_info: Extract Split Information from Tree Structure
+#'
+#' Extracts split criteria, node statistics, and (optionally) split benchmark information from a tree structure.
+#' This function traverses a depth-based list of Node objects and returns a data frame summarizing each node's split details, statistics, and (if provided) split timing.
+#'
+#' @param tree (`list`)
+#'   A depth-based list of Node objects, typically produced by `convert_tree_to_list`.
+#' @param split_benchmark (`data.frame` or `list`, optional)
+#'   Optional. A data frame or list containing split timing information, with columns `node.id` and `depth` (or similar). If provided, timing info will be merged into the output.
+#'
+#' @return (`data.frame`)
+#'   A data frame where each row summarizes a node, including split feature, split value, statistics, and (if available) split timing.
+#'
+#' @details
+#' This function is used internally by the gadgetTree framework to extract and summarize the structure and statistics of effect-based decision trees. It is useful for interpretation, reporting, and benchmarking.
+#'
+#' @examples
+#' # Example: Extract split info from a fitted tree
+#' pd_strat = pdStrategy$new()
+#' tree = gadgetTree$new(strategy = pd_strat, n.split = 2)
+#' tree$fit(effect, data, target.feature.name = "target")
+#' split_info = tree$extract_split_info()
+#'
+#' @keywords internal
+extract_split_info = function(tree, split_benchmark = NULL) {
+  # Collect all intImp.j field names
+  all_intimp_names = unique(unlist(
+    lapply(tree, function(depth) {
+      lapply(depth, function(node) if (!is.null(node$intImp.j)) names(node$intImp.j))
     })
+  ))
+  all_intimp_names = all_intimp_names[!is.na(all_intimp_names)]
+
+  rows = lapply(unlist(tree, recursive = FALSE), function(node) {
+    if (is.null(node)) return(NULL)
+    n_obs = if (is.null(node$subset.idx) || length(node$subset.idx) == 0) 0 else length(node$subset.idx)
+    is_final = isTRUE(node$improvement.met) | isTRUE(node$stop.criterion.met) |
+      is.null(node$children) || (is.list(node$children) && all(sapply(node$children, is.null)))
+    row = data.frame(
+      depth = as.integer(node$depth),
+      id = as.integer(node$id),
+      n.obs = as.integer(n_obs),
+      node.type = if (is.null(node$id)) NA_character_ else if (node$id == 1) "root" else if (node$id %% 2 == 0) "left" else "right",
+      split.feature = if (is.null(node$split.feature)) NA_character_ else as.character(node$split.feature),
+      split.value = if (is.null(node$split.value)) NA else node$split.value,
+      objective.value = if (is.null(node$objective.value)) NA else node$objective.value,
+      intImp = if (is.null(node$intImp)) NA else node$intImp,
+      split.feature.parent = if (is.null(node$split.feature.parent)) NA_character_ else as.character(node$split.feature.parent),
+      split.value.parent = if (is.null(node$split.value.parent)) NA else node$split.value.parent,
+      objective.value.parent = if (is.null(node$objective.value.parent)) NA else node$objective.value.parent,
+      intImp.parent = if (is.null(node$intImp.parent)) NA else node$intImp.parent,
+      is.final = is_final,
+      stringsAsFactors = FALSE
+    )
+    # Ensure all intImp.* fields exist
+    for (nm in all_intimp_names) {
+      row[[paste0("intImp.", nm)]] = if (!is.null(node$intImp.j) && nm %in% names(node$intImp.j)) node$intImp.j[[nm]] else NA
+    }
+    row
   })
-  list.split = Filter(function(x) length(x) > 0L, list.split)
-  df.split = unlist(list.split, recursive = FALSE)
-  df.split = as.data.frame(do.call(rbind, df.split))
+  df.split = do.call(rbind, rows)
+  rownames(df.split) = NULL
+
+  # Field order: place intImp.* fields after intImp
   all_cols = names(df.split)
   intimp_pos = which(all_cols == "intImp")
   intimp_dot_cols = grep("^intImp\\.", all_cols, value = TRUE)
-  intimp_dot_pos = match(intimp_dot_cols, all_cols)
-  cols_wo_dot = all_cols[-intimp_dot_pos]
+  cols_wo_dot = setdiff(all_cols, intimp_dot_cols)
   new_order = append(cols_wo_dot, intimp_dot_cols, after = intimp_pos)
   df.split = df.split[, new_order]
-  return(df.split)
+
+  # Merge split_benchmark info if provided
+  if (!is.null(split_benchmark)) {
+    # Ensure split_benchmark is a data.frame
+    if (is.list(split_benchmark) && !is.data.frame(split_benchmark)) {
+      split_benchmark = do.call(rbind, lapply(split_benchmark, as.data.frame))
+    }
+    # Merge by c("id", "depth")
+    df.split = merge(df.split, split_benchmark, by.x = c("id", "depth"), by.y = c("node.id", "depth"), all.x = TRUE, sort = TRUE)
+  }
+  df.split
 }
+
+
+
+
+
+
+
+
+
 
 # extract_split_info = function(tree, feat_name = NULL) {
 #   cat_line = function(...) cat(paste0(..., "\n"))
