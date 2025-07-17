@@ -15,6 +15,7 @@ library(ranger)
 library(bench)
 library(future)
 library(ggplot2)
+library(pryr)
 ```
 
 ## Overview of the gadget Package
@@ -198,6 +199,7 @@ n_list = c(1000, 5000, 10000)
 p_list = c(5, 10, 20)
 
 bench_results = list()
+tree_sizes = data.frame(n = integer(), p = integer(), tree_size_MB = numeric())
 for (n in n_list) {
   for (p in p_list) {
     cat(sprintf("Running: n = %d, p = %d\n", n, p))
@@ -208,6 +210,11 @@ for (n in n_list) {
     } else if (p == 20) {
       sim = datagen_p20(n)
     }
+    tree = gadgetTree$new(strategy = pdStrategy$new(), n.split = 10)
+    tree$fit(sim$eff, sim$dat, target.feature.name = "y")
+    tree_size_MB = as.numeric(pryr::object_size(tree)) / 1024^2
+    tree_sizes = rbind(tree_sizes, data.frame(n = n, p = p, tree_size_MB = tree_size_MB))
+    # benchmark
     res = bench::mark(
       fit = {
         tree = gadgetTree$new(strategy = pdStrategy$new(), n.split = 10)
@@ -244,6 +251,11 @@ ggplot(bench_long, aes(x = factor(n), y = time_ms, color = factor(p), group = p)
   theme_minimal()
 ```
 
+
+```{r}
+tree_sizes
+```
+
 ## Simplified Risk Calculation
 
 $$
@@ -268,4 +280,3 @@ Since $$n\_{parent} = n\_{left} + n\_{right}\\ SS\_{parent} = SS\_{left} + SS\_{
 Then $$ 
 SSE\_{Reduction} = -\frac{S_{parent}^2}{n_{parent}} +\frac{S_{left}^2}{n_{left}} +\frac{S_{right}^2}{n_{right}}\\ max(SSE\_{Reduction}) = max(\frac{S_{left}^2}{n_{left}} +\frac{S_{right}^2}{n_{right}})=min(-\frac{S_{left}^2}{n_{left}} -\frac{S_{right}^2}{n_{right}}) 
 $$
-
