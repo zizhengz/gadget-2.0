@@ -11,6 +11,19 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// re_mean_center_ice_cpp
+/**   * @brief Mean-center ICE matrices for each feature, only on grid columns.   *   * For each feature matrix in Y, this function:   *   - Selects only the rows specified by idx   *   - Sets columns not in grid to NA   *   - For each row, mean-centers only the valid grid and non-NA columns   *   - Returns a list of centered matrices, preserving column names   *   * @param Y   List of NumericMatrix, one per feature with dimnames   * @param grid List of CharacterVector, each specifying valid grid columns for the feature   * @param idx IntegerVector of row indices, 1-based as in R   * @return List of mean-centered NumericMatrix, with column names preserved   */  List re_mean_center_ice_cpp(List Y, List grid, IntegerVector idx);
+RcppExport SEXP _gadget_re_mean_center_ice_cpp(SEXP YSEXP, SEXP gridSEXP, SEXP idxSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< List >::type grid(gridSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type idx(idxSEXP);
+    rcpp_result_gen = Rcpp::wrap(re_mean_center_ice_cpp(Y, grid, idx));
+    return rcpp_result_gen;
+END_RCPP
+}
 // search_best_split_cpp
 DataFrame search_best_split_cpp(DataFrame Z, List Y, int min_node_size, Nullable<int> n_quantiles);
 RcppExport SEXP _gadget_search_best_split_cpp(SEXP ZSEXP, SEXP YSEXP, SEXP min_node_sizeSEXP, SEXP n_quantilesSEXP) {
@@ -42,6 +55,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_gadget_re_mean_center_ice_cpp", (DL_FUNC) &_gadget_re_mean_center_ice_cpp, 3},
     {"_gadget_search_best_split_cpp", (DL_FUNC) &_gadget_search_best_split_cpp, 4},
     {"_gadget_search_best_split_point_cpp", (DL_FUNC) &_gadget_search_best_split_point_cpp, 5},
     {NULL, NULL, 0}

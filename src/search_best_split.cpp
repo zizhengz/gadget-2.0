@@ -3,7 +3,7 @@
  * @brief Fast tree splitting implementation using C++ and Armadillo
  *
  * This file implements efficient tree splitting algorithms for the gadget package.
- * It provides both categorical and numerical splitting with optimized performance.
+ * It provides both categorical and numerical splitting.
  *
  * @author gadget Development Team
  * @version 1.0
@@ -331,9 +331,27 @@ DataFrame search_best_split_cpp(
   // Calculate total runtime and identify best split
   auto t1 = std::chrono::high_resolution_clock::now();
   split_runtime.fill(std::chrono::duration<double>(t1 - t0).count());
+  
+  // Find best valid split (original)
+  //double best_val = min(split_obj);
+  //LogicalVector best_split = (split_obj == best_val);
 
-  double best_val = min(split_obj);
-  LogicalVector best_split = (split_obj == best_val);
+  // Find best valid split (filter out NA/NaN split points)
+  double best_val = R_PosInf;
+  int best_idx = -1;
+  
+  for (int j = 0; j < p; ++j) {
+    std::string split_point_str = as<std::string>(split_point_out[j]);
+    if (split_point_str != "NA" && split_point_str != "NaN" && split_obj[j] < best_val) {
+      best_val = split_obj[j];
+      best_idx = j;
+    }
+  }
+  
+  LogicalVector best_split(p, false);
+  if (best_idx >= 0) {
+    best_split[best_idx] = true;
+  }
 
   // Return results as DataFrame
   return DataFrame::create(
