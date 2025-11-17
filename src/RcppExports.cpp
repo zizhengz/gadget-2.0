@@ -11,6 +11,68 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// calculate_ale_heterogeneity_single_cpp
+double calculate_ale_heterogeneity_single_cpp(NumericVector dL, IntegerVector interval_index);
+RcppExport SEXP _gadget_calculate_ale_heterogeneity_single_cpp(SEXP dLSEXP, SEXP interval_indexSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type dL(dLSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type interval_index(interval_indexSEXP);
+    rcpp_result_gen = Rcpp::wrap(calculate_ale_heterogeneity_single_cpp(dL, interval_index));
+    return rcpp_result_gen;
+END_RCPP
+}
+// calculate_ale_heterogeneity_list_cpp
+List calculate_ale_heterogeneity_list_cpp(List Y);
+RcppExport SEXP _gadget_calculate_ale_heterogeneity_list_cpp(SEXP YSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type Y(YSEXP);
+    rcpp_result_gen = Rcpp::wrap(calculate_ale_heterogeneity_list_cpp(Y));
+    return rcpp_result_gen;
+END_RCPP
+}
+// robustify_extreme_segments_cpp
+DataFrame robustify_extreme_segments_cpp(DataFrame Y_data, String boundary_type, int min_samples, double fraction_threshold, double sd_threshold);
+RcppExport SEXP _gadget_robustify_extreme_segments_cpp(SEXP Y_dataSEXP, SEXP boundary_typeSEXP, SEXP min_samplesSEXP, SEXP fraction_thresholdSEXP, SEXP sd_thresholdSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< DataFrame >::type Y_data(Y_dataSEXP);
+    Rcpp::traits::input_parameter< String >::type boundary_type(boundary_typeSEXP);
+    Rcpp::traits::input_parameter< int >::type min_samples(min_samplesSEXP);
+    Rcpp::traits::input_parameter< double >::type fraction_threshold(fraction_thresholdSEXP);
+    Rcpp::traits::input_parameter< double >::type sd_threshold(sd_thresholdSEXP);
+    rcpp_result_gen = Rcpp::wrap(robustify_extreme_segments_cpp(Y_data, boundary_type, min_samples, fraction_threshold, sd_threshold));
+    return rcpp_result_gen;
+END_RCPP
+}
+// handle_single_category_cpp
+DataFrame handle_single_category_cpp(DataFrame Y_data);
+RcppExport SEXP _gadget_handle_single_category_cpp(SEXP Y_dataSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< DataFrame >::type Y_data(Y_dataSEXP);
+    rcpp_result_gen = Rcpp::wrap(handle_single_category_cpp(Y_data));
+    return rcpp_result_gen;
+END_RCPP
+}
+// process_ale_node_data_cpp
+List process_ale_node_data_cpp(List Y, Nullable<String> split_feature, String node_type);
+RcppExport SEXP _gadget_process_ale_node_data_cpp(SEXP YSEXP, SEXP split_featureSEXP, SEXP node_typeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< Nullable<String> >::type split_feature(split_featureSEXP);
+    Rcpp::traits::input_parameter< String >::type node_type(node_typeSEXP);
+    rcpp_result_gen = Rcpp::wrap(process_ale_node_data_cpp(Y, split_feature, node_type));
+    return rcpp_result_gen;
+END_RCPP
+}
 // re_mean_center_ice_cpp
 /**   * @brief Mean-center ICE matrices for each feature, only on grid columns.   *   * For each feature matrix in Y, this function:   *   - Selects only the rows specified by idx   *   - Sets columns not in grid to NA   *   - For each row, mean-centers only the valid grid and non-NA columns   *   - Returns a list of centered matrices, preserving column names   *   * @param Y   List of NumericMatrix, one per feature with dimnames   * @param grid List of CharacterVector, each specifying valid grid columns for the feature   * @param idx IntegerVector of row indices, 1-based as in R   * @return List of mean-centered NumericMatrix, with column names preserved   */  List re_mean_center_ice_cpp(List Y, List grid, IntegerVector idx);
 RcppExport SEXP _gadget_re_mean_center_ice_cpp(SEXP YSEXP, SEXP gridSEXP, SEXP idxSEXP) {
@@ -53,11 +115,32 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// search_best_split_ale_cpp
+DataFrame search_best_split_ale_cpp(DataFrame Z, List Y, int min_node_size, Nullable<IntegerVector> n_quantiles, int N);
+RcppExport SEXP _gadget_search_best_split_ale_cpp(SEXP ZSEXP, SEXP YSEXP, SEXP min_node_sizeSEXP, SEXP n_quantilesSEXP, SEXP NSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< DataFrame >::type Z(ZSEXP);
+    Rcpp::traits::input_parameter< List >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< int >::type min_node_size(min_node_sizeSEXP);
+    Rcpp::traits::input_parameter< Nullable<IntegerVector> >::type n_quantiles(n_quantilesSEXP);
+    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    rcpp_result_gen = Rcpp::wrap(search_best_split_ale_cpp(Z, Y, min_node_size, n_quantiles, N));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_gadget_calculate_ale_heterogeneity_single_cpp", (DL_FUNC) &_gadget_calculate_ale_heterogeneity_single_cpp, 2},
+    {"_gadget_calculate_ale_heterogeneity_list_cpp", (DL_FUNC) &_gadget_calculate_ale_heterogeneity_list_cpp, 1},
+    {"_gadget_robustify_extreme_segments_cpp", (DL_FUNC) &_gadget_robustify_extreme_segments_cpp, 5},
+    {"_gadget_handle_single_category_cpp", (DL_FUNC) &_gadget_handle_single_category_cpp, 1},
+    {"_gadget_process_ale_node_data_cpp", (DL_FUNC) &_gadget_process_ale_node_data_cpp, 3},
     {"_gadget_re_mean_center_ice_cpp", (DL_FUNC) &_gadget_re_mean_center_ice_cpp, 3},
     {"_gadget_search_best_split_cpp", (DL_FUNC) &_gadget_search_best_split_cpp, 4},
     {"_gadget_search_best_split_point_cpp", (DL_FUNC) &_gadget_search_best_split_point_cpp, 5},
+    {"_gadget_search_best_split_ale_cpp", (DL_FUNC) &_gadget_search_best_split_ale_cpp, 5},
     {NULL, NULL, 0}
 };
 

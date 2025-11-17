@@ -12,11 +12,30 @@ plot_tree_pd = function(tree, effect, data, target.feature.name,
   all_node_data = preprocess_node_data(tree, Y, grid.total, mean.center)
 
   # Determine depths and nodes to render
-  depths_to_render = if (is.null(depth)) {
-    seq_along(tree)
+  if (is.null(node.id)) {
+    # If no specific nodes requested, render all depths
+    depths_to_render = if (is.null(depth)) {
+      seq_along(tree)
+    } else {
+      depths = suppressWarnings(as.integer(depth))
+      depths[!is.na(depths) & depths > 0 & depths <= length(tree)]
+    }
   } else {
-    depths = suppressWarnings(as.integer(depth))
-    depths[!is.na(depths) & depths > 0 & depths <= length(tree)]
+    # If specific nodes requested, find which depths contain these nodes
+    node_ids = suppressWarnings(as.integer(node.id))
+    depths_to_render = c()
+    for (depth_idx in seq_along(tree)) {
+      nodes_at_depth = sapply(tree[[depth_idx]], function(n) !is.null(n) && n$id %in% node_ids)
+      if (any(nodes_at_depth)) {
+        depths_to_render = c(depths_to_render, depth_idx)
+      }
+    }
+    # If depth is specified, filter to only those depths
+    if (!is.null(depth)) {
+      depths = suppressWarnings(as.integer(depth))
+      depths = depths[!is.na(depths) & depths > 0 & depths <= length(tree)]
+      depths_to_render = intersect(depths_to_render, depths)
+    }
   }
 
   if (length(depths_to_render) == 0) {
@@ -25,6 +44,7 @@ plot_tree_pd = function(tree, effect, data, target.feature.name,
   }
 
   plot.list = list()
+
   for (depth_idx in depths_to_render) {
     prepared.data = all_node_data[[depth_idx]]
     if (is.null(node.id)) {
@@ -41,6 +61,7 @@ plot_tree_pd = function(tree, effect, data, target.feature.name,
                                            show.plot, show.point, mean.center)
     plot.list[[paste0("Depth_", depth_idx)]] = plots.at.depth
   }
+
   invisible(plot.list)
 }
 
@@ -124,8 +145,20 @@ create_node_title = function(node, depth_idx, tree) {
 
 # Helper function to calculate y range
 calculate_y_range = function(prepared.data, data, target.feature.name, show.point) {
-  ymin.effect = min(unlist(prepared.data), na.rm = TRUE)
-  ymax.effect = max(unlist(prepared.data), na.rm = TRUE)
+  # Collect ICE values excluding the 'node' column by name from each data.frame
+  values.list = lapply(prepared.data, function(df) {
+    if (is.data.frame(df) && ncol(df) >= 1) {
+      cols = setdiff(colnames(df), "node")
+      if (length(cols) == 0) return(numeric(0))
+      as.numeric(unlist(df[, cols, drop = FALSE]))
+    } else {
+      numeric(0)
+    }
+  })
+  effect.values = unlist(values.list, use.names = FALSE)
+
+  ymin.effect = min(effect.values, na.rm = TRUE)
+  ymax.effect = max(effect.values, na.rm = TRUE)
   if (show.point) {
     ymin.data = min(data[[target.feature.name]], na.rm = TRUE)
     ymax.data = max(data[[target.feature.name]], na.rm = TRUE)

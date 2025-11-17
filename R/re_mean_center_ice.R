@@ -1,7 +1,7 @@
 #' mean-centering of ICE matrices
 #'
 #' @param Y List of data.frame (one per feature)
-#' @param grid List of grid column names (one per feature)
+#' @param grid List of grid column names, i.e. character vectors (one per feature)
 #' @param idx Integer vector of row indices to keep
 #' @return List of mean-centered matrices
 re_mean_center_ice = function(Y, grid, idx) {

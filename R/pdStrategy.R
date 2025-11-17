@@ -1,12 +1,15 @@
 #' pdStrategy: Partial Dependence Tree Strategy (R6 class)
 #'
 #' Implements the effectStrategy interface for building and analyzing Partial Dependence (PD) trees.
-#' This strategy supports data preprocessing, node transformation, heterogeneity calculation, best split search, tree fitting, and visualization.
+#' This strategy supports data preprocessing, node transformation, heterogeneity calculation,
+#' best split search, tree fitting, and visualization.
 #'
 #' @field tree_ref Reference to the associated tree instance.
 #'
 #' @details
-#' This class is used internally by the gadgetTree framework to implement partial dependence tree growing, splitting, and visualization. It is not intended to be used directly by end users, but can be instantiated for advanced customization.
+#' This class is used internally by the gadgetTree framework to implement partial dependence
+#' tree growing, splitting, and visualization. It is not intended to be used directly by end users,
+#' but can be instantiated for advanced customization.
 #'
 #' @examples
 #' # Example: Fit and plot a PD tree using pdStrategy and gadgetTree
@@ -30,12 +33,18 @@ pdStrategy = R6::R6Class(
 
     #' @description
     #' Preprocess input data to generate the split feature set Z, effect list Y, and grid.
-    #' @param effect R6 object or list. An object containing feature effect results, typically from FeatureEffect or FeatureEffects.
-    #' @param data Data frame. Data frame containing all features and the target variable.
-    #' @param target.feature Character(1). The name of the target feature in the data to explain.
-    #' @param feature.set Character or NULL. Optional. Subset of features to use for effect calculation. If NULL, all features are used.
-    #' @param split.feature Character or NULL. Optional. Features to consider for splitting at each node. If NULL, all features are considered.
-    #' @return List. A list with Z (split feature set), Y (effect list), and grid (feature grid).
+    #' @param effect R6 object or list.\cr
+    #'   An object containing feature effect results, typically from FeatureEffect or FeatureEffects.
+    #' @param data Data frame.\cr
+    #'   Data frame containing all features and the target variable.
+    #' @param target.feature Character(1).\cr
+    #'   The name of the target feature in the data to explain.
+    #' @param feature.set Character or NULL. \cr
+    #'   Optional. Subset of features to use for effect calculation. If NULL, all features are used.
+    #' @param split.feature Character or NULL. \cr
+    #'   Optional. Features to consider for splitting at each node. If NULL, all features are considered.
+    #' @return List. \cr
+    #'   A list with Z (split feature set), Y (effect list), and grid (feature grid).
     preprocess = function(effect, data, target.feature, feature.set = NULL, split.feature = NULL) {
       prepare_split_data_pd(effect = effect, data = data, target.feature.name = target.feature,
         feature.set = feature.set, split.feature = split.feature)
@@ -67,7 +76,9 @@ pdStrategy = R6::R6Class(
     #' @param Z Data frame. Split feature set.
     #' @param Y List. Effect matrices.
     #' @param min.node.size Integer(1). Minimum node size.
-    #' @param n.quantiles Integer(1) or NULL. Optional. Number of quantiles to use for candidate split points (for numeric features). If NULL, use default.
+    #' @param n.quantiles Integer(1) or NULL. \cr
+    #'   Optional. Number of quantiles to use for candidate split points (for numeric features).
+    #'   If NULL, use default.
     #' @return List. List with best split feature, split point, etc.
     find_best_split = function(Z, Y, min.node.size, n.quantiles) {
       checkmate::assert_data_frame(Z)

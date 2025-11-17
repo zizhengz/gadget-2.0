@@ -71,6 +71,7 @@ plot_regional_pd = function(prepared.data, origin.data, target.feature.name, nod
         labels = c("ICE" = if (mean.center) "Mean centered ICE" else "ICE",
           "PDP" = if (mean.center) "Mean centered PDP" else "PDP")) +
       coord_cartesian(ylim = c(ymin, ymax)) +
+      #ylim(ymin, ymax) +
       theme_bw(base_size = 9) +
       labs(
         x = if (!is.null(split.condition)) paste0(feat, " | ", split.condition) else feat,
