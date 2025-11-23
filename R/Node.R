@@ -1,31 +1,55 @@
 #' Node: Tree Node for Effect-based Decision Trees (R6 class)
 #'
-#' Represents a single node in an effect-based decision tree, storing split information, effect statistics, and child nodes.
+#' Represents a single node in an effect-based decision tree, storing split information,
+#' effect statistics, and child nodes.
 #'
-#' @field id Integer. Node identifier within its depth level.
-#' @field depth Integer. Depth of the node (root starts at 1).
-#' @field subset.idx Integer vector. Row indices of data that fall into this node.
-#' @field objective.value.j Numeric vector. Objective values for each feature in this node.
-#' @field objective.value Numeric. Total objective value for this node.
-#' @field objective.value.parent Numeric. Parent node's objective value.
-#' @field grid Named list. Grid values for each feature in this node.
-#' @field id.parent Integer or NULL. Parent node id.
-#' @field child.type Character. Split direction ("<=", ">", "==", "!=").
-#' @field split.feature Character. Feature used for splitting this node.
-#' @field split.feature.parent Character. Parent node's split feature.
-#' @field split.value Numeric or factor. Threshold or level used for splitting.
-#' @field split.value.parent Numeric or factor. Parent node's split value.
-#' @field children List. Contains left and right child nodes (or NULL for terminal nodes).
-#' @field stop.criterion.met Logical. Whether the minimal node size or improvement threshold has been reached.
-#' @field improvement.met Logical. Whether the improvement threshold was not met.
-#' @field intImp.j Numeric vector. Interaction importance for each feature.
-#' @field intImp Numeric. Overall interaction importance for this node.
-#' @field intImp.parent Numeric. Parent node's interaction importance.
-#' @field strategy Strategy object. Used for effect-specific operations.
-#' @field cache List. Stores cached values for fast re-computation.
+#' @field id Integer. \cr
+#'   Node identifier within its depth level.
+#' @field depth Integer. \cr
+#'   Depth of the node (root starts at 1).
+#' @field subset.idx Integer vector. \cr
+#'   Row indices of data that fall into this node.
+#' @field objective.value.j Numeric vector. \cr
+#'   Objective values for each feature in this node.
+#' @field objective.value Numeric. \cr
+#'   Total objective value for this node.
+#' @field objective.value.parent Numeric. \cr
+#'   Parent node's objective value.
+#' @field grid Named list. \cr
+#'   Grid values for each feature in this node.
+#' @field id.parent Integer or NULL. \cr
+#'   Parent node id.
+#' @field child.type Character. \cr
+#'   Split direction ("<=", ">", "==", "!=").
+#' @field split.feature Character. \cr
+#'   Feature used for splitting this node.
+#' @field split.feature.parent Character. \cr
+#'   Parent node's split feature.
+#' @field split.value Numeric or factor. \cr
+#'   Threshold or level used for splitting.
+#' @field split.value.parent Numeric or factor. \cr
+#'   Parent node's split value.
+#' @field children List. \cr
+#'   Contains left and right child nodes (or NULL for terminal nodes).
+#' @field stop.criterion.met Logical. \cr
+#'   Whether the minimal node size or improvement threshold has been reached.
+#' @field improvement.met Logical. \cr
+#'   Whether the improvement threshold was not met.
+#' @field intImp.j Numeric vector. \cr
+#'   Interaction importance for each feature.
+#' @field intImp Numeric. \cr
+#'   Overall interaction importance for this node.
+#' @field intImp.parent Numeric. \cr
+#'   Parent node's interaction importance.
+#' @field strategy Strategy object. \cr
+#'   Used for effect-specific operations.
+#' @field cache List. \cr
+#'   Stores cached values for fast re-computation.
 #'
 #' @details
-#' This class is used internally by gadgetTree and strategy objects to represent and manage nodes in effect-based decision trees. Each node stores split information, effect statistics, and references to its children.
+#' This class is used internally by gadgetTree and strategy objects to represent
+#' and manage nodes in effect-based decision trees. Each node stores split information,
+#' effect statistics, and references to its children.
 #'
 #' @examples
 #' # Example: Creating a Node (typically done internally)
@@ -120,9 +144,14 @@ Node = R6::R6Class("Node", public = list(
       return(NULL)
     }
     # 2. Find the best split
+    # Find best split with strategy-specific logic
     split.info = tryCatch({
-      self$find_best_split(Z, self$strategy$node_transform(Y = Y, grid = self$grid, idx = self$subset.idx),
-        min.node.size, n.quantiles)
+      if (inherits(self$strategy, "aleStrategy")) {
+        Y.curr = self$strategy$node_transform(Y, idx = self$subset.idx, split.feature = self$split.feature.parent)
+        self$find_best_split(Z, Y.curr, min.node.size, n.quantiles)
+      } else if (inherits(self$strategy, "pdStrategy")) {
+        self$find_best_split(Z, self$strategy$node_transform(Y = Y, grid = self$grid, idx = self$subset.idx), min.node.size, n.quantiles)
+      }
     }, error = function(e) {
       message("find_best_split error: ", e$message)
       return(NULL)
@@ -186,10 +215,38 @@ Node = R6::R6Class("Node", public = list(
   #' @param n.quantiles Integer or NULL. Number of quantiles for candidate split points.
   #' @return List or NULL. Best split information or NULL if no valid split.
   find_best_split = function(Z, Y.curr, min.node.size, n.quantiles) {
-    split.res = self$strategy$find_best_split(Z = Z[self$subset.idx, ], Y = Y.curr,
+    # Ensure Z subset is always a data.frame(data.table)
+    Z.subset = Z[self$subset.idx, ]
+    if (!is.data.frame(Z.subset)) {
+      Z.subset = data.frame(Z.subset)
+      colnames(Z.subset) = colnames(Z)
+    }
+    split.res = self$strategy$find_best_split(Z = Z.subset, Y = Y.curr,
       min.node.size = min.node.size, n.quantiles = n.quantiles)
     if (is.null(split.res$best.split) || length(split.res$best.split) == 0) {
       return(NULL)
+    }
+    if (inherits(self$strategy, "aleStrategy")) {
+      best.idx = which(split.res$best.split)[1]
+      if (is.na(best.idx)) return(NULL)
+      sf = split.res$split.feature[best.idx]
+      rows = which(split.res$split.feature == sf & split.res$best.split)
+      if (!length(rows)) return(NULL)
+      ord = names(Y.curr)
+      leftmap = stats::setNames(split.res$left.objective.value.j[rows], split.res$feature[rows])
+      rightmap = stats::setNames(split.res$right.objective.value.j[rows], split.res$feature[rows])
+      if (is.null(ord)) ord = names(leftmap)
+      leftj = setNames(as.numeric(leftmap[ord]), ord)
+      rightj = setNames(as.numeric(rightmap[ord]), ord)
+      return(list(
+        split.feature = sf,
+        split.value = split.res$split.point[best.idx],
+        is.categorical = split.res$is.categorical[best.idx],
+        left.objective.value.j = leftj,
+        right.objective.value.j = rightj,
+        left.objective.value = sum(leftj, na.rm = TRUE),
+        right.objective.value = sum(rightj, na.rm = TRUE)
+      ))
     }
     list(
       split.feature = split.res$split.feature[split.res$best.split][1],
@@ -220,34 +277,45 @@ Node = R6::R6Class("Node", public = list(
       idx.left = self$subset.idx[which(z.sub <= as.numeric(split.value))]
       idx.right = self$subset.idx[which(z.sub > as.numeric(split.value))]
     }
-
     if (length(idx.left) == 0) idx.left = 0
     if (length(idx.right) == 0) idx.right = 0
 
     # Create grids for children
     grid.info = self$create_child_grids(split.feature, split.value, is.categorical)
-
     # Calculate objective values for children
-    Y.curr.left = self$strategy$node_transform(Y = Y, grid = grid.info$grid.left, idx = idx.left)
-    Y.curr.right = self$strategy$node_transform(Y = Y, grid = grid.info$grid.right, idx = idx.right)
-    left.objective.value.j = self$strategy$heterogeneity(Y.curr.left)
-    right.objective.value.j = self$strategy$heterogeneity(Y.curr.right)
-    left.objective.value = sum(left.objective.value.j, na.rm = TRUE)
-    right.objective.value = sum(right.objective.value.j, na.rm = TRUE)
-
-    # Calculate importance
-    intImp.j = (self$objective.value.j - left.objective.value.j - right.objective.value.j) / objective.value.root.j
-    intImp = (self$objective.value - left.objective.value - right.objective.value) / objective.value.root
+    if (inherits(self$strategy, "pdStrategy")) {
+      Y.curr.left = self$strategy$node_transform(Y = Y, grid = grid.info$grid.left, idx = idx.left)
+      Y.curr.right = self$strategy$node_transform(Y = Y, grid = grid.info$grid.right, idx = idx.right)
+      left.objective.value.j = self$strategy$heterogeneity(Y.curr.left)
+      right.objective.value.j = self$strategy$heterogeneity(Y.curr.right)
+      left.objective.value = sum(left.objective.value.j, na.rm = TRUE)
+      right.objective.value = sum(right.objective.value.j, na.rm = TRUE)
+      # Calculate importance
+      intImp.j = (self$objective.value.j - left.objective.value.j - right.objective.value.j) / objective.value.root.j
+      intImp = (self$objective.value - left.objective.value - right.objective.value) / objective.value.root
+    } else if (inherits(self$strategy, "aleStrategy")) {
+      left.objective.value.j = split.info$left.objective.value.j
+      right.objective.value.j = split.info$right.objective.value.j
+      left.objective.value = split.info$left.objective.value
+      right.objective.value = split.info$right.objective.value
+      intImp.j = (self$objective.value.j - left.objective.value.j - right.objective.value.j) / objective.value.root.j
+      intImp = (self$objective.value - left.objective.value - right.objective.value) / objective.value.root
+    }
+    # left.objective.value.j = self$strategy$heterogeneity(Y.curr.left)
+    # right.objective.value.j = self$strategy$heterogeneity(Y.curr.right)
+    # left.objective.value = sum(left.objective.value.j, na.rm = TRUE)
+    # right.objective.value = sum(right.objective.value.j, na.rm = TRUE)
+    # # Calculate importance
+    # intImp.j = (self$objective.value.j - left.objective.value.j - right.objective.value.j) / objective.value.root.j
+    # intImp = (self$objective.value - left.objective.value - right.objective.value) / objective.value.root
 
     # threshold for root node: impr.par; for child node: intImp.parent * impr.par
     threshold = if (self$id == 1) impr.par else self$intImp.parent * impr.par
-
     # Check if improvement meets threshold
     if (intImp < threshold) {
       self$improvement.met = TRUE
       return(NULL) # Improvement not sufficient: stop splitting at this node
     }
-
     # Create child nodes
     left.child = Node$new(
       id = 2 * self$id, depth = self$depth + 1,
@@ -271,7 +339,6 @@ Node = R6::R6Class("Node", public = list(
       improvement.met = self$improvement.met,
       strategy = self$strategy
     )
-
     # Set parent info for children
     left.child$split.feature.parent = right.child$split.feature.parent = split.feature
     left.child$split.value.parent = right.child$split.value.parent = split.value

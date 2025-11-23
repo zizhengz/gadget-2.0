@@ -1,6 +1,7 @@
 #' gadgetTree: Generalized Additive Decomposition of Global Effects Tree (R6 class)
 #'
-#' Main class for growing, managing, and visualizing effect-based decision trees using a modular strategy (e.g., pdStrategy).
+#' Main class for growing, managing, and visualizing effect-based decision trees
+#' using a modular strategy (e.g., pdStrategy).
 #'
 #' @field strategy Strategy object (e.g., pdStrategy) that implements effect-specific logic.
 #' @field root Node object. Root node of the tree.
@@ -11,7 +12,9 @@
 #' @field split_benchmark List. Timing information for each split (for benchmarking).
 #'
 #' @details
-#' This class manages the overall tree structure and delegates effect-specific operations (such as splitting and plotting) to the provided strategy object. It is the main entry point for fitting and visualizing effect-based decision trees in the gadget package.
+#' This class manages the overall tree structure and delegates effect-specific operations
+#' (such as splitting and plotting) to the provided strategy object. It is the main entry
+#' point for fitting and visualizing effect-based decision trees in the gadget package.
 #'
 #' @examples
 #' # Example: Fit and plot a PD tree using pdStrategy and gadgetTree
@@ -60,18 +63,42 @@ gadgetTree = R6::R6Class(
     #' @param effect R6 object or list. Object containing feature effect results.
     #' @param data Data frame. Data frame containing features and the target variable.
     #' @param target.feature.name Character(1). Name of the target feature to explain.
-    #' @param feature.set Character or NULL. Optional. Subset of features to use for effect calculation. If NULL, all features are used.
-    #' @param split.feature Character or NULL. Optional. Features to consider for splitting at each node. If NULL, all features are considered.
+    #' @param feature.set Character or NULL. \cr
+    #'   Optional. Subset of features to use for effect calculation.
+    #'   If NULL, all features are used.
+    #' @param split.feature Character or NULL. \cr
+    #'   Optional. Features to consider for splitting at each node.
+    #'   If NULL, all features are considered.
     #' @return gadgetTree object, invisibly. The fitted tree object.
-    fit = function(effect, data, target.feature.name, feature.set = NULL, split.feature = NULL) {
+    fit = function(data, target.feature.name, feature.set = NULL, split.feature = NULL, ...) {
       checkmate::assert_data_frame(data, .var.name = "data")
       checkmate::assert_character(target.feature.name, len = 1, .var.name = "target.feature.name")
       checkmate::assert_character(feature.set, null.ok = TRUE, .var.name = "feature.set")
       checkmate::assert_character(split.feature, null.ok = TRUE, .var.name = "split.feature")
       self$split_benchmark = list()
-      result = self$strategy$fit(tree = self, effect = effect, data = data,
+      # Common arguments for all strategies
+      common.args = list(
+        tree = self,
+        data = data,
         target.feature.name = target.feature.name,
-        feature.set = feature.set, split.feature = split.feature)
+        feature.set = feature.set,
+        split.feature = split.feature
+      )
+      .dots = list(...)
+      # Strategy-specific validation and argument preparation
+      if (inherits(self$strategy, "aleStrategy")) {
+        if (is.null(.dots$model)) stop("aleStrategy requires 'model' to be passed via ...", call. = FALSE)
+        if (is.null(.dots$n.intervals)) stop("aleStrategy requires 'n.intervals' to be passed via ...", call. = FALSE)
+        checkmate::assert_integerish(.dots$n.intervals, len = 1, lower = 1, .var.name = "n.intervals")
+        checkmate::assert_function(.dots$predict.fun, null.ok = TRUE, .var.name = "predict.fun")
+      } else if (inherits(self$strategy, "pdStrategy")) {
+        if (is.null(.dots$effect)) stop("pdStrategy requires 'effect' to be passed via ...", call. = FALSE)
+        checkmate::assert_true(is.list(.dots$effect) || inherits(.dots$effect, "R6"), .var.name = "effect")
+      } else {
+        stop("Unknown strategy type: please ensure the strategy implements a compatible 'fit' signature.", call. = FALSE)
+      }
+      # Call strategy's fit method with combined arguments
+      result = do.call(self$strategy$fit, c(common.args, .dots))
       invisible(result)
     },
 

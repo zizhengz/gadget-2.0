@@ -1,7 +1,9 @@
 #' effectStrategy: Abstract Base Class for Effect Strategies (R6 class)
 #'
 #' Provides the interface for effect-based tree strategies (e.g., pdStrategy, aleStrategy).
-#' This abstract class defines the required methods for any effect strategy implementation, including data preprocessing, node transformation, heterogeneity calculation, split search, tree fitting, and visualization.
+#' This abstract class defines the required methods for any effect strategy implementation,
+#' including data preprocessing, node transformation, heterogeneity calculation, split search,
+#' tree fitting, and visualization.
 #'
 #' @field name Character. Name of the strategy.
 #'
@@ -72,7 +74,9 @@ effectStrategy = R6::R6Class(
     },
 
     #' @description
-    #' Calculate the heterogeneity (e.g., sum of variances) of effects within the node. Must be implemented by subclasses.
+    #' Calculate the heterogeneity (e.g., sum of variances) of effects within the node.
+    #' Must be implemented by subclasses.
+    #'
     #' @param Y List. List of effect matrices.
     #' @return Numeric. Numeric vector, heterogeneity for each feature.
     heterogeneity = function(Y) {
@@ -84,7 +88,9 @@ effectStrategy = R6::R6Class(
     #' @param Z Data frame. Split feature set.
     #' @param Y List. Effect matrices.
     #' @param min.node.size Integer(1). Minimum node size.
-    #' @param n.quantiles Integer(1) or NULL. Optional. Number of quantiles to use for candidate split points (for numeric features). If NULL, use default.
+    #' @param n.quantiles Integer(1) or NULL. \cr
+    #'   Optional. Number of quantiles to use for candidate split points (for numeric features).
+    #'   If NULL, use default.
     #' @return List. List with best split feature, split point, etc.
     find_best_split = function(Z, Y, min.node.size, n.quantiles) {
       stop("Not implemented.")
