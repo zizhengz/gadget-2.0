@@ -99,6 +99,12 @@ gadgetTree = R6::R6Class(
       }
       # Call strategy's fit method with combined arguments
       result = do.call(self$strategy$fit, c(common.args, .dots))
+
+      # Clean up large objects from strategy to reduce object size
+      if (inherits(self$strategy, "aleStrategy")) {
+        # Explicitly clean to remove data and model references
+        self$strategy$clean()
+      }
       invisible(result)
     },
 

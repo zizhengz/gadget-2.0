@@ -98,10 +98,9 @@ prepare_split_data_ale = function(model, data, target.feature.name, n.intervals,
   }
   Z = data.table::setDT(Z)
 
-  # No feature grids need
-  grid = lapply(effect, function(feat) {
-    feat$feat.val
-  })
+  # No feature grids needed for ALE strategy, return empty list structure to satisfy interface
+  grid = vector("list", length(names(Z)))
+  names(grid) = names(Z)
 
   return(list(Z = Z, Y = effect, grid = grid))
 }

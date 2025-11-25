@@ -19,6 +19,12 @@
 #' tree$fit(model = model, data = data, target.feature.name = "target")
 #' tree$plot(model = model, data = data, target.feature.name = "target")
 #'
+#' @keywords internal
+default_predict_fun = function(model, data) {
+  pred = model$predict_newdata(data)
+  if (inherits(pred, "Prediction")) pred$response else pred
+}
+
 aleStrategy = R6::R6Class(
   "aleStrategy",
   inherit = effectStrategy,
@@ -163,10 +169,7 @@ aleStrategy = R6::R6Class(
 
       # Default prediction function for mlr3 models compatibility
       if (is.null(predict.fun)) {
-        predict.fun = function(model, data) {
-          pred = model$predict_newdata(data)
-          if (inherits(pred, "Prediction")) pred$response else pred
-        }
+        predict.fun = default_predict_fun
       }
       # Store parameters for ALE-specific splitting
       self$model = model
@@ -182,7 +185,10 @@ aleStrategy = R6::R6Class(
         feature.set = feature.set, split.feature = split.feature, predict.fun = predict.fun)
       Z = prepared.data$Z
       Y = prepared.data$Y
-      grid = prepared.data$grid
+      # Force grid to be empty structure for aleStrategy to save memory
+      # regardless of what preprocess returns
+      grid = vector("list", length(names(Z)))
+      names(grid) = names(Z)
       # Root objective
       objective.value.root.j = self$heterogeneity(Y)
       objective.value.root = sum(unlist(objective.value.root.j), na.rm = TRUE)
@@ -204,6 +210,12 @@ aleStrategy = R6::R6Class(
       )
       tree$root = parent
       invisible(tree)
+    },
+    #' @description
+    #' Clean up large objects (data, model) after fitting to save memory.
+    clean = function() {
+      self$data = NULL
+      self$model = NULL
     }
   )
 )
