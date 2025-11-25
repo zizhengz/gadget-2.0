@@ -10,7 +10,9 @@ effectStrategy: Abstract Base Class for Effect Strategies (R6 class)
 }
 \details{
 Provides the interface for effect-based tree strategies (e.g., pdStrategy, aleStrategy).
-This abstract class defines the required methods for any effect strategy implementation, including data preprocessing, node transformation, heterogeneity calculation, split search, tree fitting, and visualization.
+This abstract class defines the required methods for any effect strategy implementation,
+including data preprocessing, node transformation, heterogeneity calculation, split search,
+tree fitting, and visualization.
 
 
 This class is intended to be subclassed by concrete effect strategies (e.g., pdStrategy, aleStrategy).
@@ -44,7 +46,6 @@ myStrategy = R6::R6Class(
 )
 
 }
-\keyword{internal}
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
@@ -137,7 +138,8 @@ List. List of transformed effects.
 \if{html}{\out{<a id="method-effectStrategy-heterogeneity"></a>}}
 \if{latex}{\out{\hypertarget{method-effectStrategy-heterogeneity}{}}}
 \subsection{Method \code{heterogeneity()}}{
-Calculate the heterogeneity (e.g., sum of variances) of effects within the node. Must be implemented by subclasses.
+Calculate the heterogeneity (e.g., sum of variances) of effects within the node.
+Must be implemented by subclasses.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{effectStrategy$heterogeneity(Y)}\if{html}{\out{</div>}}
 }
@@ -171,7 +173,9 @@ Find the best split point for a node. Must be implemented by subclasses.
 
 \item{\code{min.node.size}}{Integer(1). Minimum node size.}
 
-\item{\code{n.quantiles}}{Integer(1) or NULL. Optional. Number of quantiles to use for candidate split points (for numeric features). If NULL, use default.}
+\item{\code{n.quantiles}}{Integer(1) or NULL. \cr
+Optional. Number of quantiles to use for candidate split points (for numeric features).
+If NULL, use default.}
 }
 \if{html}{\out{</div>}}
 }

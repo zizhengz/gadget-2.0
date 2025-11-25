@@ -19,6 +19,7 @@
 #' tree$fit(effect, data, target.feature.name = "target")
 #' tree$plot(effect, data, target.feature.name = "target")
 #'
+#' @export
 pdStrategy = R6::R6Class(
   "pdStrategy",
   inherit = effectStrategy,

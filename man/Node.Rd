@@ -9,10 +9,13 @@ Node: Tree Node for Effect-based Decision Trees (R6 class)
 Node: Tree Node for Effect-based Decision Trees (R6 class)
 }
 \details{
-Represents a single node in an effect-based decision tree, storing split information, effect statistics, and child nodes.
+Represents a single node in an effect-based decision tree, storing split information,
+effect statistics, and child nodes.
 
 
-This class is used internally by gadgetTree and strategy objects to represent and manage nodes in effect-based decision trees. Each node stores split information, effect statistics, and references to its children.
+This class is used internally by gadgetTree and strategy objects to represent
+and manage nodes in effect-based decision trees. Each node stores split information,
+effect statistics, and references to its children.
 }
 \examples{
 # Example: Creating a Node (typically done internally)
@@ -23,47 +26,68 @@ This class is used internally by gadgetTree and strategy objects to represent an
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
-\item{\code{id}}{Integer. Node identifier within its depth level.}
+\item{\code{id}}{Integer. \cr
+Node identifier within its depth level.}
 
-\item{\code{depth}}{Integer. Depth of the node (root starts at 1).}
+\item{\code{depth}}{Integer. \cr
+Depth of the node (root starts at 1).}
 
-\item{\code{subset.idx}}{Integer vector. Row indices of data that fall into this node.}
+\item{\code{subset.idx}}{Integer vector. \cr
+Row indices of data that fall into this node.}
 
-\item{\code{objective.value.j}}{Numeric vector. Objective values for each feature in this node.}
+\item{\code{objective.value.j}}{Numeric vector. \cr
+Objective values for each feature in this node.}
 
-\item{\code{objective.value}}{Numeric. Total objective value for this node.}
+\item{\code{objective.value}}{Numeric. \cr
+Total objective value for this node.}
 
-\item{\code{objective.value.parent}}{Numeric. Parent node's objective value.}
+\item{\code{objective.value.parent}}{Numeric. \cr
+Parent node's objective value.}
 
-\item{\code{grid}}{Named list. Grid values for each feature in this node.}
+\item{\code{grid}}{Named list. \cr
+Grid values for each feature in this node.}
 
-\item{\code{id.parent}}{Integer or NULL. Parent node id.}
+\item{\code{id.parent}}{Integer or NULL. \cr
+Parent node id.}
 
-\item{\code{child.type}}{Character. Split direction ("<=", ">", "==", "!=").}
+\item{\code{child.type}}{Character. \cr
+Split direction ("<=", ">", "==", "!=").}
 
-\item{\code{split.feature}}{Character. Feature used for splitting this node.}
+\item{\code{split.feature}}{Character. \cr
+Feature used for splitting this node.}
 
-\item{\code{split.feature.parent}}{Character. Parent node's split feature.}
+\item{\code{split.feature.parent}}{Character. \cr
+Parent node's split feature.}
 
-\item{\code{split.value}}{Numeric or factor. Threshold or level used for splitting.}
+\item{\code{split.value}}{Numeric or factor. \cr
+Threshold or level used for splitting.}
 
-\item{\code{split.value.parent}}{Numeric or factor. Parent node's split value.}
+\item{\code{split.value.parent}}{Numeric or factor. \cr
+Parent node's split value.}
 
-\item{\code{children}}{List. Contains left and right child nodes (or NULL for terminal nodes).}
+\item{\code{children}}{List. \cr
+Contains left and right child nodes (or NULL for terminal nodes).}
 
-\item{\code{stop.criterion.met}}{Logical. Whether the minimal node size or improvement threshold has been reached.}
+\item{\code{stop.criterion.met}}{Logical. \cr
+Whether the minimal node size or improvement threshold has been reached.}
 
-\item{\code{improvement.met}}{Logical. Whether the improvement threshold was not met.}
+\item{\code{improvement.met}}{Logical. \cr
+Whether the improvement threshold was not met.}
 
-\item{\code{intImp.j}}{Numeric vector. Interaction importance for each feature.}
+\item{\code{intImp.j}}{Numeric vector. \cr
+Interaction importance for each feature.}
 
-\item{\code{intImp}}{Numeric. Overall interaction importance for this node.}
+\item{\code{intImp}}{Numeric. \cr
+Overall interaction importance for this node.}
 
-\item{\code{intImp.parent}}{Numeric. Parent node's interaction importance.}
+\item{\code{intImp.parent}}{Numeric. \cr
+Parent node's interaction importance.}
 
-\item{\code{strategy}}{Strategy object. Used for effect-specific operations.}
+\item{\code{strategy}}{Strategy object. \cr
+Used for effect-specific operations.}
 
-\item{\code{cache}}{List. Stores cached values for fast re-computation.}
+\item{\code{cache}}{List. \cr
+Stores cached values for fast re-computation.}
 }
 \if{html}{\out{</div>}}
 }

@@ -9,10 +9,13 @@ gadgetTree: Generalized Additive Decomposition of Global Effects Tree (R6 class)
 gadgetTree: Generalized Additive Decomposition of Global Effects Tree (R6 class)
 }
 \details{
-Main class for growing, managing, and visualizing effect-based decision trees using a modular strategy (e.g., pdStrategy).
+Main class for growing, managing, and visualizing effect-based decision trees
+using a modular strategy (e.g., pdStrategy).
 
 
-This class manages the overall tree structure and delegates effect-specific operations (such as splitting and plotting) to the provided strategy object. It is the main entry point for fitting and visualizing effect-based decision trees in the gadget package.
+This class manages the overall tree structure and delegates effect-specific operations
+(such as splitting and plotting) to the provided strategy object. It is the main entry
+point for fitting and visualizing effect-based decision trees in the gadget package.
 }
 \examples{
 # Example: Fit and plot a PD tree using pdStrategy and gadgetTree
@@ -24,7 +27,6 @@ tree$plot_tree_structure()
 split_info = tree$extract_split_info()
 
 }
-\keyword{internal}
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
@@ -93,26 +95,30 @@ Constructor for the gadgetTree object.
 Fit the tree to the provided data and effect object.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{gadgetTree$fit(
-  effect,
   data,
   target.feature.name,
   feature.set = NULL,
-  split.feature = NULL
+  split.feature = NULL,
+  ...
 )}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{effect}}{R6 object or list. Object containing feature effect results.}
-
 \item{\code{data}}{Data frame. Data frame containing features and the target variable.}
 
 \item{\code{target.feature.name}}{Character(1). Name of the target feature to explain.}
 
-\item{\code{feature.set}}{Character or NULL. Optional. Subset of features to use for effect calculation. If NULL, all features are used.}
+\item{\code{feature.set}}{Character or NULL. \cr
+Optional. Subset of features to use for effect calculation.
+If NULL, all features are used.}
 
-\item{\code{split.feature}}{Character or NULL. Optional. Features to consider for splitting at each node. If NULL, all features are considered.}
+\item{\code{split.feature}}{Character or NULL. \cr
+Optional. Features to consider for splitting at each node.
+If NULL, all features are considered.}
+
+\item{\code{...}}{Additional arguments passed to the strategy's fit method.}
 }
 \if{html}{\out{</div>}}
 }

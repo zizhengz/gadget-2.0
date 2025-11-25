@@ -1,3 +1,19 @@
+#' Visualize the Tree Structure
+#'
+#' This function visualizes the decision tree structure using the `ggraph` and `igraph` packages.
+#' It creates a plot where nodes are labeled with split information and edges represent the tree hierarchy.
+#'
+#' @param tree List. A list containing the tree structure, typically converted from the internal Node object format.
+#'
+#' @return A `ggplot` object representing the tree structure.
+#'
+#' @importFrom igraph graph_from_data_frame
+#' @importFrom ggraph ggraph geom_edge_elbow geom_node_label circle
+#' @importFrom ggplot2 aes coord_flip scale_fill_manual theme_void scale_y_reverse theme expansion arrow unit margin
+#' @importFrom stats setNames na.omit
+#' @importFrom grDevices hcl.colors
+#'
+#' @keywords internal
 plot_tree_structure = function(tree) {
   data = prepare_layout_data(tree)
   parent.map = setNames(data$id, data$node.id)

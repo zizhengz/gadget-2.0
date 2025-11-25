@@ -10,10 +10,13 @@ pdStrategy: Partial Dependence Tree Strategy (R6 class)
 }
 \details{
 Implements the effectStrategy interface for building and analyzing Partial Dependence (PD) trees.
-This strategy supports data preprocessing, node transformation, heterogeneity calculation, best split search, tree fitting, and visualization.
+This strategy supports data preprocessing, node transformation, heterogeneity calculation,
+best split search, tree fitting, and visualization.
 
 
-This class is used internally by the gadgetTree framework to implement partial dependence tree growing, splitting, and visualization. It is not intended to be used directly by end users, but can be instantiated for advanced customization.
+This class is used internally by the gadgetTree framework to implement partial dependence
+tree growing, splitting, and visualization. It is not intended to be used directly by end users,
+but can be instantiated for advanced customization.
 }
 \examples{
 # Example: Fit and plot a PD tree using pdStrategy and gadgetTree
@@ -75,20 +78,26 @@ Preprocess input data to generate the split feature set Z, effect list Y, and gr
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{effect}}{R6 object or list. An object containing feature effect results, typically from FeatureEffect or FeatureEffects.}
+\item{\code{effect}}{R6 object or list.\cr
+An object containing feature effect results, typically from FeatureEffect or FeatureEffects.}
 
-\item{\code{data}}{Data frame. Data frame containing all features and the target variable.}
+\item{\code{data}}{Data frame.\cr
+Data frame containing all features and the target variable.}
 
-\item{\code{target.feature}}{Character(1). The name of the target feature in the data to explain.}
+\item{\code{target.feature}}{Character(1).\cr
+The name of the target feature in the data to explain.}
 
-\item{\code{feature.set}}{Character or NULL. Optional. Subset of features to use for effect calculation. If NULL, all features are used.}
+\item{\code{feature.set}}{Character or NULL. \cr
+Optional. Subset of features to use for effect calculation. If NULL, all features are used.}
 
-\item{\code{split.feature}}{Character or NULL. Optional. Features to consider for splitting at each node. If NULL, all features are considered.}
+\item{\code{split.feature}}{Character or NULL. \cr
+Optional. Features to consider for splitting at each node. If NULL, all features are considered.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-List. A list with Z (split feature set), Y (effect list), and grid (feature grid).
+List. \cr
+  A list with Z (split feature set), Y (effect list), and grid (feature grid).
 }
 }
 \if{html}{\out{<hr>}}
@@ -153,7 +162,9 @@ Find the best split point for a node.
 
 \item{\code{min.node.size}}{Integer(1). Minimum node size.}
 
-\item{\code{n.quantiles}}{Integer(1) or NULL. Optional. Number of quantiles to use for candidate split points (for numeric features). If NULL, use default.}
+\item{\code{n.quantiles}}{Integer(1) or NULL. \cr
+Optional. Number of quantiles to use for candidate split points (for numeric features).
+If NULL, use default.}
 }
 \if{html}{\out{</div>}}
 }

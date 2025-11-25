@@ -38,8 +38,7 @@
 #'   )
 #' )
 #'
-#' @keywords internal
-
+#' @export
 effectStrategy = R6::R6Class(
   "effectStrategy",
   public = list(

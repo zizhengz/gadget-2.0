@@ -1,3 +1,9 @@
+#' @keywords internal
+default_predict_fun = function(model, data) {
+  pred = model$predict_newdata(data)
+  if (inherits(pred, "Prediction")) pred$response else pred
+}
+
 #' aleStrategy: Accumulated Local Effects Tree Strategy (R6 class)
 #'
 #' Implements the effectStrategy interface for building and analyzing Accumulated Local Effects (ALE) trees.
@@ -5,6 +11,11 @@
 #' best split search, tree fitting, and visualization.
 #'
 #' @field tree_ref Reference to the associated tree instance.
+#' @field model Fitted model object (persistent).
+#' @field data Data frame containing all features and the target variable (persistent).
+#' @field target.feature.name Character(1). The name of the target feature (persistent).
+#' @field n.intervals Integer. Number of intervals for numeric features (persistent).
+#' @field predict.fun Function. Prediction function (persistent).
 #'
 #' @details
 #' This class is used internally by the gadgetTree framework to implement ALE-based
@@ -19,12 +30,7 @@
 #' tree$fit(model = model, data = data, target.feature.name = "target")
 #' tree$plot(model = model, data = data, target.feature.name = "target")
 #'
-#' @keywords internal
-default_predict_fun = function(model, data) {
-  pred = model$predict_newdata(data)
-  if (inherits(pred, "Prediction")) pred$response else pred
-}
-
+#' @export
 aleStrategy = R6::R6Class(
   "aleStrategy",
   inherit = effectStrategy,
@@ -155,7 +161,7 @@ aleStrategy = R6::R6Class(
     #' @param model Fitted model object.
     #' @param data Data frame. Data frame.
     #' @param target.feature.name Character(1). Target feature name.
-    #' @param h Integer. Number of intervals for numeric features.
+    #' @param n.intervals Integer. Number of intervals for numeric features.
     #' @param feature.set Character or NULL. Feature subset (optional).
     #' @param split.feature Character or NULL. Split feature (optional).
     #' @param predict.fun Function or NULL. Prediction function (optional).

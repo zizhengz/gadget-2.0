@@ -8,30 +8,43 @@ mean_center_ice(effect, feature.set = NULL, mean.center = TRUE)
 }
 \arguments{
 \item{effect}{(`R6` object or list)\cr
-An object containing feature effect results, typically with a `results` field. Usually produced by `FeatureEffect` or similar functions.}
+An object containing feature effect results, typically with
+a `results` field. Usually produced by `FeatureEffect` or
+similar functions.}
 
 \item{feature.set}{(`character` or `NULL`)\cr
-Optional. Subset of features to include. If `NULL`, all features in the effect object are used. Default is `NULL`.}
+Optional. Subset of features to include. If `NULL`, all
+features in the effect object are used. Default is `NULL`.}
 
 \item{mean.center}{(`logical(1)`)\cr
-Whether to mean-center the effect matrix for each observation. Default is `TRUE`.}
+Whether to mean-center the effect matrix for each observation.
+Default is `TRUE`.}
 }
 \value{
 (`list`)\cr
-  A list with the following elements (always lists, even for a single feature):
+  A list with the following elements (always lists, even for
+  a single feature):
   \describe{
     \item{Y}{A named list of effect matrices (one per feature).}
     \item{grid}{A named list of grid values (column names) for each feature.}
   }
 }
 \description{
-Processes feature effect results to produce a list of effect matrices (Y) and their corresponding grid values for each feature. Optionally mean-centers the effects for each observation.
+Processes feature effect results to produce a list of effect
+matrices (Y) and their corresponding grid values for each
+feature. Optionally mean-centers the effects for each observation.
 }
 \details{
-If the effect results are in `data.frame` format, the function pivots the data to wide format and mean-centers if requested. If the effect results are a list, each element is processed similarly. The grid contains the unique values (or bins) for each feature. This function is typically used internally for preparing data for effect tree construction and visualization.
+If the effect results are in `data.frame` format, the function
+pivots the data to wide format and mean-centers if requested.
+If the effect results are a list, each element is processed similarly.
+The grid contains the unique values (or bins) for each feature.
+This function is typically used internally for preparing data for
+effect tree construction and visualization.
 }
 \examples{
-# Example usage (assuming 'effect' is an object with a 'results' field from FeatureEffect):
+# Example usage (assuming 'effect' is an object with a 'results' field
+# from FeatureEffect):
 # result <- mean_center_ice(effect, feature.set = c("feature1", "feature2"), mean.center = TRUE)
 # Y <- result$Y
 # grid <- result$grid

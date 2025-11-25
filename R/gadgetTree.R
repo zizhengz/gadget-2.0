@@ -25,8 +25,7 @@
 #' tree$plot_tree_structure()
 #' split_info = tree$extract_split_info()
 #'
-#' @keywords internal
-
+#' @export
 gadgetTree = R6::R6Class(
   "gadgetTree",
   public = list(
@@ -60,7 +59,6 @@ gadgetTree = R6::R6Class(
 
     #' @description
     #' Fit the tree to the provided data and effect object.
-    #' @param effect R6 object or list. Object containing feature effect results.
     #' @param data Data frame. Data frame containing features and the target variable.
     #' @param target.feature.name Character(1). Name of the target feature to explain.
     #' @param feature.set Character or NULL. \cr
@@ -69,6 +67,7 @@ gadgetTree = R6::R6Class(
     #' @param split.feature Character or NULL. \cr
     #'   Optional. Features to consider for splitting at each node.
     #'   If NULL, all features are considered.
+    #' @param ... Additional arguments passed to the strategy's fit method.
     #' @return gadgetTree object, invisibly. The fitted tree object.
     fit = function(data, target.feature.name, feature.set = NULL, split.feature = NULL, ...) {
       checkmate::assert_data_frame(data, .var.name = "data")
