@@ -4,6 +4,7 @@ search_best_split_point_ale = function(
   n.quantiles = NULL,
   min.node.size = 1L
 ) {
+  risk_from_stats = function(n, s1, s2) ifelse(n <= 1L, 0.0, s2 - (s1 * s1) / n)
   # Helper: Find split candidates
   build_order_and_candidates = function() {
     if (!is.categorical) {
@@ -74,7 +75,6 @@ search_best_split_point_ale = function(
     d = st.table$dL.mat[, row.id] # length p, dL of each feature
     interval.idx = st.table$interval.idx.mat[, row.id] # length p, interval number of each feature
     m = offsets + interval.idx # length p, subscript of each feature in flattened vector
-    risk_from_stats = function(n, s1, s2) ifelse(n <= 1L, 0.0, s2 - (s1 * s1) / n)
 
     r.n.old = st.table$r.n[m]
     r.s1.old = st.table$r.s1[m]

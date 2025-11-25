@@ -16,7 +16,7 @@
 #' @return List. List of transformed ALE effects.
 #'
 node_transform_ale = function(Y, idx, split.feature = NULL, model = NULL, data = NULL,
-  target.feature.name = NULL, n.intervals = 10, predict.fun = NULL) {  # nolint: object_usage_linter
+  target.feature.name = NULL, n.intervals = 10, predict.fun = NULL) {
   # Step 1: Subset Y to current node indices using row.id for alignment
   Y.subset = lapply(names(Y), function(feat) {
     Y.j = Y[[feat]]

@@ -280,7 +280,7 @@ Node = R6::R6Class("Node", public = list(
     if (length(idx.left) == 0) idx.left = 0
     if (length(idx.right) == 0) idx.right = 0
 
-    # Create grids for children
+    # Create grids for children (note: grid.info only effective for pdStrategy)
     grid.info = self$create_child_grids(split.feature, split.value, is.categorical)
     # Calculate objective values for children
     if (inherits(self$strategy, "pdStrategy")) {
@@ -290,7 +290,7 @@ Node = R6::R6Class("Node", public = list(
       right.objective.value.j = self$strategy$heterogeneity(Y.curr.right)
       left.objective.value = sum(left.objective.value.j, na.rm = TRUE)
       right.objective.value = sum(right.objective.value.j, na.rm = TRUE)
-      # Calculate importance
+      # Calculate interaction importance
       intImp.j = (self$objective.value.j - left.objective.value.j - right.objective.value.j) / objective.value.root.j
       intImp = (self$objective.value - left.objective.value - right.objective.value) / objective.value.root
     } else if (inherits(self$strategy, "aleStrategy")) {
@@ -301,15 +301,8 @@ Node = R6::R6Class("Node", public = list(
       intImp.j = (self$objective.value.j - left.objective.value.j - right.objective.value.j) / objective.value.root.j
       intImp = (self$objective.value - left.objective.value - right.objective.value) / objective.value.root
     }
-    # left.objective.value.j = self$strategy$heterogeneity(Y.curr.left)
-    # right.objective.value.j = self$strategy$heterogeneity(Y.curr.right)
-    # left.objective.value = sum(left.objective.value.j, na.rm = TRUE)
-    # right.objective.value = sum(right.objective.value.j, na.rm = TRUE)
-    # # Calculate importance
-    # intImp.j = (self$objective.value.j - left.objective.value.j - right.objective.value.j) / objective.value.root.j
-    # intImp = (self$objective.value - left.objective.value - right.objective.value) / objective.value.root
 
-    # threshold for root node: impr.par; for child node: intImp.parent * impr.par
+    # Threshold for root node: impr.par; for child node: intImp.parent * impr.par
     threshold = if (self$id == 1) impr.par else self$intImp.parent * impr.par
     # Check if improvement meets threshold
     if (intImp < threshold) {
