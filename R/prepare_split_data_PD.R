@@ -1,9 +1,18 @@
 prepare_split_data_pd = function(effect, data, target.feature.name = NULL, feature.set = NULL, split.feature = NULL) {
   # X: full feature set
-  X = data[, setdiff(colnames(data), target.feature.name)]
+  feature_names = setdiff(colnames(data), target.feature.name)
+  if (data.table::is.data.table(data)) {
+    X = data[, feature_names, with = FALSE]
+  } else {
+    X = data[, feature_names, drop = FALSE]
+  }
   # Z \subseteq X: split feature set
   Z = if (!is.null(split.feature)) {
-    X[, split.feature, drop = FALSE]
+    if (data.table::is.data.table(X)) {
+      X[, split.feature, with = FALSE]
+    } else {
+      X[, split.feature, drop = FALSE]
+    }
   } else {
     X
   }

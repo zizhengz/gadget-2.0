@@ -42,7 +42,11 @@ calculate_ale = function(model, data, feature.set, target.feature.name, n.interv
       if (inherits(pred, "Prediction")) pred$response else pred
     }
   }
-  X = data[, setdiff(colnames(data), target.feature.name), drop = FALSE]
+  if (data.table::is.data.table(data)) {
+    X = data[, setdiff(colnames(data), target.feature.name), with = FALSE]
+  } else {
+    X = data[, setdiff(colnames(data), target.feature.name), drop = FALSE]
+  }
   eff.list = lapply(feature.set, function(feat) {
     if (is.factor(data[[feat]])) {
       ale_categorical_feature(model = model, data = data, X = X,
@@ -79,8 +83,8 @@ ale_numeric_feature = function(model, data, X, feature, target.feature.name, n.i
   max_id = length(q) - 1L
   interval.index[interval.index > max_id] = max_id
   # Build boundary datasets
-  data.lower = X
-  data.upper = X
+  data.lower = data.table::copy(X)
+  data.upper = data.table::copy(X)
   data.lower[[feature]] = q[interval.index]
   data.upper[[feature]] = q[interval.index + 1L]
   # Predictions at boundaries
@@ -131,8 +135,8 @@ ale_categorical_feature = function(model, data, X, feature, target.feature.name,
   row.ind.plus = seq_len(nrow(data.copy))[levels.id < K] # not the highest level
   row.ind.neg = seq_len(nrow(data.copy))[levels.id > 1] # not the lowest level
 
-  X.plus = X
-  X.neg = X
+  X.plus = data.table::copy(X)
+  X.neg = data.table::copy(X)
   X.plus[row.ind.plus, feature] = levels.orig[levels.id[row.ind.plus] + 1L]
   X.neg[row.ind.neg, feature] = levels.orig[levels.id[row.ind.neg] - 1L]
   y.hat.plus = predict.fun(model, X.plus)
@@ -142,8 +146,8 @@ ale_categorical_feature = function(model, data, X, feature, target.feature.name,
   DT = data.table::data.table(
     row.id         = seq_len(n.rows),
     feat.val       = data.copy[[feature]],
-    x.left         = X.neg[, feature],
-    x.right        = X.plus[, feature],
+    x.left         = X.neg[[feature]],
+    x.right        = X.plus[[feature]],
     dL             = delta,
     interval.index = levels.id
   )
