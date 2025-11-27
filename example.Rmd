@@ -69,7 +69,7 @@ syn.tree.ale$fit(model = syn.learner, data = syn.data, target.feature.name = "y"
 syn.tree.ale$plot_tree_structure()
 syn.esi.ale = syn.tree.ale$extract_split_info()
 print(syn.esi.ale)
-#object_size(syn.tree.ale)
+object_size(syn.tree.ale)
 ```
 
 ## Bikeshare data
