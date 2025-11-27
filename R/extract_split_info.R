@@ -70,13 +70,15 @@ extract_split_info = function(tree, split_benchmark = NULL) {
   df.split = df.split[, new_order]
 
   # Merge split_benchmark info if provided
-  if (!is.null(split_benchmark)) {
+  if (!is.null(split_benchmark) && length(split_benchmark) > 0) {
     # Ensure split_benchmark is a data.frame
     if (is.list(split_benchmark) && !is.data.frame(split_benchmark)) {
       split_benchmark = do.call(rbind, lapply(split_benchmark, as.data.frame))
     }
-    # Merge by c("id", "depth")
-    df.split = merge(df.split, split_benchmark, by.x = c("id", "depth"), by.y = c("node.id", "depth"), all.x = TRUE, sort = TRUE)
+    # Check if split_benchmark is valid data frame with rows
+    if (is.data.frame(split_benchmark) && nrow(split_benchmark) > 0) {
+       df.split = merge(df.split, split_benchmark, by.x = c("id", "depth"), by.y = c("node.id", "depth"), all.x = TRUE, sort = TRUE)
+    }
   }
   df.split
 }

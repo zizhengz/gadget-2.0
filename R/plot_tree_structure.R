@@ -23,14 +23,20 @@ plot_tree_structure = function(tree) {
 
   g = igraph::graph_from_data_frame(edge.list, vertices = data, directed = TRUE)
 
-  ggraph::ggraph(g, layout = "tree") +
-    coord_flip(clip = "off") +
-    ggraph::geom_edge_elbow(
+  gg = ggraph::ggraph(g, layout = "tree") +
+    coord_flip(clip = "off")
+
+  # Only add edges if there are any
+  if (nrow(edge.list) > 0) {
+    gg = gg + ggraph::geom_edge_elbow(
       arrow = arrow(length = unit(0.05, "cm")),
       end_cap = ggraph::circle(1.5, "mm"),
       edge_colour = "grey40",
       edge_width = 0.4
-    ) +
+    )
+  }
+
+  gg +
     ggraph::geom_node_label(
       aes(label = label, fill = factor(depth)),
       size = 3.5,
