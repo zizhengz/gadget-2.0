@@ -197,7 +197,7 @@ aleStrategy = R6::R6Class(
       names(grid) = names(Z)
       # Root objective
       objective.value.root.j = self$heterogeneity(Y)
-      objective.value.root = sum(unlist(objective.value.root.j), na.rm = TRUE)
+      objective.value.root = sum(objective.value.root.j, na.rm = TRUE)
       # Create root node
       parent = Node$new(id = 1, depth = 1, subset.idx = seq_len(nrow(Z)), grid = grid,
         objective.value.parent = NA, objective.value = objective.value.root, intImp.j = NULL,

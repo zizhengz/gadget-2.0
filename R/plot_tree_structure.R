@@ -41,7 +41,7 @@ plot_tree_structure = function(tree) {
       aes(label = label, fill = factor(depth)),
       size = 3.5,
       label.padding = unit(0.25, "lines"),
-      label.size = 0.3,
+      #label.size = 0.3,
       label.r = unit(0.1, "lines")
     ) +
     scale_fill_manual(values = hcl.colors(n = length(tree), palette = "Set2")) +

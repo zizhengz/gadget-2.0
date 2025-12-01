@@ -28,9 +28,9 @@ search_best_split_point_ale = function(
       valid.t = t.idx[t.idx >= 1L & t.idx <= (n.obs - 1L)]
       is.cand[unique(valid.t)] = TRUE
       list(ord.idx = ord.idx,
-           z.sorted = z.sorted,
-           n.obs = n.obs,
-           is.cand = is.cand)
+        z.sorted = z.sorted,
+        n.obs = n.obs,
+        is.cand = is.cand)
     } else {
       z.fac = droplevels(z)
       z.nonNA = which(!is.na(z.fac))
@@ -106,55 +106,120 @@ search_best_split_point_ale = function(
   }
 
   # Helper: Boundary stabilizer using cumulative sums (numeric feature only)
-  adjust_side_for_feature = function(side, t, w) {
-    # w = window size (# of points near boundary)
-    if (w <= 0L) {
-      return(if (side == "L") l.risks[split.feat.j] else r.risks[split.feat.j])
-    }
-    if (side == "L") {
-      # Left node: ord[1..t]
-      tot.n = t
-      if (tot.n <= 1L) {
-        return(l.risks[split.feat.j])
-      }
-      w = min(w, tot.n)
-      # near: last w samples on the left
-      s1.near = S1[t] - if (t - w >= 1L) S1[t - w] else 0.0
-      s2.near = S2[t] - if (t - w >= 1L) S2[t - w] else 0.0
+  # adjust_side_for_feature = function(side, t, w) {
+  #   # w = window size (# of points near boundary)
+  #   if (w <= 0L) {
+  #     return(if (side == "L") l.risks[split.feat.j] else r.risks[split.feat.j])
+  #   }
+  #   if (side == "L") {
+  #     # Left node: ord[1..t]
+  #     tot.n = t
+  #     if (tot.n <= 1L) {
+  #       return(l.risks[split.feat.j])
+  #     }
+  #     w = min(w, tot.n)
+  #     # near: last w samples on the left
+  #     s1.near = S1[t] - if (t - w >= 1L) S1[t - w] else 0.0
+  #     s2.near = S2[t] - if (t - w >= 1L) S2[t - w] else 0.0
+  #
+  #     risk.j = l.risks[split.feat.j]
+  #     s1.tot = S1[t]
+  #     s2.tot = S2[t]
+  #   } else {
+  #     # Right node: ord[t+1..n.obs]
+  #     tot.n = n.obs - t
+  #     if (tot.n <= 1L) {
+  #       return(r.risks[split.feat.j])
+  #     }
+  #     w = min(w, tot.n)
+  #     # near: first w samples on the right
+  #     s1.near = S1[t + w] - S1[t]
+  #     s2.near = S2[t + w] - S2[t]
+  #
+  #     risk.j = r.risks[split.feat.j]
+  #     # totals over the right node
+  #     s1.tot = S1.tot - S1[t]
+  #     s2.tot = S2.tot - S2[t]
+  #   }
+  #
+  #   # far region = node minus near window
+  #   n.far = tot.n - w
+  #   if (n.far <= 1L) {
+  #     return(risk.j)
+  #   }
+  #   s1.far = s1.tot - s1.near
+  #   s2.far = s2.tot - s2.near
+  #   var.near = (s2.near - s1.near * s1.near / w) / max(w - 1L, 1L)
+  #   var.far = (s2.far - s1.far * s1.far / n.far) / max(n.far - 1L, 1L)
+  #   if (is.na(var.far) || is.na(var.near) || var.far <= 0 || var.near < 4.0 * var.far) {
+  #     return(risk.j)
+  #   }
+  #   risk.j - risk_from_stats(w, s1.near, s2.near) + w * var.far
+  # }
 
-      risk.j = l.risks[split.feat.j]
-      s1.tot = S1[t]
-      s2.tot = S2[t]
+  adjust_side_for_feature = function(side, t) {
+    # 1. Determine range of current side
+    is.left = (side == "L")
+    if (is.left) {
+      idx.start = 1L
+      idx.end = t
+      original.risk = l.risks[split.feat.j]
     } else {
-      # Right node: ord[t+1..n.obs]
-      tot.n = n.obs - t
-      if (tot.n <= 1L) {
-        return(r.risks[split.feat.j])
-      }
-      w = min(w, tot.n)
-      # near: first w samples on the right
-      s1.near = S1[t + w] - S1[t]
-      s2.near = S2[t + w] - S2[t]
-
-      risk.j = r.risks[split.feat.j]
-      # totals over the right node
-      s1.tot = S1.tot - S1[t]
-      s2.tot = S2.tot - S2[t]
+      idx.start = t + 1L
+      idx.end = n.obs
+      original.risk = r.risks[split.feat.j]
     }
 
-    # far region = node minus near window
-    n.far = tot.n - w
-    if (n.far <= 1L) {
-      return(risk.j)
+    n.side = idx.end - idx.start + 1L
+    # 2. if sample size <= 20, do not smooth
+    if (n.side <= 20L) {
+      return(original.risk)
     }
-    s1.far = s1.tot - s1.near
-    s2.far = s2.tot - s2.near
-    var.near = (s2.near - s1.near * s1.near / w) / max(w - 1L, 1L)
-    var.far  = (s2.far - s1.far * s1.far / n.far) / max(n.far - 1L, 1L)
-    if (is.na(var.far) || is.na(var.near) || var.far <= 0 || var.near < 4.0 * var.far) {
-      return(risk.j)
+
+    # 3. window size w: max(10% of side samples, 10)
+    w = max(round(0.1 * n.side), 10L)
+
+    # 4. Get interval indices and dL for current side
+    node.int = interval.idx.sorted[idx.start:idx.end]
+    node.dL = dL.j.sorted[idx.start:idx.end]
+
+    # 5. Get unique set of interval indices within the window
+    if (is.left) {
+      # Left window: last w elements
+      window.indices = (n.side - w + 1L):n.side
+    } else {
+      # Right window: first w elements
+      window.indices = 1L:w
     }
-    risk.j - risk_from_stats(w, s1.near, s2.near) + w * var.far
+    target.intervals = unique(node.int[window.indices])
+
+    # 6. Define Near / Far samples
+    # As long as it belongs to target_intervals, treat as Near (regardless of whether inside window w)
+    is.near = node.int %in% target.intervals
+
+    # 7. Sample size check
+    n.near = sum(is.near)
+    n.far = n.side - n.near
+    if (n.near < 2 || n.far < 2) {
+      return(original.risk)
+    }
+
+    # 8. Get dL and calculate SD
+    vals.near = node.dL[is.near]
+    vals.far = node.dL[!is.near]
+    sd.near = sd(vals.near)
+    sd.far = sd(vals.far)
+
+    # 9. Condition and replacement
+    if (!is.na(sd.near) && !is.na(sd.far) && sd.near > 2.0 * sd.far) {
+      node.dL[is.near] = rnorm(n = n.near, mean = mean(vals.far), sd = sd.far)
+      s1.vec = rowsum(node.dL, group = node.int, reorder = FALSE)
+      s2.vec = rowsum(node.dL^2, group = node.int, reorder = FALSE)
+      n.vec  = rowsum(rep(1L, length(node.dL)), group = node.int, reorder = FALSE)
+      interval.sse = s2.vec - (s1.vec^2) / n.vec
+      return(sum(interval.sse))
+    }
+    return(original.risk)
   }
 
   feature.names = names(effect)
@@ -182,17 +247,21 @@ search_best_split_point_ale = function(
   # cumulative dL sums of current (only if numeric) split.feat by ord.idx for O(1) neighborhood stats calculation in boundary stabilizer
   if (!is.categorical) {
     dL.j.sorted = st.table$dL.mat[split.feat.j, ord.idx] # N x 1
-    S1 = cumsum(dL.j.sorted)
-    S2 = cumsum(dL.j.sorted * dL.j.sorted)
-    S1.tot = S1[n.obs]
-    S2.tot = S2[n.obs]
+    # S1 = cumsum(dL.j.sorted)
+    # S2 = cumsum(dL.j.sorted * dL.j.sorted)
+    # S1.tot = S1[n.obs]
+    # S2.tot = S2[n.obs]
+
+    #### new ####
+    interval.idx.sorted = st.table$interval.idx.mat[split.feat.j, ord.idx]
+    #### new ####
   }
 
   # Main sweep
   risks.sum = sum(r.risks)
   best.risks.sum = Inf
   best.t = NA_integer_
-  w.base = if (!is.categorical) max(round(0.1 * n.obs), 10L) else 0L
+  # w.base = if (!is.categorical) max(round(0.1 * n.obs, 0), 10L) else 0L
   best.l.risks = NULL
   best.r.risks = NULL
   for (t in 1:(n.obs - 1L)) {
@@ -200,13 +269,16 @@ search_best_split_point_ale = function(
     if (!is.cand.t[t]) next
     if (t < min.node.size || (n.obs - t) < min.node.size) next
     if (!is.categorical) {
-      risk.t.j = l.risks[split.feat.j] + r.risks[split.feat.j]
-      w.l = min(w.base, t)
-      w.r = min(w.base, n.obs - t)
-      adj.l.risk.t.j = adjust_side_for_feature("L", t, w.l)
-      adj.r.risk.t.j = adjust_side_for_feature("R", t, w.r)
-      adj.risk.t.j = adj.l.risk.t.j + adj.r.risk.t.j
-      total = risks.sum - risk.t.j + adj.risk.t.j
+      # risk.t.j = l.risks[split.feat.j] + r.risks[split.feat.j]
+      # # w.l = min(w.base, t)
+      # # w.r = min(w.base, n.obs - t)
+      # # adj.l.risk.t.j = adjust_side_for_feature("L", t, w.l)
+      # # adj.r.risk.t.j = adjust_side_for_feature("R", t, w.r)
+      # adj.l.risk.t.j = adjust_side_for_feature("L", t)
+      # adj.r.risk.t.j = adjust_side_for_feature("R", t)
+      # adj.risk.t.j = adj.l.risk.t.j + adj.r.risk.t.j
+      # total = risks.sum - risk.t.j + adj.risk.t.j
+      total = risks.sum
     } else {
       total = risks.sum
     }
@@ -215,10 +287,10 @@ search_best_split_point_ale = function(
       best.t = t
       best.left.risks = l.risks
       best.right.risks = r.risks
-      if (!is.categorical) {
-        best.left.risks[split.feat.j] = adj.l.risk.t.j
-        best.right.risks[split.feat.j] = adj.r.risk.t.j
-      }
+      # if (!is.categorical) {
+      #   best.left.risks[split.feat.j] = adj.l.risk.t.j
+      #   best.right.risks[split.feat.j] = adj.r.risk.t.j
+      # }
     }
   }
   if (is.na(best.t)) {

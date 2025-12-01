@@ -165,7 +165,7 @@ Node = R6::R6Class("Node", public = list(
     children.info = tryCatch({
       self$create_children(Z, Y, split.info, objective.value.root.j, objective.value.root, impr.par)
     }, error = function(e) {
-      # message("create_children error: ", e$message)
+      message("create_children error: ", e$message)
       return(NULL)
     })
     if (is.null(children.info)) {
@@ -223,7 +223,7 @@ Node = R6::R6Class("Node", public = list(
     }
     split.res = self$strategy$find_best_split(Z = Z.subset, Y = Y.curr,
       min.node.size = min.node.size, n.quantiles = n.quantiles)
-    if (is.null(split.res$best.split) || length(split.res$best.split) == 0) {
+    if (is.null(split.res$best.split) || length(split.res$best.split) == 0 || all(!split.res$best.split)) {
       return(NULL)
     }
     if (inherits(self$strategy, "aleStrategy")) {
