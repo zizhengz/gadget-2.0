@@ -120,7 +120,9 @@ search_best_split_ale = function(
       stringsAsFactors = FALSE
     )
   }), fill = TRUE)
-  res$best.split = res$split.objective == min(res$split.objective, na.rm = TRUE)
+
+  min.obj = min(res$split.objective, na.rm = TRUE)
+  res$best.split = is.finite(min.obj) & (res$split.objective == min.obj)
   res$split.runtime = (t.end - t.start)[[3]]
   res[, c("split.feature", "is.categorical", "split.point",
     "split.objective", "feature", "objective.value.j",
