@@ -167,7 +167,7 @@ aleStrategy = R6::R6Class(
     #' @param predict.fun Function or NULL. Prediction function (optional).
     #' @param ... Additional arguments (ignored).
     #' @return gadgetTree object, invisibly. The fitted tree object.
-    fit = function(tree, model, data, target.feature.name, n.intervals, feature.set = NULL, split.feature = NULL, predict.fun = NULL) {
+    fit = function(tree, model, data, target.feature.name, n.intervals, feature.set = NULL, split.feature = NULL, predict.fun = NULL, ...) {
       if (missing(model)) stop("aleStrategy requires 'model' to be passed.", call. = FALSE)
       if (missing(n.intervals)) stop("aleStrategy requires 'n.intervals' to be passed.", call. = FALSE)
       checkmate::assert_integerish(n.intervals, len = 1, lower = 1, .var.name = "n.intervals")
