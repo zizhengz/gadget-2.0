@@ -75,33 +75,19 @@ gadgetTree = R6::R6Class(
       checkmate::assert_character(feature.set, null.ok = TRUE, .var.name = "feature.set")
       checkmate::assert_character(split.feature, null.ok = TRUE, .var.name = "split.feature")
       self$split_benchmark = list()
-      # Common arguments for all strategies
-      common.args = list(
+
+      # The strategy is responsible for validating and handling its own arguments (via ...)
+      result = self$strategy$fit(
         tree = self,
         data = data,
         target.feature.name = target.feature.name,
         feature.set = feature.set,
-        split.feature = split.feature
+        split.feature = split.feature,
+        ...
       )
-      .dots = list(...)
-      # Strategy-specific validation and argument preparation
-      if (inherits(self$strategy, "aleStrategy")) {
-        if (is.null(.dots$model)) stop("aleStrategy requires 'model' to be passed via ...", call. = FALSE)
-        if (is.null(.dots$n.intervals)) stop("aleStrategy requires 'n.intervals' to be passed via ...", call. = FALSE)
-        checkmate::assert_integerish(.dots$n.intervals, len = 1, lower = 1, .var.name = "n.intervals")
-        checkmate::assert_function(.dots$predict.fun, null.ok = TRUE, .var.name = "predict.fun")
-      } else if (inherits(self$strategy, "pdStrategy")) {
-        if (is.null(.dots$effect)) stop("pdStrategy requires 'effect' to be passed via ...", call. = FALSE)
-        checkmate::assert_true(is.list(.dots$effect) || inherits(.dots$effect, "R6"), .var.name = "effect")
-      } else {
-        stop("Unknown strategy type: please ensure the strategy implements a compatible 'fit' signature.", call. = FALSE)
-      }
-      # Call strategy's fit method with combined arguments
-      result = do.call(self$strategy$fit, c(common.args, .dots))
 
-      # Clean up large objects from strategy to reduce object size
-      if (inherits(self$strategy, "aleStrategy")) {
-        # Explicitly clean to remove data and model references
+      # Cleanup hook
+      if (exists("clean", envir = self$strategy) && is.function(self$strategy$clean)) {
         self$strategy$clean()
       }
       invisible(result)

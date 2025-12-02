@@ -105,7 +105,7 @@ search_best_split_point_ale = function(
     sum(-l.risk.old - r.risk.old + l.risk.new + r.risk.new)
   }
 
-  # Helper: Boundary stabilizer using cumulative sums (numeric feature only)
+  #### Old Helper: Boundary stabilizer using cumulative sums (numeric feature only) ####
   # adjust_side_for_feature = function(side, t, w) {
   #   # w = window size (# of points near boundary)
   #   if (w <= 0L) {
@@ -156,7 +156,9 @@ search_best_split_point_ale = function(
   #   }
   #   risk.j - risk_from_stats(w, s1.near, s2.near) + w * var.far
   # }
+  #### End old adjust_side_for_feature function ####
 
+  #### New Helper: Boundary stabilizer using cumulative sums (numeric feature only) ####
   adjust_side_for_feature = function(side, t) {
     # 1. Determine range of current side
     is.left = (side == "L")
@@ -215,12 +217,13 @@ search_best_split_point_ale = function(
       node.dL[is.near] = rnorm(n = n.near, mean = mean(vals.far), sd = sd.far)
       s1.vec = rowsum(node.dL, group = node.int, reorder = FALSE)
       s2.vec = rowsum(node.dL^2, group = node.int, reorder = FALSE)
-      n.vec  = rowsum(rep(1L, length(node.dL)), group = node.int, reorder = FALSE)
+      n.vec = rowsum(rep(1L, length(node.dL)), group = node.int, reorder = FALSE)
       interval.sse = s2.vec - (s1.vec^2) / n.vec
       return(sum(interval.sse))
     }
     return(original.risk)
   }
+  #### End new adjust_side_for_feature function ####
 
   feature.names = names(effect)
   p = length(feature.names)
@@ -261,36 +264,45 @@ search_best_split_point_ale = function(
   risks.sum = sum(r.risks)
   best.risks.sum = Inf
   best.t = NA_integer_
-  # w.base = if (!is.categorical) max(round(0.1 * n.obs, 0), 10L) else 0L
   best.l.risks = NULL
   best.r.risks = NULL
   for (t in 1:(n.obs - 1L)) {
     risks.sum = risks.sum + move_row_all(ord.idx[t])
     if (!is.cand.t[t]) next
     if (t < min.node.size || (n.obs - t) < min.node.size) next
-    if (!is.categorical) {
-      # risk.t.j = l.risks[split.feat.j] + r.risks[split.feat.j]
-      # # w.l = min(w.base, t)
-      # # w.r = min(w.base, n.obs - t)
-      # # adj.l.risk.t.j = adjust_side_for_feature("L", t, w.l)
-      # # adj.r.risk.t.j = adjust_side_for_feature("R", t, w.r)
-      # adj.l.risk.t.j = adjust_side_for_feature("L", t)
-      # adj.r.risk.t.j = adjust_side_for_feature("R", t)
-      # adj.risk.t.j = adj.l.risk.t.j + adj.r.risk.t.j
-      # total = risks.sum - risk.t.j + adj.risk.t.j
-      total = risks.sum
-    } else {
-      total = risks.sum
+    # Handle single unique value case for the split feature
+    l.const = z.sorted[1] == z.sorted[t]
+    r.const = z.sorted[t + 1L] == z.sorted[n.obs]
+    curr.l.risks = l.risks
+    curr.r.risks = r.risks
+    if (l.const) curr.l.risks[split.feat.j] = 0.0
+    if (r.const) curr.r.risks[split.feat.j] = 0.0
+    total = sum(curr.l.risks) + sum(curr.r.risks)
+    # Handle boundary variance stabilization
+    if (!is.categorical && !l.const && !r.const) {
+      if (t > 20 && (n.obs - t) > 20) {
+        risk.t.j = l.risks[split.feat.j] + r.risks[split.feat.j]
+        # w.l = max(round(0.1 * t), 10L)
+        # w.l = min(w.l, t)
+        # w.r = max(round(0.1 * (n.obs - t)), 10L)
+        # w.r = min(w.r, n.obs - t)
+        # adj.l.risk.t.j = adjust_side_for_feature("L", t, w.l)
+        # adj.r.risk.t.j = adjust_side_for_feature("R", t, w.r)
+        adj.l.risk.t.j = adjust_side_for_feature("L", t)
+        adj.r.risk.t.j = adjust_side_for_feature("R", t)
+        adj.risk.t.j = adj.l.risk.t.j + adj.r.risk.t.j
+        total = risks.sum - risk.t.j + adj.risk.t.j
+      }
     }
     if (!is.na(total) && !is.infinite(total) && total < best.risks.sum) {
       best.risks.sum = total
       best.t = t
-      best.left.risks = l.risks
-      best.right.risks = r.risks
-      # if (!is.categorical) {
-      #   best.left.risks[split.feat.j] = adj.l.risk.t.j
-      #   best.right.risks[split.feat.j] = adj.r.risk.t.j
-      # }
+      best.left.risks = curr.l.risks
+      best.right.risks = curr.r.risks
+      if (!is.categorical && !l.const && !r.const && t > 20 && (n.obs - t) > 20) {
+        best.left.risks[split.feat.j] = adj.l.risk.t.j
+        best.right.risks[split.feat.j] = adj.r.risk.t.j
+      }
     }
   }
   if (is.na(best.t)) {

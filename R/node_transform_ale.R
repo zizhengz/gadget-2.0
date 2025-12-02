@@ -20,8 +20,12 @@ node_transform_ale = function(Y, idx, split.feature = NULL, model = NULL, data =
   # Step 1: Subset Y to current node indices using row.id for alignment
   Y.subset = lapply(names(Y), function(feat) {
     Y.j = Y[[feat]]
-    # Use row.id to ensure correct alignment with original data rows
     Y.j = Y.j[Y.j$row.id %in% idx, ]
+    Y.j[, `:=`(
+      int_n    = .N,
+      int_s1   = sum(dL),
+      int_s2   = sum(dL^2)
+    ), by = interval.index]
     return(Y.j)
   })
   names(Y.subset) = names(Y)
@@ -32,6 +36,11 @@ node_transform_ale = function(Y, idx, split.feature = NULL, model = NULL, data =
       # Handle single unique value case
       if (length(unique(Y.j$feat.val)) == 1) {
         Y.j$dL = 0
+        Y.j[, `:=`(
+          int_n    = .N,
+          int_s1   = sum(dL),
+          int_s2   = sum(dL^2)
+        ), by = interval.index]
       }
       # Recalculate ALE for categorical split feature
       if (feat == split.feature && is.factor(Y.j$feat.val)) {

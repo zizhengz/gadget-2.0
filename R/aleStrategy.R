@@ -165,13 +165,13 @@ aleStrategy = R6::R6Class(
     #' @param feature.set Character or NULL. Feature subset (optional).
     #' @param split.feature Character or NULL. Split feature (optional).
     #' @param predict.fun Function or NULL. Prediction function (optional).
+    #' @param ... Additional arguments (ignored).
     #' @return gadgetTree object, invisibly. The fitted tree object.
     fit = function(tree, model, data, target.feature.name, n.intervals, feature.set = NULL, split.feature = NULL, predict.fun = NULL) {
-      checkmate::assert_character(target.feature.name, len = 1, .var.name = "target.feature.name")
-      checkmate::assert_data_frame(data, .var.name = "data")
-      checkmate::assert_character(split.feature, null.ok = TRUE, .var.name = "split.feature")
-      checkmate::assert_character(feature.set, null.ok = TRUE, .var.name = "feature.set")
-      checkmate::assert_integerish(n.intervals, len = 1, .var.name = "n.intervals")
+      if (missing(model)) stop("aleStrategy requires 'model' to be passed.", call. = FALSE)
+      if (missing(n.intervals)) stop("aleStrategy requires 'n.intervals' to be passed.", call. = FALSE)
+      checkmate::assert_integerish(n.intervals, len = 1, lower = 1, .var.name = "n.intervals")
+      checkmate::assert_function(predict.fun, null.ok = TRUE, .var.name = "predict.fun")
 
       # Default prediction function for mlr3 models compatibility
       if (is.null(predict.fun)) {

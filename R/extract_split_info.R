@@ -43,18 +43,18 @@ extract_split_info = function(tree, split_benchmark = NULL) {
       node.type = if (is.null(node$id)) NA_character_ else if (node$id == 1) "root" else if (node$id %% 2 == 0) "left" else "right",
       split.feature = if (is.null(node$split.feature)) NA_character_ else as.character(node$split.feature),
       split.value = if (is.null(node$split.value)) NA else node$split.value,
-      objective.value = if (is.null(node$objective.value)) NA else node$objective.value,
-      intImp = if (is.null(node$intImp)) NA else node$intImp,
+      node.objective = if (is.null(node$objective.value)) NA else node$objective.value,
+      intImp = if (is.null(node$intImp)) NA else round(node$intImp, 2),
       split.feature.parent = if (is.null(node$split.feature.parent)) NA_character_ else as.character(node$split.feature.parent),
       split.value.parent = if (is.null(node$split.value.parent)) NA else node$split.value.parent,
       objective.value.parent = if (is.null(node$objective.value.parent)) NA else node$objective.value.parent,
-      intImp.parent = if (is.null(node$intImp.parent)) NA else node$intImp.parent,
+      intImp.parent = if (is.null(node$intImp.parent)) NA else round(node$intImp.parent, 2),
       is.final = is_final,
       stringsAsFactors = FALSE
     )
     # Ensure all intImp.* fields exist
     for (nm in all_intimp_names) {
-      row[[paste0("intImp.", nm)]] = if (!is.null(node$intImp.j) && nm %in% names(node$intImp.j)) node$intImp.j[[nm]] else NA
+      row[[paste0("intImp.", nm)]] = if (!is.null(node$intImp.j) && nm %in% names(node$intImp.j)) round(node$intImp.j[[nm]], 2) else NA
     }
     row
   })

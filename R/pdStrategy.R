@@ -120,12 +120,12 @@ pdStrategy = R6::R6Class(
     #' @param target.feature.name Character(1). Target feature name.
     #' @param feature.set Character or NULL. Feature subset (optional).
     #' @param split.feature Character or NULL. Split feature (optional).
+    #' @param ... Additional arguments (ignored).
     #' @return gadgetTree object, invisibly. The fitted tree object.
-    fit = function(tree, effect, data, target.feature.name, feature.set = NULL, split.feature = NULL) {
-      checkmate::assert_character(target.feature.name, len = 1, .var.name = "target.feature.name")
-      checkmate::assert_data_frame(data, .var.name = "data")
-      checkmate::assert_character(split.feature, null.ok = TRUE, .var.name = "split.feature")
-      checkmate::assert_character(feature.set, null.ok = TRUE, .var.name = "feature.set")
+    fit = function(tree, effect, data, target.feature.name, feature.set = NULL, split.feature = NULL, ...) {
+      if (missing(effect)) stop("pdStrategy requires 'effect' to be passed.", call. = FALSE)
+      checkmate::assert_true(is.list(effect) || inherits(effect, "R6"), .var.name = "effect")
+
       self$tree_ref = tree
       prepared.data = self$preprocess(effect = effect, data = data,
         target.feature = target.feature.name,

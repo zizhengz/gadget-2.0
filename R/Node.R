@@ -227,25 +227,17 @@ Node = R6::R6Class("Node", public = list(
       return(NULL)
     }
     if (inherits(self$strategy, "aleStrategy")) {
-      best.idx = which(split.res$best.split)[1]
-      if (is.na(best.idx)) return(NULL)
-      sf = split.res$split.feature[best.idx]
-      rows = which(split.res$split.feature == sf & split.res$best.split)
-      if (!length(rows)) return(NULL)
-      ord = names(Y.curr)
-      leftmap = stats::setNames(split.res$left.objective.value.j[rows], split.res$feature[rows])
-      rightmap = stats::setNames(split.res$right.objective.value.j[rows], split.res$feature[rows])
-      if (is.null(ord)) ord = names(leftmap)
-      leftj = setNames(as.numeric(leftmap[ord]), ord)
-      rightj = setNames(as.numeric(rightmap[ord]), ord)
+      rows = which(split.res$best.split)
+      left.objective.value.j = split.res$left.objective.value.j[rows]
+      right.objective.value.j = split.res$right.objective.value.j[rows]
       return(list(
-        split.feature = sf,
-        split.value = split.res$split.point[best.idx],
-        is.categorical = split.res$is.categorical[best.idx],
-        left.objective.value.j = leftj,
-        right.objective.value.j = rightj,
-        left.objective.value = sum(leftj, na.rm = TRUE),
-        right.objective.value = sum(rightj, na.rm = TRUE)
+        split.feature = split.res$split.feature[split.res$best.split][1],
+        split.value = split.res$split.point[split.res$best.split][1],
+        is.categorical = split.res$is.categorical[split.res$best.split][1],
+        left.objective.value.j = left.objective.value.j,
+        right.objective.value.j = right.objective.value.j,
+        left.objective.value = sum(left.objective.value.j, na.rm = TRUE),
+        right.objective.value = sum(right.objective.value.j, na.rm = TRUE)
       ))
     }
     list(
