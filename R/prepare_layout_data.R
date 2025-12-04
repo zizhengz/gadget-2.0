@@ -24,6 +24,13 @@ prepare_layout_data = function(tree) {
   layout = do.call(rbind.data.frame, rows)
   rownames(layout) = NULL
   layout$label = NA
+  
+  # Helper to format split values
+  format_val = function(x) {
+    num_x = suppressWarnings(as.numeric(x))
+    if (!is.na(num_x)) round(num_x, 3) else x
+  }
+
   for (i in layout$node.id) {
     path_conditions = c()
     current = layout[layout$node.id == i, ]
@@ -31,7 +38,7 @@ prepare_layout_data = function(tree) {
       parent = layout[layout$node.id == current$id.parent, ]
       if (nrow(parent) != 1) break
       op = current$child.type
-      cond = paste0(parent$split.feature, " ", op, " ", round(as.numeric(parent$split.value), 3))
+      cond = paste0(parent$split.feature, " ", op, " ", format_val(parent$split.value))
       path_conditions = c(cond, path_conditions)
       current = parent
     }
@@ -39,7 +46,7 @@ prepare_layout_data = function(tree) {
     child_row = which(layout$node.id == 2 * i)
     child_type = if (length(child_row) > 0) layout$child.type[child_row] else NA_character_
     if (!is.na(this$split.feature)) {
-      cond_self = paste0(this$split.feature, " ", ifelse(child_type == "<=", "<=", "="), " ", round(as.numeric(this$split.value), 3))
+      cond_self = paste0(this$split.feature, " ", ifelse(child_type == "<=", "<=", "="), " ", format_val(this$split.value))
       path_conditions = paste0(cond_self, "\nheter.reduction: ", round(this$intImp, 3))
     } else {
       path_conditions = path_conditions
