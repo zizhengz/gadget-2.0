@@ -4,7 +4,13 @@ search_best_split_point_ale = function(
   n.quantiles = NULL,
   min.node.size = 1L
 ) {
+  feature.names = names(effect)
+  p = length(feature.names)
+  split.feat.j = match(split.feat, feature.names)
+  has.self.ale = !is.na(split.feat.j)
+
   risk_from_stats = function(n, s1, s2) ifelse(n <= 1L, 0.0, s2 - (s1 * s1) / n)
+
   # Helper: Find split candidates
   build_order_and_candidates = function() {
     if (!is.categorical) {
@@ -27,10 +33,7 @@ search_best_split_point_ale = function(
       is.cand = rep(FALSE, n.obs - 1L)
       valid.t = t.idx[t.idx >= 1L & t.idx <= (n.obs - 1L)]
       is.cand[unique(valid.t)] = TRUE
-      list(ord.idx = ord.idx,
-        z.sorted = z.sorted,
-        n.obs = n.obs,
-        is.cand = is.cand)
+      list(ord.idx = ord.idx, z.sorted = z.sorted, n.obs = n.obs, is.cand = is.cand)
     } else {
       z.fac = droplevels(z)
       z.nonNA = which(!is.na(z.fac))
@@ -39,14 +42,19 @@ search_best_split_point_ale = function(
         return(NULL)
       }
       level.id = as.integer(z.fac[z.nonNA])
-      dL.split.feat = effect[[split.feat]]$dL
-      dL.nonNA = dL.split.feat[z.nonNA]
-      avg.dL.by.level = tapply(dL.nonNA, level.id, mean, na.rm = TRUE)
-      if (anyNA(avg.dL.by.level)) {
-        global.mean = mean(dL.nonNA, na.rm = TRUE)
-        avg.dL.by.level[is.na(avg.dL.by.level)] = global.mean
+      if (has.self.ale) {
+        dL.split.feat = effect[[split.feat]]$dL
+        dL.nonNA = dL.split.feat[z.nonNA]
+        avg.dL.by.level = tapply(dL.nonNA, level.id, mean, na.rm = TRUE)
+        if (anyNA(avg.dL.by.level)) {
+          global.mean = mean(dL.nonNA, na.rm = TRUE)
+          avg.dL.by.level[is.na(avg.dL.by.level)] = global.mean
+        }
+        levels.orded = order(avg.dL.by.level)
+      } else {
+        # Fallback: Use default level order if ALE is not available
+        levels.orded = 1:n.L
       }
-      levels.orded = order(avg.dL.by.level)
       rows.by.level = split(z.nonNA, level.id)
       ord.idx = unlist(rows.by.level[as.character(levels.orded)], use.names = FALSE)
       n.obs = length(ord.idx)
@@ -104,7 +112,6 @@ search_best_split_point_ale = function(
     l.risks <<- l.risks - l.risk.old + l.risk.new
     sum(-l.risk.old - r.risk.old + l.risk.new + r.risk.new)
   }
-
   #### Old Helper: Boundary stabilizer using cumulative sums (numeric feature only) ####
   # adjust_side_for_feature = function(side, t, w) {
   #   # w = window size (# of points near boundary)
@@ -171,47 +178,37 @@ search_best_split_point_ale = function(
       idx.end = n.obs
       original.risk = r.risks[split.feat.j]
     }
-
     n.side = idx.end - idx.start + 1L
     # 2. if sample size <= 20, do not smooth
     if (n.side <= 20L) {
       return(original.risk)
     }
-
     # 3. window size w: max(10% of side samples, 10)
     w = max(round(0.1 * n.side), 10L)
-
     # 4. Get interval indices and dL for current side
     node.int = interval.idx.sorted[idx.start:idx.end]
     node.dL = dL.j.sorted[idx.start:idx.end]
-
     # 5. Get unique set of interval indices within the window
     if (is.left) {
-      # Left window: last w elements
-      window.indices = (n.side - w + 1L):n.side
+      window.indices = (n.side - w + 1L):n.side # Left window: last w elements
     } else {
-      # Right window: first w elements
-      window.indices = 1L:w
+      window.indices = 1L:w # Right window: first w elements
     }
     target.intervals = unique(node.int[window.indices])
-
     # 6. Define Near / Far samples
     # As long as it belongs to target_intervals, treat as Near (regardless of whether inside window w)
     is.near = node.int %in% target.intervals
-
     # 7. Sample size check
     n.near = sum(is.near)
     n.far = n.side - n.near
     if (n.near < 2 || n.far < 2) {
       return(original.risk)
     }
-
     # 8. Get dL and calculate SD
     vals.near = node.dL[is.near]
     vals.far = node.dL[!is.near]
     sd.near = sd(vals.near)
     sd.far = sd(vals.far)
-
     # 9. Condition and replacement
     if (!is.na(sd.near) && !is.na(sd.far) && sd.near > 2.0 * sd.far) {
       node.dL[is.near] = rnorm(n = n.near, mean = mean(vals.far), sd = sd.far)
@@ -225,8 +222,6 @@ search_best_split_point_ale = function(
   }
   #### End new adjust_side_for_feature function ####
 
-  feature.names = names(effect)
-  p = length(feature.names)
   plan = build_order_and_candidates()
   if (is.null(plan)) {
     return(list(
@@ -245,61 +240,56 @@ search_best_split_point_ale = function(
   offsets = st.table$offsets
   r.risks = st.table$r.risks
   l.risks = numeric(p)
-
-  split.feat.j = match(split.feat, feature.names)
-  # cumulative dL sums of current (only if numeric) split.feat by ord.idx for O(1) neighborhood stats calculation in boundary stabilizer
-  if (!is.categorical) {
+  if (!is.categorical && has.self.ale) {
     dL.j.sorted = st.table$dL.mat[split.feat.j, ord.idx] # N x 1
+    interval.idx.sorted = st.table$interval.idx.mat[split.feat.j, ord.idx]
     # S1 = cumsum(dL.j.sorted)
     # S2 = cumsum(dL.j.sorted * dL.j.sorted)
     # S1.tot = S1[n.obs]
     # S2.tot = S2[n.obs]
-
-    #### new ####
-    interval.idx.sorted = st.table$interval.idx.mat[split.feat.j, ord.idx]
-    #### new ####
   }
 
-  # Main sweep
   risks.sum = sum(r.risks)
   best.risks.sum = Inf
   best.t = NA_integer_
   best.l.risks = NULL
   best.r.risks = NULL
+
+  # Main sweep
   for (t in 1:(n.obs - 1L)) {
     risks.sum = risks.sum + move_row_all(ord.idx[t])
-    if (!is.cand.t[t]) next
-    if (t < min.node.size || (n.obs - t) < min.node.size) next
+    if (!is.cand.t[t] || t < min.node.size || (n.obs - t) < min.node.size) next
     # Handle single unique value case for the split feature
     l.const = z.sorted[1] == z.sorted[t]
     r.const = z.sorted[t + 1L] == z.sorted[n.obs]
     curr.l.risks = l.risks
     curr.r.risks = r.risks
-    if (l.const) curr.l.risks[split.feat.j] = 0.0
-    if (r.const) curr.r.risks[split.feat.j] = 0.0
+    if (has.self.ale) {
+      if (l.const) curr.l.risks[split.feat.j] = 0.0
+      if (r.const) curr.r.risks[split.feat.j] = 0.0
+    }
     total = sum(curr.l.risks) + sum(curr.r.risks)
-    # Handle boundary variance stabilization
-    if (!is.categorical && !l.const && !r.const) {
-      if (t > 20 && (n.obs - t) > 20) {
-        risk.t.j = l.risks[split.feat.j] + r.risks[split.feat.j]
-        # w.l = max(round(0.1 * t), 10L)
-        # w.l = min(w.l, t)
-        # w.r = max(round(0.1 * (n.obs - t)), 10L)
-        # w.r = min(w.r, n.obs - t)
-        # adj.l.risk.t.j = adjust_side_for_feature("L", t, w.l)
-        # adj.r.risk.t.j = adjust_side_for_feature("R", t, w.r)
-        adj.l.risk.t.j = adjust_side_for_feature("L", t)
-        adj.r.risk.t.j = adjust_side_for_feature("R", t)
-        adj.risk.t.j = adj.l.risk.t.j + adj.r.risk.t.j
-        total = risks.sum - risk.t.j + adj.risk.t.j
-      }
+    # Boundary Stabilizer
+    use.stabilizer = !is.categorical && has.self.ale && !l.const && !r.const && t > 20 && (n.obs - t) > 20
+    if (use.stabilizer) {
+      risk.t.j = l.risks[split.feat.j] + r.risks[split.feat.j]
+      # w.l = max(round(0.1 * t), 10L)
+      # w.l = min(w.l, t)
+      # w.r = max(round(0.1 * (n.obs - t)), 10L)
+      # w.r = min(w.r, n.obs - t)
+      # adj.l.risk.t.j = adjust_side_for_feature("L", t, w.l)
+      # adj.r.risk.t.j = adjust_side_for_feature("R", t, w.r)
+      adj.l.risk.t.j = adjust_side_for_feature("L", t)
+      adj.r.risk.t.j = adjust_side_for_feature("R", t)
+      adj.risk.t.j = adj.l.risk.t.j + adj.r.risk.t.j
+      total = risks.sum - risk.t.j + adj.risk.t.j
     }
     if (!is.na(total) && !is.infinite(total) && total < best.risks.sum) {
       best.risks.sum = total
       best.t = t
       best.left.risks = curr.l.risks
       best.right.risks = curr.r.risks
-      if (!is.categorical && !l.const && !r.const && t > 20 && (n.obs - t) > 20) {
+      if (use.stabilizer) {
         best.left.risks[split.feat.j] = adj.l.risk.t.j
         best.right.risks[split.feat.j] = adj.r.risk.t.j
       }
@@ -314,7 +304,6 @@ search_best_split_point_ale = function(
       right.objective.value.j = rep(NA_real_, p)
     ))
   }
-  best.split.point = NULL
   if (!is.categorical) {
     left.value = max(z.sorted[1:best.t])
     right.value = min(z.sorted[-(1:best.t)])
@@ -323,11 +312,10 @@ search_best_split_point_ale = function(
     k = which(plan$cum.counts == best.t)[1]
     best.split.point = if (!is.na(k)) plan$levels.vec[plan$level.order[k]] else NA
   }
-  objective.value.j = best.left.risks + best.right.risks
   list(
     split.point = best.split.point,
     split.objective = best.risks.sum,
-    objective.value.j = objective.value.j,
+    objective.value.j = best.left.risks + best.right.risks,
     left.objective.value.j = best.left.risks,
     right.objective.value.j = best.right.risks
   )

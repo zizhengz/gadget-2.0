@@ -53,13 +53,6 @@ prepare_split_data_ale = function(model, data, target.feature.name, n.intervals,
 
   # feature.set: feature set to compute ALE for (default to all features if NULL)
   if (!is.null(feature.set)) {
-    # If split.feature is provided, ensure it's included in feature.set
-    if (!is.null(split.feature)) {
-      missing.ale = setdiff(split.feature, feature.set)
-      if (length(missing.ale) > 0) {
-        feature.set = unique(c(feature.set, missing.ale))
-      }
-    }
     available.features = colnames(X)
     missing.features = setdiff(feature.set, available.features)
     if (length(missing.features) > 0) {
