@@ -1,4 +1,4 @@
-search_best_split_point_ale = function(
+search_best_split_point_ale_with = function(
   z, effect, st.table, split.feat,
   is.categorical,
   n.quantiles = NULL,
@@ -223,16 +223,16 @@ search_best_split_point_ale = function(
   l.risks = numeric(p)
 
   #### Code with adjust_side_for_feature ####
-  # if (!is.categorical && has.self.ale) {
-  #   dL.j.sorted = st.table$dL.mat[split.feat.j, ord.idx] # N x 1
-  #   interval.idx.sorted = st.table$interval.idx.mat[split.feat.j, ord.idx]
-  #   #### Code for old adjust_side_for_feature ####
-  #   # S1 = cumsum(dL.j.sorted)
-  #   # S2 = cumsum(dL.j.sorted * dL.j.sorted)
-  #   # S1.tot = S1[n.obs]
-  #   # S2.tot = S2[n.obs]
-  #   #### ####
-  # }
+  if (!is.categorical && has.self.ale) {
+    dL.j.sorted = st.table$dL.mat[split.feat.j, ord.idx] # N x 1
+    interval.idx.sorted = st.table$interval.idx.mat[split.feat.j, ord.idx]
+    #### Code for old adjust_side_for_feature ####
+    # S1 = cumsum(dL.j.sorted)
+    # S2 = cumsum(dL.j.sorted * dL.j.sorted)
+    # S1.tot = S1[n.obs]
+    # S2.tot = S2[n.obs]
+    #### ####
+  }
   #### ####
 
   risks.sum = sum(r.risks)
@@ -249,41 +249,41 @@ search_best_split_point_ale = function(
     curr.l.risks = l.risks
     curr.r.risks = r.risks
     #### Code with adjust_side_for_feature ####
-    # # Handle single unique value case for the split feature
-    # l.const = z.sorted[1] == z.sorted[t]
-    # r.const = z.sorted[t + 1L] == z.sorted[n.obs]
-    # if (has.self.ale) {
-    #   if (l.const) curr.l.risks[split.feat.j] = 0.0
-    #   if (r.const) curr.r.risks[split.feat.j] = 0.0
-    # }
+    # Handle single unique value case for the split feature
+    l.const = z.sorted[1] == z.sorted[t]
+    r.const = z.sorted[t + 1L] == z.sorted[n.obs]
+    if (has.self.ale) {
+      if (l.const) curr.l.risks[split.feat.j] = 0.0
+      if (r.const) curr.r.risks[split.feat.j] = 0.0
+    }
     #### ####
     #### Code without adjust_side_for_feature ####
     # When splitting on a feature that has its own ALE, exclude its own risk from the objective
     # This avoids re-fitting the feature's main effect and focuses on interaction effects
-    if (has.self.ale) {
-      curr.l.risks[split.feat.j] = 0.0
-      curr.r.risks[split.feat.j] = 0.0
-    }
+    # if (has.self.ale) {
+    #   curr.l.risks[split.feat.j] = 0.0
+    #   curr.r.risks[split.feat.j] = 0.0
+    # }
     #### ####
     total = sum(curr.l.risks) + sum(curr.r.risks)
     #### Code with adjust_side_for_feature ####
-    # # Boundary Stabilizer
-    # use.stabilizer = !is.categorical && has.self.ale && !l.const && !r.const && t > 20 && (n.obs - t) > 20
-    # if (use.stabilizer) {
-    #   risk.t.j = l.risks[split.feat.j] + r.risks[split.feat.j]
-    #   #### Code for old adjust_side_for_feature ####
-    #   # w.l = max(round(0.1 * t), 10L)
-    #   # w.l = min(w.l, t)
-    #   # w.r = max(round(0.1 * (n.obs - t)), 10L)
-    #   # w.r = min(w.r, n.obs - t)
-    #   # adj.l.risk.t.j = adjust_side_for_feature("L", t, w.l)
-    #   # adj.r.risk.t.j = adjust_side_for_feature("R", t, w.r)
-    #   #### ####
-    #   adj.l.risk.t.j = adjust_side_for_feature("L", t)
-    #   adj.r.risk.t.j = adjust_side_for_feature("R", t)
-    #   adj.risk.t.j = adj.l.risk.t.j + adj.r.risk.t.j
-    #   total = risks.sum - risk.t.j + adj.risk.t.j
-    # }
+    # Boundary Stabilizer
+    use.stabilizer = !is.categorical && has.self.ale && !l.const && !r.const && t > 20 && (n.obs - t) > 20
+    if (use.stabilizer) {
+      risk.t.j = l.risks[split.feat.j] + r.risks[split.feat.j]
+      #### Code for old adjust_side_for_feature ####
+      # w.l = max(round(0.1 * t), 10L)
+      # w.l = min(w.l, t)
+      # w.r = max(round(0.1 * (n.obs - t)), 10L)
+      # w.r = min(w.r, n.obs - t)
+      # adj.l.risk.t.j = adjust_side_for_feature("L", t, w.l)
+      # adj.r.risk.t.j = adjust_side_for_feature("R", t, w.r)
+      #### ####
+      adj.l.risk.t.j = adjust_side_for_feature("L", t)
+      adj.r.risk.t.j = adjust_side_for_feature("R", t)
+      adj.risk.t.j = adj.l.risk.t.j + adj.r.risk.t.j
+      total = risks.sum - risk.t.j + adj.risk.t.j
+    }
     #### ####
     if (!is.na(total) && !is.infinite(total) && total < best.risks.sum) {
       best.risks.sum = total
@@ -291,10 +291,10 @@ search_best_split_point_ale = function(
       best.left.risks = curr.l.risks
       best.right.risks = curr.r.risks
       #### Code with adjust_side_for_feature ####
-      # if (use.stabilizer) {
-      #   best.left.risks[split.feat.j] = adj.l.risk.t.j
-      #   best.right.risks[split.feat.j] = adj.r.risk.t.j
-      # }
+      if (use.stabilizer) {
+        best.left.risks[split.feat.j] = adj.l.risk.t.j
+        best.right.risks[split.feat.j] = adj.r.risk.t.j
+      }
       #### ####
     }
   }

@@ -1,38 +1,29 @@
 #' Calculate Accumulated Local Effects (ALE)
 #'
-#' This function computes Accumulated Local Effects (ALE) data at the sample level.
-#' It calculates local finite differences for each data point across specified features.
-#' The output can be used for tree splitting, visualization, or other ALE-based analyses.
+#' Computes sample-level ALE data as local finite differences for each specified
+#' feature. Output is used for tree splitting, heterogeneity measures, or visualization.
 #'
-#' @param model Fitted model object. The model should have a predict method.
-#' @param S Character vector. Names of features to compute ALE effects for. If NULL, computes for all features.
-#' @param data Data frame. Training data containing features and target variable.
-#' @param target.feature.name Character. Name of the target variable in the data.
-#' @param n.intervals Integer. Number of intervals for numeric features (default: 10).
-#' @param predict.fun Function. Required prediction function that takes (model, data) and returns predictions.
+#' @param model Fitted model object with a predict interface.
+#' @param data Data frame or data.table. Training data (features and target).
+#' @param feature.set Character. Names of features to compute ALE for; must exist in \code{data}.
+#' @param target.feature.name Character. Name of the target variable in \code{data}.
+#' @param n.intervals Integer. Number of equal-frequency intervals for numeric features (default: 10).
+#' @param predict.fun Function or NULL. \code{function(model, data)} returning a numeric vector of predictions; NULL uses an mlr3-style default.
 #'
-#' @return List. Named list where each element corresponds to a feature and contains:
-#'   \item{feat.val}{Original feature values}
-#'   \item{x.left}{Left boundary of interval (for numeric) or lower category (for factors)}
-#'   \item{x.right}{Right boundary of interval (for numeric) or upper category (for factors)}
-#'   \item{dL}{Local effect (finite difference)}
-#'   \item{interval.index}{Index of interval/category}
-#'   \item{interval.width}{Width of interval (1 for categorical features)}
+#' @return Named list of data.tables, one per element of \code{feature.set}. Each data.table has columns:
+#'   \item{row.id}{Row index in \code{data}.}
+#'   \item{feat.val}{Feature value at that row.}
+#'   \item{x.left, x.right}{Interval/category boundaries (numeric) or left/right category (factor).}
+#'   \item{dL}{Local effect (finite difference).}
+#'   \item{interval.index}{Interval or category index.}
+#'   \item{int_n, int_s1, int_s2}{Per-interval count and sum(dL), sum(dL^2) for heterogeneity.}
 #'
 #' @details
-#' For numeric features, the function:
-#' 1. Creates n.intervals equal-frequency intervals based on quantiles
-#' 2. Assigns each data point to an interval
-#' 3. Computes finite differences between interval boundaries
+#' Numeric features: builds \code{n.intervals} quantile-based intervals, assigns each row to an interval, and computes finite differences between interval boundaries via \code{predict.fun}.
 #'
-#' For categorical features, the function:
-#' 1. Orders categories by their numeric encoding
-#' 2. Computes differences between adjacent categories
-#' 3. Uses boundary interpolation for edge categories
+#' Categorical features: use factor levels as given (typically pre-ordered by \code{order_categorical_levels} in \code{prepare_split_data_ale}). For each row, \code{dL} is the difference in predictions when the focal feature is set to the next vs. previous level; single-level factors get \code{dL = 0}.
 #'
-#' The resulting data retains sample-level information, including the ability to
-#' subset by row indices and calculate node-specific heterogeneity measures.
-#' This makes it suitable for various downstream applications including tree splitting.
+#' Sample-level columns (\code{row.id}, \code{feat.val}, \code{dL}, etc.) support subsetting by node and downstream heterogeneity calculation.
 #'
 #' @export
 calculate_ale = function(model, data, feature.set, target.feature.name, n.intervals = 10, predict.fun = NULL) {
@@ -102,9 +93,8 @@ ale_numeric_feature = function(model, data, X, feature, target.feature.name, n.i
   )
 
   # Compute per-interval statistics
-  # Note: :=, .N, and column names in by clause are data.table special syntax
-  DT[, `:=`(  # nolint: object_usage_linter
-    int_n    = .N,  # nolint: object_usage_linter
+  DT[, `:=`(
+    int_n    = .N,
     int_s1   = sum(dL),
     int_s2   = sum(dL^2)
   ), by = interval.index]
@@ -161,6 +151,62 @@ ale_categorical_feature = function(model, data, X, feature, target.feature.name,
   ), by = interval.index]
   DT
 }
+
+#### Old ale_categorical_feature ####
+# ale_categorical_feature = function(model, data, X, feature, target.feature.name, predict.fun = NULL) {
+#   data.copy = data
+#   x.cat = droplevels(data.copy[[feature]])
+#   K = nlevels(x.cat)
+#   n.rows = nrow(data.copy)
+#   # If only one level, dL is zero
+#   if (K <= 1) {
+#     return(data.table::data.table(
+#       row.id         = seq_len(n.rows),
+#       feat.val       = x.cat,
+#       x.left         = x.cat,
+#       x.right        = x.cat,
+#       dL             = 0,
+#       interval.index = as.numeric(x.cat),
+#       int_n          = length(x.cat),
+#       int_s1         = 0,
+#       int_s2         = 0
+#     ))
+#   }
+#   levels.orig = levels(x.cat)
+#   levels.id = as.numeric(x.cat)
+#   # Indices for adjacent category replacement
+#   row.ind.plus = seq_len(nrow(data.copy))[levels.id < K] # not the highest level
+#   row.ind.neg = seq_len(nrow(data.copy))[levels.id > 1] # not the lowest level
+#
+#   X.plus = data.table::copy(X)
+#   X.neg = data.table::copy(X)
+#   X.plus[row.ind.plus, feature] = levels.orig[levels.id[row.ind.plus] + 1L]
+#   X.neg[row.ind.neg, feature] = levels.orig[levels.id[row.ind.neg] - 1L]
+#   y.hat.plus = predict.fun(model, X.plus)
+#   y.hat.neg = predict.fun(model, X.neg)
+#   delta = y.hat.plus - y.hat.neg
+#
+#   DT = data.table::data.table(
+#     row.id         = seq_len(n.rows),
+#     feat.val       = data.copy[[feature]],
+#     x.left         = X.neg[[feature]],
+#     x.right        = X.plus[[feature]],
+#     dL             = delta,
+#     interval.index = levels.id
+#   )
+#
+#   # Full-interval statistics (each category treated as an interval)
+#   # Note: :=, .N, and column names in by clause are data.table special syntax
+#   DT[, `:=`( # nolint: object_usage_linter
+#     int_n    = .N, # nolint: object_usage_linter
+#     int_s1   = sum(dL),
+#     int_s2   = sum(dL^2)
+#   ), by = interval.index]
+#   DT
+# }
+
+
+#### Old calculate_ale ####
 # calculate_ale = function(model, data, feature.set, target.feature.name, h, predict.fun = NULL) {
 #   if (is.null(predict.fun)) {
 #     predict.fun = function(model, data) {

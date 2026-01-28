@@ -16,7 +16,7 @@
 #' @return List. List of transformed ALE effects.
 #'
 node_transform_ale = function(Y, idx, split.feature = NULL, model = NULL, data = NULL,
-  target.feature.name = NULL, n.intervals = 10, predict.fun = NULL) {
+                              target.feature.name = NULL, n.intervals = 10, predict.fun = NULL) {
   # Step 1: Subset Y to current node indices using row.id for alignment
   Y.subset = lapply(names(Y), function(feat) {
     Y.j = Y[[feat]]
@@ -29,7 +29,7 @@ node_transform_ale = function(Y, idx, split.feature = NULL, model = NULL, data =
     return(Y.j)
   })
   names(Y.subset) = names(Y)
-  # Step 2: Apply preprocessing if split.feature is provided
+  # Step 2: Apply postprocessing
   if (!is.null(split.feature)) {
     Y.processed = lapply(names(Y.subset), function(feat) {
       Y.j = Y.subset[[feat]]
@@ -41,23 +41,22 @@ node_transform_ale = function(Y, idx, split.feature = NULL, model = NULL, data =
           int_s1   = sum(dL),
           int_s2   = sum(dL^2)
         ), by = interval.index]
-      }
-      # Recalculate ALE for categorical split feature
-      if (feat == split.feature && is.factor(Y.j$feat.val)) {
-        # Use row.id to find corresponding rows in original data
-        subset.idx = Y.j$row.id
-        # Recalculate ALE for the split feature using subset data
-        res = calculate_ale(
-          model = model,
-          data = data[subset.idx, , drop = FALSE],
-          feature.set = split.feature,
-          target.feature.name = target.feature.name,
-          n.intervals = n.intervals,
-          predict.fun = predict.fun
-        )
-        Y.j = res[[split.feature]]
-        # Update row.id to match original data indices
-        Y.j$row.id = subset.idx
+      } else if (feat == split.feature && is.factor(Y.j$feat.val)) {
+        # # Recalculate ALE for categorical split feature
+        # # Use row.id to find corresponding rows in original data
+        # subset.idx = Y.j$row.id
+        # # Recalculate ALE for the split feature using subset data
+        # res = calculate_ale(
+        #   model = model,
+        #   data = data[subset.idx, , drop = FALSE],
+        #   feature.set = split.feature,
+        #   target.feature.name = target.feature.name,
+        #   n.intervals = n.intervals,
+        #   predict.fun = predict.fun
+        # )
+        # Y.j = res[[split.feature]]
+        # # Update row.id to match original data indices
+        # Y.j$row.id = subset.idx
       }
       # Ensure it's a data.table
       if (!data.table::is.data.table(Y.j)) {
@@ -68,7 +67,6 @@ node_transform_ale = function(Y, idx, split.feature = NULL, model = NULL, data =
     names(Y.processed) = names(Y.subset)
     return(Y.processed)
   } else {
-    # No preprocessing needed for root node
     return(Y.subset)
   }
 }

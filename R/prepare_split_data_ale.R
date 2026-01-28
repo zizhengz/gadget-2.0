@@ -1,106 +1,71 @@
 #' Prepare ALE Data for Tree Splitting
 #'
-#' This function computes ALE effects and prepares the data structure needed for
-#' ALE-based tree splitting. It includes robust feature validation and handles
-#' both feature.set and split.feature parameters with proper error checking.
+#' Validates features, converts character columns to ordered factors, builds the
+#' split-feature matrix Z, and computes ALE effects for tree splitting.
 #'
-#' @param model Fitted model object. The model should have a predict method.
-#' @param data Data frame. Training data containing features and target variable.
-#' @param target.feature.name Character. Name of the target variable in the data.
-#' @param h Integer. Number of intervals for numeric features (default: 10).
-#' @param feature.set Character vector or NULL. Features to compute ALE effects for.
-#'   If NULL, computes for all features. Will validate that all specified features exist.
-#' @param split.feature Character vector or NULL. Features to consider for splitting.
-#'   If NULL, all features are considered for splitting. Will validate that all specified features exist.
-#' @param predict.fun Function or NULL. Prediction function that takes (model, data) and returns predictions.
-#'   If NULL, uses default mlr3-compatible prediction function.
+#' @param model Fitted model object with a predict interface.
+#' @param data Data frame or data.table. Training data (features and target).
+#' @param target.feature.name Character. Name of the target variable.
+#' @param n.intervals Integer. Number of intervals for numeric ALE (default 10).
+#' @param feature.set Character or NULL. Features to compute ALE for; NULL = all.
+#' @param split.feature Character or NULL. Features to consider for splitting; NULL = all.
+#' @param predict.fun Function or NULL. \code{function(model, data)} returning predictions; NULL uses mlr3-style default.
+#' @param order.method Character. How to order categorical levels: \code{"mds"}, \code{"pca"}, or \code{"random"} (default \code{"mds"}).
 #'
-#' @return List with the following components:
-#'   \item{Z}{Data frame of split features (numeric)}
-#'   \item{Y}{List of ALE effect data for each feature}
-#'   \item{grid}{List of feature value grids}
+#' @return List with:
+#'   \item{Z}{data.table of split features (columns in \code{split.feature}).}
+#'   \item{Y}{List of ALE effect data per feature (from \code{calculate_ale}).}
 #'
 #' @details
-#' This function performs the following steps:
-#' 1. Validates that all specified features exist in the data
-#' 2. Computes ALE effects using calculate_ale()
-#' 3. Prepares split feature set Z with proper type conversion
-#' 4. Extracts feature grids from ALE effect data
-#'
-#' The function includes robust error handling that will stop execution with
-#' informative messages if any specified features are not found in the data.
+#' Steps performed:
+#' \enumerate{
+#'   \item Resolve and validate \code{feature.set} and \code{split.feature} against \code{colnames(data)}.
+#'   \item For \code{union(feature.set, split.feature)}, convert character columns to factor and order levels via \code{order_categorical_levels} (using \code{droplevels} internally).
+#'   \item Build \code{Z} as \code{data[split.feature]} (data.table).
+#'   \item Call \code{calculate_ale(model, data, feature.set, ...)} to get \code{Y}.
+#' }
+#' Stops with an error if any requested feature is missing from \code{data}.
 #'
 #' @examples
 #' \dontrun{
-#' # Basic usage with all features
-#' result = prepare_split_data_ale(model, data, "target")
-#'
-#' # With specific feature sets
-#' result = prepare_split_data_ale(model, data, "target",
-#'                                feature.set = c("x1", "x2"),
-#'                                split.feature = c("x1", "x2", "x3"))
+#' result = prepare_split_data_ale(model, data, "y", n.intervals = 10)
+#' result = prepare_split_data_ale(model, data, "y", n.intervals = 10,
+#'   feature.set = c("x1", "x2"), split.feature = c("x1", "x2", "x3"))
 #' }
 #'
 prepare_split_data_ale = function(model, data, target.feature.name, n.intervals,
-                                  feature.set = NULL, split.feature = NULL, predict.fun = NULL) {
-  # X: full feature set
-  feature_names = setdiff(colnames(data), target.feature.name)
-  if (data.table::is.data.table(data)) {
-    X = data[, feature_names, with = FALSE]
-  } else {
-    X = data[, feature_names, drop = FALSE]
+  feature.set = NULL, split.feature = NULL, predict.fun = NULL, order.method = "mds") {
+  # Local helpers
+  all.features = setdiff(colnames(data), target.feature.name)
+  take_cols = function(d, cols) {
+    if (data.table::is.data.table(d)) d[, cols, with = FALSE] else d[, cols, drop = FALSE]
+  }
+  resolve_features = function(requested, err_label) {
+    if (is.null(requested)) {
+      return(all.features)
+    }
+    miss = setdiff(requested, all.features)
+    if (length(miss) > 0L) {
+      stop(sprintf("%s not found in data: %s. Available features: %s",
+        err_label, paste(miss, collapse = ", "), paste(all.features, collapse = ", ")))
+    }
+    requested
+  }
+  ensure_factors = function(d, cols) {
+    for (c in cols) if (is.character(d[[c]])) d[[c]] = factor(d[[c]])
+    d
   }
 
-  # feature.set: feature set to compute ALE for (default to all features if NULL)
-  if (!is.null(feature.set)) {
-    available.features = colnames(X)
-    missing.features = setdiff(feature.set, available.features)
-    if (length(missing.features) > 0) {
-      stop(sprintf("Features not found in data: %s. Available features: %s",
-        paste(missing.features, collapse = ", "),
-        paste(available.features, collapse = ", ")))
-    }
-    feature.set = feature.set
-  } else {
-    feature.set = colnames(X)
+  feature.set = resolve_features(feature.set, "Features")
+  split.feature = resolve_features(split.feature, "Split features")
+  data = ensure_factors(data, union(feature.set, split.feature))
+  for (col in union(feature.set, split.feature)) {
+    if (is.factor(data[[col]]))
+      data[[col]] = order_categorical_levels(droplevels(data[[col]]), data, col, target.feature.name, order.method)
   }
-
-  # Convert character columns to factors in the selected feature set
-  for (col in feature.set) {
-    if (is.character(data[[col]])) {
-      data[[col]] = factor(data[[col]])
-    }
-  }
+  Z = data.table::setDT(take_cols(data, split.feature))
   effect = calculate_ale(model = model, data = data, target.feature.name = target.feature.name,
-                             feature.set = feature.set, n.intervals = n.intervals, predict.fun = predict.fun)
+    feature.set = feature.set, n.intervals = n.intervals, predict.fun = predict.fun)
 
-  # Z \subseteq X: split feature set
-  if (!is.null(split.feature)) {
-    available.features = colnames(X)
-    missing.features = setdiff(split.feature, available.features)
-    if (length(missing.features) > 0) {
-      stop(sprintf("Split features not found in data: %s. Available features: %s",
-        paste(missing.features, collapse = ", "),
-        paste(available.features, collapse = ", ")))
-    }
-    if (data.table::is.data.table(X)) {
-      Z = X[, split.feature, with = FALSE]
-    } else {
-      Z = X[, split.feature, drop = FALSE]
-    }
-  } else {
-    Z = X
-  }
-  for (col in names(Z)) {
-    if (is.character(Z[[col]])) {
-      Z[[col]] = factor(Z[[col]])
-    }
-  }
-  Z = data.table::setDT(Z)
-
-  # No feature grids needed for ALE strategy, return empty list structure to satisfy interface
-  grid = vector("list", length(names(Z)))
-  names(grid) = names(Z)
-
-  return(list(Z = Z, Y = effect, grid = grid))
+  list(Z = Z, Y = effect)
 }

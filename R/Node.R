@@ -138,7 +138,7 @@ Node = R6::R6Class("Node", public = list(
   split_node = function(Z, Y, objective.value.root.j, objective.value.root, min.node.size, n.quantiles, impr.par, depth, max.depth) {
     t0 = proc.time()
     # 1. Stopping criteria
-    if (objective.value.root< 1e-10 || depth >= max.depth || length(self$subset.idx) < min.node.size || isTRUE(self$improvement.met)) {
+    if (objective.value.root < 1e-10 || depth >= max.depth || length(self$subset.idx) < min.node.size || isTRUE(self$improvement.met)) {
       self$stop.criterion.met = TRUE
       # Recursion exit: stop splitting at this node
       return(NULL)
@@ -150,7 +150,8 @@ Node = R6::R6Class("Node", public = list(
         Y.curr = self$strategy$node_transform(Y, idx = self$subset.idx, split.feature = self$split.feature.parent)
         self$find_best_split(Z, Y.curr, min.node.size, n.quantiles)
       } else if (inherits(self$strategy, "pdStrategy")) {
-        self$find_best_split(Z, self$strategy$node_transform(Y = Y, grid = self$grid, idx = self$subset.idx), min.node.size, n.quantiles)
+        Y.curr = self$strategy$node_transform(Y = Y, grid = self$grid, idx = self$subset.idx)
+        self$find_best_split(Z, Y.curr, min.node.size, n.quantiles)
       }
     }, error = function(e) {
       message("find_best_split error: ", e$message)
@@ -158,9 +159,9 @@ Node = R6::R6Class("Node", public = list(
     })
     if (is.null(split.info)) {
       self$stop.criterion.met = TRUE
-      # No valid split found: stop splitting at this node
       return(NULL)
     }
+    #print(split.info)
     # 3. Create left and right child nodes
     children.info = tryCatch({
       self$create_children(Z, Y, split.info, objective.value.root.j, objective.value.root, impr.par)
@@ -170,7 +171,6 @@ Node = R6::R6Class("Node", public = list(
     })
     if (is.null(children.info)) {
       self$stop.criterion.met = TRUE
-      # Failed to create children: stop splitting at this node
       return(NULL)
     }
     # 4. Apply the split
@@ -290,6 +290,7 @@ Node = R6::R6Class("Node", public = list(
       right.objective.value.j = split.info$right.objective.value.j
       left.objective.value = split.info$left.objective.value
       right.objective.value = split.info$right.objective.value
+      # Calculate interaction importance
       intImp.j = (self$objective.value.j - left.objective.value.j - right.objective.value.j) / objective.value.root.j
       intImp = (self$objective.value - left.objective.value - right.objective.value) / objective.value.root
     }

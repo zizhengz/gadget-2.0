@@ -1,9 +1,10 @@
 search_best_split_ale = function(
   Z, effect,
   min.node.size = 1L,
-  n.quantiles = NULL
+  n.quantiles = NULL,
+  with_stab =TRUE
 ) {
-  # Helper: Build per-feature interval statistics
+  #### Helper: Build per-feature interval statistics ####
   build_stats = function(effect, features) {
     p = length(features)
     stats.list = vector("list", p)
@@ -76,7 +77,7 @@ search_best_split_ale = function(
       r.n = r.n, r.s1 = r.s1, r.s2 = r.s2, r.risks = r.risks,
       dL.mat = dL.mat, interval.idx.mat = interval.idx.mat)
   }
-
+  #####
   split.feature.names = colnames(Z)
   if (is.null(split.feature.names)) stop("Z (split features) must have column names.")
   t.start = proc.time()
@@ -84,6 +85,16 @@ search_best_split_ale = function(
   st.table = build_stats(effect, names(effect))
   # Per split.feature, compute best split once and capture per-feature vectors
   per.feature.res = lapply(split.feature.names, function(split.feat) {
+    if(with_stab){
+    res = search_best_split_point_ale_with(
+      z = Z[[split.feat]],
+      effect = effect,
+      st.table = st.table,
+      split.feat = split.feat,
+      is.categorical = is.factor(Z[[split.feat]]),
+      n.quantiles = n.quantiles,
+      min.node.size = min.node.size
+    )}else{
     res = search_best_split_point_ale(
       z = Z[[split.feat]],
       effect = effect,
@@ -92,7 +103,7 @@ search_best_split_ale = function(
       is.categorical = is.factor(Z[[split.feat]]),
       n.quantiles = n.quantiles,
       min.node.size = min.node.size
-    )
+    )}
     res$split.feature = split.feat
     res$is.categorical = is.factor(Z[[split.feat]])
     res
