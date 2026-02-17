@@ -6,6 +6,10 @@
 \usage{
 cumsum_na_as_zero(values)
 }
+\arguments{
+\item{values}{Numeric vector. Values to be cumulatively summed;
+any \code{NA} values are treated as \code{0}.}
+}
 \description{
 Cumulative Sum with NA Handling
 }

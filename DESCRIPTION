@@ -39,4 +39,8 @@ RoxygenNote: 7.3.2
 Suggests: 
     testthat (>= 3.0.0),
     iml (>= 0.11.4),
+    mlr3,
+    mlr3learners,
+    ranger,
+    ISLR2
 Config/testthat/edition: 3

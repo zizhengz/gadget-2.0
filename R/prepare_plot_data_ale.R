@@ -109,6 +109,8 @@ mean_center_ale = function(feat, mean.center = TRUE) {
 
 #' Cumulative Sum with NA Handling
 #'
+#' @param values Numeric vector. Values to be cumulatively summed;
+#'   any \code{NA} values are treated as \code{0}.
 cumsum_na_as_zero = function(values) {
   values[is.na(values)] = 0
   cumsum(values)
