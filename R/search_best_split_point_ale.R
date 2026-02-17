@@ -1,3 +1,6 @@
+#' Find best ALE split point for one feature (internal).
+#' @param z,effect,st.table,split.feat,is.categorical,n.quantiles,min.node.size Arguments.
+#' @keywords internal
 search_best_split_point_ale = function(
   z, effect, st.table, split.feat,
   is.categorical,

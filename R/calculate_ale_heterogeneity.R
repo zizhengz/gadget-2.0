@@ -18,7 +18,9 @@ calculate_ale_heterogeneity_cpp = function(Y) {
   }
 }
 
-
+#' Sum-of-squares ALE heterogeneity from list of effect data.tables (internal).
+#' @param y_list List of ALE data.tables per feature.
+#' @keywords internal
 ss_ale_dt = function(y_list) {
   lapply(y_list, function(feat) {
     delta.aggr = feat[, list(dL = mean(dL, na.rm = TRUE),

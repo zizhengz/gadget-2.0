@@ -1,3 +1,6 @@
+#' Default prediction function for mlr3-style models (internal).
+#' @param model Fitted model.
+#' @param data New data.
 #' @keywords internal
 default_predict_fun = function(model, data) {
   pred = model$predict_newdata(data)

@@ -1,3 +1,6 @@
+#' Plot regional PD/ICE for one node (internal).
+#' @param prepared.data,origin.data,target.feature.name,node.idx,color.ice,color.pd,ymin,ymax,split.condition,show.point,mean.center Plot arguments.
+#' @keywords internal
 plot_regional_pd = function(prepared.data, origin.data, target.feature.name, node.idx,
   color.ice, color.pd, ymin, ymax, split.condition = NULL,
   show.point, mean.center) {

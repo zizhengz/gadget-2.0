@@ -1,3 +1,6 @@
+#' Find best ALE split point with stabilizer (internal).
+#' @param z,effect,st.table,split.feat,is.categorical,n.quantiles,min.node.size Arguments.
+#' @keywords internal
 search_best_split_point_ale_with = function(
   z, effect, st.table, split.feat,
   is.categorical,
@@ -328,6 +331,9 @@ search_best_split_point_ale_with = function(
   )
 }
 
+#' Find best ALE split point via C++ sweep (internal).
+#' @param z,effect,st.table,split.feat,is.categorical,n.quantiles,min.node.size Arguments.
+#' @keywords internal
 search_best_split_point_ale_with_cpp = function(
   z, effect, st.table, split.feat,
   is.categorical,

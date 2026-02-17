@@ -1,3 +1,6 @@
+#' Plot PD tree by depth and node (internal).
+#' @param tree,effect,data,target.feature.name,color.ice,color.pd,show.plot,show.point,mean.center,depth,node.id,features Plot arguments.
+#' @keywords internal
 plot_tree_pd = function(tree, effect, data, target.feature.name,
   color.ice = "lightblue", color.pd = "lightcoral",
   show.plot = TRUE, show.point = FALSE, mean.center = TRUE,
@@ -65,7 +68,8 @@ plot_tree_pd = function(tree, effect, data, target.feature.name,
   invisible(plot.list)
 }
 
-# Helper function to preprocess node data
+#' Preprocess PD node data by depth (internal).
+#' @keywords internal
 preprocess_node_data = function(tree, Y, grid.total, mean.center) {
   all_node_data = list()
   for (depth_idx in seq_along(tree)) {
@@ -98,7 +102,8 @@ preprocess_node_data = function(tree, Y, grid.total, mean.center) {
   all_node_data
 }
 
-# Helper function to create plots for a depth
+#' Create PD plots for one depth (internal).
+#' @keywords internal
 create_plots_for_depth = function(tree, prepared.data, data, target.feature.name,
   depth_idx, nodes_to_render, color.ice, color.pd,
   show.plot, show.point, mean.center) {
@@ -131,7 +136,8 @@ create_plots_for_depth = function(tree, prepared.data, data, target.feature.name
   plots.at.depth
 }
 
-# Helper function to create node title
+#' Create node title for PD plot (internal).
+#' @keywords internal
 create_node_title = function(node, depth_idx, tree) {
   n.samples = length(node$subset.idx)
   if (depth_idx == 1) {
@@ -143,7 +149,8 @@ create_node_title = function(node, depth_idx, tree) {
   paste0(depth_idx - 1, ".Split results: ", split.condition, " (N = ", n.samples, ")")
 }
 
-# Helper function to calculate y range
+#' Compute y-axis range for PD plots (internal).
+#' @keywords internal
 calculate_y_range = function(prepared.data, data, target.feature.name, show.point) {
   # Collect ICE values excluding the 'node' column by name from each data.frame
   values.list = lapply(prepared.data, function(df) {

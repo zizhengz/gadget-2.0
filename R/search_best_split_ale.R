@@ -1,3 +1,6 @@
+#' Find best ALE split (internal).
+#' @param Z,effect,min.node.size,n.quantiles,with_stab Split/search arguments.
+#' @keywords internal
 search_best_split_ale = function(
   Z, effect,
   min.node.size = 1L,

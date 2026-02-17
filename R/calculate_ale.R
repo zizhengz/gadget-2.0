@@ -50,6 +50,10 @@ calculate_ale = function(model, data, feature.set, target.feature.name, n.interv
   names(eff.list) = feature.set
   eff.list
 }
+
+#' ALE for a single numeric feature (internal)
+#' @param model,data,X,feature,target.feature.name,n.intervals,predict.fun See \code{\link{calculate_ale}}.
+#' @keywords internal
 ale_numeric_feature = function(model, data, X, feature, target.feature.name, n.intervals = 10, predict.fun = NULL) {
   x.num = data[[feature]]
   n.rows = nrow(data)
@@ -100,6 +104,10 @@ ale_numeric_feature = function(model, data, X, feature, target.feature.name, n.i
   ), by = interval.index]
   DT
 }
+
+#' ALE for a single categorical feature (internal)
+#' @param model,data,X,feature,target.feature.name,predict.fun See \code{\link{calculate_ale}}.
+#' @keywords internal
 ale_categorical_feature = function(model, data, X, feature, target.feature.name, predict.fun = NULL) {
   data.copy = data
   x.cat = droplevels(data.copy[[feature]])
