@@ -1,6 +1,6 @@
 # GADGET: General Additive Decomposition based on Global Effect Tree
 
-GADGET is an R package designed to interpret machine learning models by detecting and visualizing feature interactions. It decomposes the global effect of features into a tree structure using Accumulated Local Effects (ALE) or Partial Dependence (PD), allowing for a hierarchical understanding of how features interact to influence model predictions.
+The **gadget** R package implements the GADGET algorithm to interpret machine learning models by detecting and visualizing feature interactions. It decomposes the global effect of features into a tree structure using Accumulated Local Effects (ALE) or Partial Dependence (PD), allowing for a hierarchical understanding of how features interact to influence model predictions.
 
 ## Features
 
@@ -12,11 +12,11 @@ GADGET is an R package designed to interpret machine learning models by detectin
 
 ## Installation
 
-You can install the development version of GADGET from GitHub:
+You can install the development version of **gadget** from GitHub:
 
 ```r
 # install.packages("devtools")
-devtools::install_github("zizhengz/GADGET")
+devtools::install_github("zizhengz/gadget-2.0")
 ```
 
 ## Dependencies

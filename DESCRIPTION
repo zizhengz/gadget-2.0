@@ -17,8 +17,8 @@ Description: Implements the GADGET (General Additive Decomposition based on Glob
     both ALE and PD strategies, integrates with 'mlr3' and 'iml', and provides
     visualization of the interaction tree and regional effect plots.
 License: MIT
-URL: https://github.com/zizhengz/GADGET
-BugReports: https://github.com/zizhengz/GADGET/issues
+URL: https://github.com/zizhengz/gadget-2.0
+BugReports: https://github.com/zizhengz/gadget-2.0/issues
 Encoding: UTF-8
 LazyData: false
 Imports: 
