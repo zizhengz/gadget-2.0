@@ -32,90 +32,121 @@ devtools::install_github("zizhengz/gadget-2.0")
 
 ## Quick Start
 
-Here is a basic example of how to use GADGET to analyze a machine learning model:
+Here is a basic example of how to use GADGET with ALE-based trees on the `Bikeshare` data from the `ISLR2` package:
 
 ```r
 library(gadget)
 library(mlr3)
 library(mlr3learners)
+library(ranger)
+library(ISLR2)  # contains the Bikeshare dataset
 
-# 1. Train a model (example using ranger)
-task = tsk("bike_sharing")
+data("Bikeshare", package = "ISLR2")
+set.seed(123)
+
+# Subsample for a lightweight example
+bike = Bikeshare[sample(1:nrow(Bikeshare), 1000), ]
+bike$workingday = as.factor(bike$workingday)
+
+# Select a small set of features and define the target
+bike_data = bike[, c("hr", "temp", "workingday", "bikers")]
+names(bike_data)[names(bike_data) == "bikers"] = "target"
+
+task = TaskRegr$new(id = "bike", backend = bike_data, target = "target")
 learner = lrn("regr.ranger")
 learner$train(task)
-data = task$data()
 
-# 2. Initialize the GADGET tree with ALE strategy
-# We want to understand the interaction structure affecting the 'count' target
+# Initialize the GADGET tree with ALE strategy
 ale_tree = gadgetTree$new(
-  strategy = aleStrategy$new(),
-  n.split = 3,           # Maximum depth
+  strategy      = aleStrategy$new(),
+  n.split       = 2,     # Maximum depth
+  impr.par      = 0.01,  # Stopping criterion
   min.node.size = 50     # Minimum samples per node
 )
 
-# 3. Fit the tree
-# This will compute ALE effects and grow the tree
+# Fit the tree (ALE effects are computed internally)
 ale_tree$fit(
   model = learner,
-  data = data,
-  target.feature.name = "count",
-  n.intervals = 20
+  data  = bike_data,
+  target.feature.name = "target",
+  n.intervals = 10
 )
 
-# 4. Visualize the tree structure
+# Visualize the tree structure and extract split information
 ale_tree$plot_tree_structure()
-
-# 5. Inspect split information
 print(ale_tree$extract_split_info())
+
+# Plot regional ALE effects
+ale_tree$plot(
+  data              = bike_data,
+  target.feature.name = "target",
+  mean.center       = FALSE,
+  show.point        = TRUE,
+  show.plot         = TRUE
+)
 ```
 
 ### Partial Dependence (PD) example and plot return value
 
-For PD-based trees we typically use the [`iml`](https://cran.r-project.org/package=iml) package to compute ICE/PD effects, and then let `pdStrategy` use them:
+For PD-based trees we typically use the [`iml`](https://cran.r-project.org/package=iml) package to compute ICE/PD effects, and then let `pdStrategy` use them. The following example is adapted from the synthetic data section in `example.Rmd`:
 
 ```r
+library(gadget)
 library(iml)
+library(mlr3)
+library(mlr3learners)
+library(ranger)
 
-# 1. Reuse the trained mlr3 model and data from above
-X = as.data.frame(data[, setdiff(names(data), "count")])
-y = data$count
+set.seed(1234)
+n = 500
+x1 = runif(n, -1, 1)
+x2 = runif(n, -1, 1)
+x3 = runif(n, -1, 1)
+y  = ifelse(x3 > 0, 3 * x1, -3 * x1) + x3 + rnorm(n, sd = 0.3)
+syn.data = data.frame(x1, x2, x3, y)
 
-predictor = iml::Predictor$new(
-  model = learner,
-  data  = X,
-  y     = y
+syn.task    = TaskRegr$new("syn", backend = syn.data, target = "y")
+syn.learner = lrn("regr.ranger")
+syn.learner$train(syn.task)
+
+syn.predictor = iml::Predictor$new(
+  model = syn.learner,
+  data  = syn.data[, c("x1", "x2", "x3")],
+  y     = syn.data$y
 )
 
-# 2. Compute ICE/PD effects for all features
-effect_all = iml::FeatureEffects$new(
-  predictor,
-  method    = "ice",   # PD is computed as the mean over ICE
+# 1. Compute ICE/PD effects for all features
+syn.effect = iml::FeatureEffects$new(
+  syn.predictor,
+  method    = "ice",  # PD is computed as the mean over ICE
   grid.size = 20
 )
 
-# 3. Fit a PD-based GADGET tree
-pd_tree = gadgetTree$new(
-  strategy     = pdStrategy$new(),
-  n.split      = 3,
-  min.node.size = 50
+# 2. Fit a PD-based GADGET tree
+syn.tree.pd = gadgetTree$new(
+  strategy      = pdStrategy$new(),
+  n.split       = 2,
+  impr.par      = 0.1,
+  min.node.size = 1
 )
 
-pd_tree$fit(
-  effect = effect_all,
-  data   = as.data.frame(data),
-  target.feature.name = "count"
+syn.tree.pd$fit(
+  effect = syn.effect,
+  data   = syn.data,
+  target.feature.name = "y"
 )
 
-# 4. Plot tree structure
-pd_tree$plot_tree_structure()
+# 3. Plot tree structure
+syn.tree.pd$plot_tree_structure()
 
-# 5. Plot regional PD / ICE and inspect the returned object
-plots = pd_tree$plot(
-  effect = effect_all,
-  data   = as.data.frame(data),
-  target.feature.name = "count",
-  show.plot   = FALSE,   # do not auto-print
-  mean.center = FALSE
+# 4. Plot regional PD / ICE and inspect the returned object
+plots = syn.tree.pd$plot(
+  effect = syn.effect,
+  data   = syn.data,
+  target.feature.name = "y",
+  show.plot   = TRUE,   
+  show.point  = TRUE,
+  mean.center = TRUE
 )
 
 # `plots` is a nested list: depth -> nodes -> ggplot objects
