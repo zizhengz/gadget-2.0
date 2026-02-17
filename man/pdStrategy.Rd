@@ -2,18 +2,13 @@
 % Please edit documentation in R/pdStrategy.R
 \name{pdStrategy}
 \alias{pdStrategy}
-\title{pdStrategy: Partial Dependence Tree Strategy (R6 class)}
+\title{pdStrategy: Generalized additive decomposition based on PD effects.}
 \description{
-pdStrategy: Partial Dependence Tree Strategy (R6 class)
-
-pdStrategy: Partial Dependence Tree Strategy (R6 class)
-}
-\details{
 Implements the effectStrategy interface for building and analyzing Partial Dependence (PD) trees.
 This strategy supports data preprocessing, node transformation, heterogeneity calculation,
 best split search, tree fitting, and visualization.
-
-
+}
+\details{
 This class is used internally by the gadgetTree framework to implement partial dependence
 tree growing, splitting, and visualization. It is not intended to be used directly by end users,
 but can be instantiated for advanced customization.

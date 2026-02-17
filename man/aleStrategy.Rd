@@ -2,18 +2,13 @@
 % Please edit documentation in R/aleStrategy.R
 \name{aleStrategy}
 \alias{aleStrategy}
-\title{aleStrategy: ALE-Based Effect Strategy (R6)}
+\title{aleStrategy: Generalized additive decomposition based on ALE effects.}
 \description{
-aleStrategy: ALE-Based Effect Strategy (R6)
-
-aleStrategy: ALE-Based Effect Strategy (R6)
-}
-\details{
 Implements the effectStrategy interface for ALE-based trees: preprocessing via
 \code{prepare_split_data_ale}, node-wise ALE transform, heterogeneity from ALE
 derivatives, and best-split search. Used by \code{gadgetTree} when \code{strategy = "ale"}.
-
-
+}
+\details{
 Intended for use through \code{gadgetTree$new(strategy = aleStrategy$new())} and
 \code{tree$fit(...)}. Can be instantiated directly for custom pipelines.
 }

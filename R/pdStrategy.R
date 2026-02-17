@@ -1,5 +1,6 @@
-#' pdStrategy: Partial Dependence Tree Strategy (R6 class)
+#' @title pdStrategy: Generalized additive decomposition based on PD effects.
 #'
+#' @description
 #' Implements the effectStrategy interface for building and analyzing Partial Dependence (PD) trees.
 #' This strategy supports data preprocessing, node transformation, heterogeneity calculation,
 #' best split search, tree fitting, and visualization.

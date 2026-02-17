@@ -4,8 +4,9 @@ default_predict_fun = function(model, data) {
   if (inherits(pred, "Prediction")) pred$response else pred
 }
 
-#' aleStrategy: ALE-Based Effect Strategy (R6)
+#' @title aleStrategy: Generalized additive decomposition based on ALE effects.
 #'
+#' @description
 #' Implements the effectStrategy interface for ALE-based trees: preprocessing via
 #' \code{prepare_split_data_ale}, node-wise ALE transform, heterogeneity from ALE
 #' derivatives, and best-split search. Used by \code{gadgetTree} when \code{strategy = "ale"}.

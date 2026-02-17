@@ -24,13 +24,4 @@ This function traverses a depth-based list of Node objects and returns a data fr
 \details{
 This function is used internally by the gadgetTree framework to extract and summarize the structure and statistics of effect-based decision trees. It is useful for interpretation, reporting, and benchmarking.
 }
-\examples{
-\dontrun{
-# Example: Extract split info from a fitted tree (requires fitted effect object)
-pd_strat = pdStrategy$new()
-tree = gadgetTree$new(strategy = pd_strat, n.split = 2)
-tree$fit(effect = effect, data = data, target.feature.name = "target")
-split_info = tree$extract_split_info()
-}
-}
 \keyword{internal}
