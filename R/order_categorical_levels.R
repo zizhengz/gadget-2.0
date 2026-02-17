@@ -12,7 +12,8 @@
 #' @param target.feature.name Character. Name of the target column; excluded from
 #'   \dQuote{other features} when building the distance matrix.
 #' @param order.method Character. How to turn the level-distance matrix into an order:
-#'   \code{"mds"} (default, 1D classic MDS), \code{"pca"} (first PC), or \code{"random"}.
+#'   \code{"mds"} (default, 1D classic MDS), \code{"pca"} (first PC),
+#'   \code{"random"} (random permutation), or \code{"raw"} (keep existing level order).
 #'
 #' @return Factor with the same length and values as \code{x.cat}, with
 #'   \code{levels} reordered and \code{ordered = TRUE}. If \code{nlevels(x.cat) <= 1}
@@ -32,6 +33,9 @@
 order_categorical_levels = function(x.cat, data, feature, target.feature.name, order.method = "mds") {
   levels.orig = levels(x.cat)
   K = nlevels(x.cat)
+  if (order.method == "raw") {
+    return(factor(x.cat, levels = levels.orig, ordered = TRUE))
+  }
   # Use all features except the focal feature and the target
   other.feats = setdiff(colnames(data), c(feature, target.feature.name))
   if (K <= 1L || length(other.feats) == 0L) {

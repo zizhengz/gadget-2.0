@@ -1,7 +1,8 @@
 #' gadgetTree: Generalized Additive Decomposition of Global Effects Tree (R6 class)
 #'
+#' @description
 #' Main class for growing, managing, and visualizing effect-based decision trees
-#' using a modular strategy (e.g., pdStrategy).
+#' using a modular strategy (e.g., \code{pdStrategy} or \code{aleStrategy}).
 #'
 #' @field strategy Strategy object (e.g., pdStrategy) that implements effect-specific logic.
 #' @field root Node object. Root node of the tree.
@@ -103,7 +104,7 @@ gadgetTree = R6::R6Class(
     #' @param features Character or NULL. Features to visualize (optional).
     #' @param ... Additional plotting arguments.
     #' @return List. List of ggplot2 objects for different depths and nodes.
-    plot = function(effect, data, target.feature.name, depth = NULL, node.id = NULL, features = NULL, ...) {
+    plot = function(effect = NULL, data, target.feature.name, depth = NULL, node.id = NULL, features = NULL, ...) {
       checkmate::assert_character(target.feature.name, len = 1, .var.name = "target.feature.name")
       checkmate::assert_data_frame(data, .var.name = "data")
       checkmate::assert_integerish(depth, lower = 1, null.ok = TRUE, .var.name = "depth")

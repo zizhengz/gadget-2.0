@@ -15,12 +15,13 @@
 #' This function is used internally by the gadgetTree framework to extract and summarize the structure and statistics of effect-based decision trees. It is useful for interpretation, reporting, and benchmarking.
 #'
 #' @examples
-#' # Example: Extract split info from a fitted tree
+#' \dontrun{
+#' # Example: Extract split info from a fitted tree (requires fitted effect object)
 #' pd_strat = pdStrategy$new()
 #' tree = gadgetTree$new(strategy = pd_strat, n.split = 2)
-#' tree$fit(effect, data, target.feature.name = "target")
+#' tree$fit(effect = effect, data = data, target.feature.name = "target")
 #' split_info = tree$extract_split_info()
-#'
+#' }
 #' @keywords internal
 extract_split_info = function(tree, split_benchmark = NULL) {
   # Collect all intImp.j field names

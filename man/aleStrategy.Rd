@@ -2,33 +2,31 @@
 % Please edit documentation in R/aleStrategy.R
 \name{aleStrategy}
 \alias{aleStrategy}
-\title{aleStrategy: Accumulated Local Effects Tree Strategy (R6 class)}
+\title{aleStrategy: ALE-Based Effect Strategy (R6)}
 \description{
-aleStrategy: Accumulated Local Effects Tree Strategy (R6 class)
+aleStrategy: ALE-Based Effect Strategy (R6)
 
-aleStrategy: Accumulated Local Effects Tree Strategy (R6 class)
+aleStrategy: ALE-Based Effect Strategy (R6)
 }
 \details{
-Implements the effectStrategy interface for building and analyzing Accumulated Local Effects (ALE) trees.
-This strategy supports data preprocessing, node transformation, heterogeneity calculation,
-best split search, tree fitting, and visualization.
+Implements the effectStrategy interface for ALE-based trees: preprocessing via
+\code{prepare_split_data_ale}, node-wise ALE transform, heterogeneity from ALE
+derivatives, and best-split search. Used by \code{gadgetTree} when \code{strategy = "ale"}.
 
 
-This class is used internally by the gadgetTree framework to implement ALE-based
-tree growing, splitting, and visualization. It is not intended to be used directly by end users,
-but can be instantiated for advanced customization.
+Intended for use through \code{gadgetTree$new(strategy = aleStrategy$new())} and
+\code{tree$fit(...)}. Can be instantiated directly for custom pipelines.
 }
 \examples{
-# Example: Fit and plot an ALE tree using aleStrategy and gadgetTree
-# (Assuming model and data are prepared)
+\dontrun{
 ale_strat = aleStrategy$new()
 tree = gadgetTree$new(strategy = ale_strat, n.split = 2)
-tree$fit(model = model, data = data, target.feature.name = "target")
-tree$plot(model = model, data = data, target.feature.name = "target")
+tree$fit(model = model, data = data, target.feature.name = "y")
+}
 
 }
 \seealso{
-\code{\link{calculate_ale_heterogeneity_cpp}} for the underlying calculation function
+\code{\link{calculate_ale_heterogeneity_cpp}}
 }
 \section{Super class}{
 \code{\link[gadget:effectStrategy]{gadget::effectStrategy}} -> \code{aleStrategy}
@@ -36,17 +34,26 @@ tree$plot(model = model, data = data, target.feature.name = "target")
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
-\item{\code{tree_ref}}{Reference to the associated tree instance.}
+\item{\code{tree_ref}}{Reference to the associated \code{gadgetTree} instance.}
 
-\item{\code{model}}{Fitted model object (persistent).}
+\item{\code{fit_timing}}{Named numeric vector with global/regional fit times (seconds).}
 
-\item{\code{data}}{Data frame containing all features and the target variable (persistent).}
+\item{\code{model}}{Fitted model (persistent after \code{fit}).}
 
-\item{\code{target.feature.name}}{Character(1). The name of the target feature (persistent).}
+\item{\code{data}}{Data frame or data.table with features and target (persistent after \code{fit}).}
 
-\item{\code{n.intervals}}{Integer. Number of intervals for numeric features (persistent).}
+\item{\code{target.feature.name}}{Character(1). Name of the target variable.}
 
-\item{\code{predict.fun}}{Function. Prediction function (persistent).}
+\item{\code{n.intervals}}{Integer. Number of intervals for numeric ALE.}
+
+\item{\code{predict.fun}}{Function. \code{function(model, data)} returning predictions.}
+
+\item{\code{order.method}}{Character. Categorical level ordering: \code{"mds"}, \code{"pca"},
+\code{"random"}, or \code{"raw"} (keep existing factor level order; default \code{"mds"}).}
+
+\item{\code{with_stab}}{Logical. Whether boundary-stabilized splits are enabled.}
+
+\item{\code{effect_root}}{Cached ALE effect list at the root node (used by \code{$plot()}).}
 }
 \if{html}{\out{</div>}}
 }
@@ -78,7 +85,7 @@ Initialize the strategy with name "ale".
 \if{html}{\out{<a id="method-aleStrategy-preprocess"></a>}}
 \if{latex}{\out{\hypertarget{method-aleStrategy-preprocess}{}}}
 \subsection{Method \code{preprocess()}}{
-Preprocess input data to generate the split feature set Z, ALE effect list Y, and grid.
+Preprocess data into split-feature matrix Z and ALE effect list Y by calling \code{prepare_split_data_ale}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{aleStrategy$preprocess(
   model,
@@ -87,7 +94,8 @@ Preprocess input data to generate the split feature set Z, ALE effect list Y, an
   n.intervals,
   feature.set = NULL,
   split.feature = NULL,
-  predict.fun = NULL
+  predict.fun = NULL,
+  order.method = "mds"
 )}\if{html}{\out{</div>}}
 }
 
@@ -96,31 +104,32 @@ Preprocess input data to generate the split feature set Z, ALE effect list Y, an
 \describe{
 \item{\code{model}}{Fitted model object.}
 
-\item{\code{data}}{Data frame containing all features and the target variable.}
+\item{\code{data}}{Data frame or data.table with features and target.}
 
-\item{\code{target.feature.name}}{Character(1). The name of the target feature in the data to explain.}
+\item{\code{target.feature.name}}{Character(1). Name of the target variable.}
 
-\item{\code{n.intervals}}{Integer. Number of intervals for numeric features.}
+\item{\code{n.intervals}}{Integer. Number of intervals for numeric ALE.}
 
-\item{\code{feature.set}}{Character or NULL. Optional. Subset of features to use for effect calculation. If NULL, all features are used.}
+\item{\code{feature.set}}{Character or NULL. Features to compute ALE for; NULL = all.}
 
-\item{\code{split.feature}}{Character or NULL. Optional. Features to consider for splitting at each node. If NULL, all features are considered.}
+\item{\code{split.feature}}{Character or NULL. Features to consider for splitting; NULL = all.}
 
-\item{\code{predict.fun}}{Function or NULL. Prediction function. If NULL, uses default mlr3-compatible function.}
+\item{\code{predict.fun}}{Function or NULL. Prediction function; NULL uses mlr3-style default.}
+
+\item{\code{order.method}}{Character. Categorical level order: \code{"mds"}, \code{"pca"},
+\code{"random"}, or \code{"raw"} (keep existing factor level order; default \code{"mds"}).}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-List. A list with Z (split feature set), Y (ALE effect list), and grid (feature grid).
+List with \code{Z} (data.table of split features) and \code{Y} (named list of ALE effect data.tables).
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-aleStrategy-node_transform"></a>}}
 \if{latex}{\out{\hypertarget{method-aleStrategy-node_transform}{}}}
 \subsection{Method \code{node_transform()}}{
-Transform ALE effects for a specific node (e.g., after splitting).
-This method applies node-specific preprocessing including single value handling
-and categorical feature recalculation.
+Transform ALE effects for a node: subset by \code{idx}, handle single-value and recalc categorical as needed.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{aleStrategy$node_transform(Y, idx, split.feature = NULL)}\if{html}{\out{</div>}}
 }
@@ -128,23 +137,23 @@ and categorical feature recalculation.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{Y}}{List. List of ALE effect data for each feature.}
+\item{\code{Y}}{List. ALE effect list (each element a data.frame/data.table from \code{calculate_ale}).}
 
-\item{\code{idx}}{Integer vector. Indices of samples in the current node.}
+\item{\code{idx}}{Integer. Row indices of samples in the node.}
 
-\item{\code{split.feature}}{Character(1) or NULL. Name of the feature used for splitting.}
+\item{\code{split.feature}}{Character(1) or NULL. Feature used for the split leading to this node.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-List. List of transformed ALE effects.
+List of transformed ALE effect data.tables.
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-aleStrategy-heterogeneity"></a>}}
 \if{latex}{\out{\hypertarget{method-aleStrategy-heterogeneity}{}}}
 \subsection{Method \code{heterogeneity()}}{
-Calculate the heterogeneity (variance of ALE derivatives) within the node.
+Compute heterogeneity (variance of ALE derivatives) per feature from effect list \code{Y}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{aleStrategy$heterogeneity(Y)}\if{html}{\out{</div>}}
 }
@@ -152,19 +161,19 @@ Calculate the heterogeneity (variance of ALE derivatives) within the node.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{Y}}{List. List of ALE effect data.}
+\item{\code{Y}}{List. ALE effect list (each element a data.table from \code{calculate_ale}).}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Numeric. Numeric vector, heterogeneity for each feature.
+Numeric vector of heterogeneity, one per feature.
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-aleStrategy-find_best_split"></a>}}
 \if{latex}{\out{\hypertarget{method-aleStrategy-find_best_split}{}}}
 \subsection{Method \code{find_best_split()}}{
-Find the best split point for a node based on ALE heterogeneity reduction.
+Find the best split for a node by ALE heterogeneity reduction.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{aleStrategy$find_best_split(Z, Y, min.node.size, n.quantiles)}\if{html}{\out{</div>}}
 }
@@ -172,34 +181,37 @@ Find the best split point for a node based on ALE heterogeneity reduction.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{Z}}{Data frame. Split feature set.}
+\item{\code{Z}}{Data frame or data.table. Split-feature matrix (columns = \code{split.feature}).}
 
-\item{\code{Y}}{List. ALE effect data.}
+\item{\code{Y}}{List. ALE effect list from \code{calculate_ale}.}
 
 \item{\code{min.node.size}}{Integer(1). Minimum node size.}
 
-\item{\code{n.quantiles}}{Integer(1) or NULL. Number of quantiles to use for candidate split points (for numeric features).}
+\item{\code{n.quantiles}}{Integer(1) or NULL. Quantile-based candidate cutpoints for numeric features.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-List. List with best split feature, split point, etc.
+List with best split feature, cutpoint/level, and related fields.
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-aleStrategy-plot"></a>}}
 \if{latex}{\out{\hypertarget{method-aleStrategy-plot}{}}}
 \subsection{Method \code{plot()}}{
-Visualize the ALE tree structure and ALE plots for each node.
+Visualize ALE curves for selected nodes by delegating to \code{plot_tree_ale()}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{aleStrategy$plot(
   tree,
-  model,
+  effect = NULL,
   data,
   target.feature.name,
   depth = NULL,
   node.id = NULL,
   features = NULL,
+  show.plot = TRUE,
+  show.point = FALSE,
+  mean.center = TRUE,
   ...
 )}\if{html}{\out{</div>}}
 }
@@ -207,69 +219,83 @@ Visualize the ALE tree structure and ALE plots for each node.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{tree}}{List. Tree structure as a list of Node objects.}
+\item{\code{tree}}{Depth-based list of Node objects (typically from \code{convert_tree_to_list}).}
 
-\item{\code{model}}{Fitted model object.}
+\item{\code{effect}}{Optional ALE effect list (from \code{calculate_ale}); if \code{NULL},
+uses the cached \code{effect_root} from the last \code{$fit()} call.}
 
-\item{\code{data}}{Data frame. Data frame.}
+\item{\code{data}}{Data frame or data.table used for plotting (same data passed to \code{$fit()}).}
 
-\item{\code{target.feature.name}}{Character(1). Target feature name.}
+\item{\code{target.feature.name}}{Character(1). Name of the target variable.}
 
-\item{\code{depth}}{Integer or NULL. Depth(s) to visualize (optional).}
+\item{\code{depth}}{Optional integer vector of depths to plot.}
 
-\item{\code{node.id}}{Integer or NULL. Node id(s) to visualize (optional).}
+\item{\code{node.id}}{Optional integer vector of node ids to plot.}
 
-\item{\code{features}}{Character or NULL. Features to visualize (optional).}
+\item{\code{features}}{Optional character vector of feature names to include.}
 
-\item{\code{...}}{Additional plotting arguments.}
+\item{\code{show.plot}}{Logical. If \code{TRUE}, print plots as they are created.}
+
+\item{\code{show.point}}{Logical. If \code{TRUE}, overlay observation points.}
+
+\item{\code{mean.center}}{Logical. Whether to mean-center ALE curves (default \code{TRUE}).}
+
+\item{\code{...}}{Passed on to \code{plot_tree_ale()}.}
 }
 \if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-List. List of ggplot2 objects for different depths and nodes.
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-aleStrategy-fit"></a>}}
 \if{latex}{\out{\hypertarget{method-aleStrategy-fit}{}}}
 \subsection{Method \code{fit()}}{
-Fit an ALE tree using the provided data and model.
+Fit an ALE tree: run \code{preprocess} to get Z and Y, then grow the tree by recursive splitting.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{aleStrategy$fit(
   tree,
   model,
   data,
   target.feature.name,
-  n.intervals,
+  n.intervals = 10,
   feature.set = NULL,
   split.feature = NULL,
-  predict.fun = NULL
+  predict.fun = NULL,
+  order.method = "raw",
+  with_stab = FALSE,
+  ...
 )}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{tree}}{gadgetTree object. Tree object instance.}
+\item{\code{tree}}{\code{gadgetTree} instance.}
 
-\item{\code{model}}{Fitted model object.}
+\item{\code{model}}{Fitted model.}
 
-\item{\code{data}}{Data frame. Data frame.}
+\item{\code{data}}{Data frame or data.table (features and target).}
 
-\item{\code{target.feature.name}}{Character(1). Target feature name.}
+\item{\code{target.feature.name}}{Character(1). Target variable name.}
 
-\item{\code{n.intervals}}{Integer. Number of intervals for numeric features.}
+\item{\code{n.intervals}}{Integer. Number of intervals for numeric ALE (default 10).}
 
-\item{\code{feature.set}}{Character or NULL. Feature subset (optional).}
+\item{\code{feature.set}}{Character or NULL. Features to compute ALE for; NULL = all.}
 
-\item{\code{split.feature}}{Character or NULL. Split feature (optional).}
+\item{\code{split.feature}}{Character or NULL. Features to split on; NULL = all.}
 
-\item{\code{predict.fun}}{Function or NULL. Prediction function (optional).}
+\item{\code{predict.fun}}{Function or NULL. Prediction function; NULL = default.}
+
+\item{\code{order.method}}{Character. Categorical level order: \code{"mds"}, \code{"pca"},
+\code{"random"}, or \code{"raw"} (keep existing factor level order; default \code{"mds"}).}
+
+\item{\code{with_stab}}{Logical. Whether to enable ALE boundary stabilizer in splitting.}
+
+\item{\code{...}}{Ignored.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-gadgetTree object, invisibly. The fitted tree object.
+The \code{tree} object, invisibly.
 }
 }
 \if{html}{\out{<hr>}}

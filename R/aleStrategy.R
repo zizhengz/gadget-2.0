@@ -11,12 +11,16 @@ default_predict_fun = function(model, data) {
 #' derivatives, and best-split search. Used by \code{gadgetTree} when \code{strategy = "ale"}.
 #'
 #' @field tree_ref Reference to the associated \code{gadgetTree} instance.
+#' @field fit_timing Named numeric vector with global/regional fit times (seconds).
 #' @field model Fitted model (persistent after \code{fit}).
 #' @field data Data frame or data.table with features and target (persistent after \code{fit}).
 #' @field target.feature.name Character(1). Name of the target variable.
 #' @field n.intervals Integer. Number of intervals for numeric ALE.
 #' @field predict.fun Function. \code{function(model, data)} returning predictions.
-#' @field order.method Character. Categorical level ordering: \code{"mds"}, \code{"pca"}, or \code{"random"} (default \code{"mds"}).
+#' @field order.method Character. Categorical level ordering: \code{"mds"}, \code{"pca"},
+#'   \code{"random"}, or \code{"raw"} (keep existing factor level order; default \code{"mds"}).
+#' @field with_stab Logical. Whether boundary-stabilized splits are enabled.
+#' @field effect_root Cached ALE effect list at the root node (used by \code{$plot()}).
 #'
 #' @details
 #' Intended for use through \code{gadgetTree$new(strategy = aleStrategy$new())} and
@@ -35,6 +39,7 @@ aleStrategy = R6::R6Class(
   inherit = effectStrategy,
   public = list(
     tree_ref = NULL,
+    fit_timing = NULL,
     # Persistent context fields (declared to allow assignment outside initialize)
     model = NULL,
     data = NULL,
@@ -42,6 +47,8 @@ aleStrategy = R6::R6Class(
     n.intervals = NULL,
     predict.fun = NULL,
     order.method = "mds",
+    with_stab = FALSE,
+    effect_root = NULL,
 
     #' @description
     #' Initialize the strategy with name "ale".
@@ -58,7 +65,8 @@ aleStrategy = R6::R6Class(
     #' @param feature.set Character or NULL. Features to compute ALE for; NULL = all.
     #' @param split.feature Character or NULL. Features to consider for splitting; NULL = all.
     #' @param predict.fun Function or NULL. Prediction function; NULL uses mlr3-style default.
-    #' @param order.method Character. Categorical level order: \code{"mds"}, \code{"pca"}, or \code{"random"} (default \code{"mds"}).
+    #' @param order.method Character. Categorical level order: \code{"mds"}, \code{"pca"},
+    #'   \code{"random"}, or \code{"raw"} (keep existing factor level order; default \code{"mds"}).
     #' @return List with \code{Z} (data.table of split features) and \code{Y} (named list of ALE effect data.tables).
     preprocess = function(model, data, target.feature.name, n.intervals, feature.set = NULL, split.feature = NULL, predict.fun = NULL, order.method = "mds") {
       checkmate::assert_data_frame(data, .var.name = "data")
@@ -128,32 +136,48 @@ aleStrategy = R6::R6Class(
         Z = Z,
         effect = Y,
         min.node.size = min.node.size,
-        n.quantiles = n.quantiles
+        n.quantiles = n.quantiles,
+        with_stab = self$with_stab
       )
     },
 
     #' @description
-    #' Placeholder for ALE tree visualization; currently throws. Use package plotting APIs when implemented.
-    #' @param tree List. Tree structure (Node objects).
-    #' @param model Fitted model.
-    #' @param data Data frame or data.table.
-    #' @param target.feature.name Character(1). Target variable name.
-    #' @param depth Integer or NULL. Depth(s) to plot.
-    #' @param node.id Integer or NULL. Node id(s) to plot.
-    #' @param features Character or NULL. Features to plot.
-    #' @param ... Passed to downstream plotting.
-    #' @return Not used; throws an error.
-    plot = function(tree, model, data, target.feature.name, depth = NULL, node.id = NULL, features = NULL, ...) {
+    #' Visualize ALE curves for selected nodes by delegating to \code{plot_tree_ale()}.
+    #' @param tree Depth-based list of Node objects (typically from \code{convert_tree_to_list}).
+    #' @param effect Optional ALE effect list (from \code{calculate_ale}); if \code{NULL},
+    #'   uses the cached \code{effect_root} from the last \code{$fit()} call.
+    #' @param data Data frame or data.table used for plotting (same data passed to \code{$fit()}).
+    #' @param target.feature.name Character(1). Name of the target variable.
+    #' @param depth Optional integer vector of depths to plot.
+    #' @param node.id Optional integer vector of node ids to plot.
+    #' @param features Optional character vector of feature names to include.
+    #' @param show.plot Logical. If \code{TRUE}, print plots as they are created.
+    #' @param show.point Logical. If \code{TRUE}, overlay observation points.
+    #' @param mean.center Logical. Whether to mean-center ALE curves (default \code{TRUE}).
+    #' @param ... Passed on to \code{plot_tree_ale()}.
+    plot = function(tree, effect = NULL, data, target.feature.name,
+      depth = NULL, node.id = NULL, features = NULL,
+      show.plot = TRUE, show.point = FALSE, mean.center = TRUE, ...) {
       checkmate::assert_list(tree)
-      checkmate::assert_character(target.feature.name, len = 1, .var.name = "target.feature.name")
       checkmate::assert_data_frame(data, .var.name = "data")
+      checkmate::assert_character(target.feature.name, len = 1, .var.name = "target.feature.name")
       checkmate::assert_integerish(depth, lower = 1, null.ok = TRUE, .var.name = "depth")
       checkmate::assert_integerish(node.id, lower = 1, null.ok = TRUE, .var.name = "node.id")
       checkmate::assert_character(features, null.ok = TRUE, .var.name = "features")
-
-      # TODO: Implement ALE-specific plotting
-      # For now, return a placeholder
-      stop("ALE plotting not yet implemented. Use plot_tree_ale() function.")
+      checkmate::assert_flag(show.plot)
+      checkmate::assert_flag(show.point)
+      checkmate::assert_flag(mean.center)
+      if (is.null(effect)) {
+        effect = self$effect_root
+        if (is.null(effect)) {
+          stop("No cached ALE effect found. Please pass 'effect' or run fit() first.",
+            call. = FALSE)
+        }
+      }
+      plot_tree_ale(tree = tree, effect = effect, data = data,
+        target.feature.name = target.feature.name, depth = depth,
+        node.id = node.id, features = features, show.plot = show.plot,
+        show.point = show.point, mean.center = mean.center, ...)
     },
 
     #' @description
@@ -166,10 +190,14 @@ aleStrategy = R6::R6Class(
     #' @param feature.set Character or NULL. Features to compute ALE for; NULL = all.
     #' @param split.feature Character or NULL. Features to split on; NULL = all.
     #' @param predict.fun Function or NULL. Prediction function; NULL = default.
-    #' @param order.method Character. Categorical level order: \code{"mds"}, \code{"pca"}, \code{"random"} (default \code{"mds"}).
+    #' @param order.method Character. Categorical level order: \code{"mds"}, \code{"pca"},
+    #'   \code{"random"}, or \code{"raw"} (keep existing factor level order; default \code{"mds"}).
+    #' @param with_stab Logical. Whether to enable ALE boundary stabilizer in splitting.
     #' @param ... Ignored.
     #' @return The \code{tree} object, invisibly.
-    fit = function(tree, model, data, target.feature.name, n.intervals = 10, feature.set = NULL, split.feature = NULL, predict.fun = NULL, order.method = "mds", ...) {
+    fit = function(tree, model, data, target.feature.name,
+      n.intervals = 10, feature.set = NULL, split.feature = NULL,
+      predict.fun = NULL, order.method = "raw", with_stab = FALSE, ...) {
       if (missing(model)) stop("aleStrategy requires 'model' to be passed.", call. = FALSE)
       # if (missing(n.intervals)) stop("aleStrategy requires 'n.intervals' to be passed.", call. = FALSE)
       checkmate::assert_integerish(n.intervals, len = 1, lower = 1, .var.name = "n.intervals")
@@ -180,44 +208,49 @@ aleStrategy = R6::R6Class(
         predict.fun = default_predict_fun
       }
       # Store parameters for ALE-specific splitting
-      self$model = model
-      self$data = data
-      self$target.feature.name = target.feature.name
-      self$n.intervals = n.intervals
-      self$predict.fun = predict.fun
-      self$order.method = order.method
-      # Keep reference to the tree
-      self$tree_ref = tree
-      # Preprocess to obtain Z and Y
-      prepared.data = self$preprocess(model = model, data = data,
-        target.feature.name = target.feature.name, n.intervals = n.intervals,
-        feature.set = feature.set, split.feature = split.feature, predict.fun = predict.fun, order.method = order.method)
-      Z = prepared.data$Z
-      Y = prepared.data$Y
-      # Force grid to be empty structure for aleStrategy to save memory
-      # regardless of what preprocess returns
-      grid = vector("list", length(names(Z)))
-      names(grid) = names(Z)
-      # Root objective
-      objective.value.root.j = self$heterogeneity(Y)
-      objective.value.root = sum(objective.value.root.j, na.rm = TRUE)
-      # Create root node
-      parent = Node$new(id = 1, depth = 1, subset.idx = seq_len(nrow(Z)), grid = grid,
-        objective.value.parent = NA, objective.value = objective.value.root, intImp.j = NULL,
-        objective.value.j = objective.value.root.j, improvement.met = FALSE, intImp = NULL,
-        strategy = self)
-      # Recursively build the tree
-      parent$split_node(
-        Z = Z, Y = Y,
-        objective.value.root.j = objective.value.root.j,
-        objective.value.root = objective.value.root,
-        min.node.size = tree$min.node.size,
-        n.quantiles = tree$n.quantiles,
-        impr.par = tree$impr.par,
-        depth = 1,
-        max.depth = tree$n.split + 1
-      )
-      tree$root = parent
+      # --- global part (timed) ---
+      t_global = system.time({
+        self$model = model
+        self$data = data
+        self$target.feature.name = target.feature.name
+        self$n.intervals = n.intervals
+        self$predict.fun = predict.fun
+        self$order.method = order.method
+        self$with_stab = with_stab
+        self$tree_ref = tree
+        prepared.data = self$preprocess(model = model, data = data,
+          target.feature.name = target.feature.name, n.intervals = n.intervals,
+          feature.set = feature.set, split.feature = split.feature, predict.fun = predict.fun, order.method = order.method)
+        Z = prepared.data$Z
+        Y = prepared.data$Y
+        self$effect_root = Y
+        grid = vector("list", length(names(Z)))
+        names(grid) = names(Z)
+        objective.value.root.j = self$heterogeneity(Y)
+        objective.value.root = sum(objective.value.root.j, na.rm = TRUE)
+      })[["elapsed"]]
+
+      # --- regional part (timed) ---
+      t_regional = system.time({
+        parent = Node$new(id = 1, depth = 1, subset.idx = seq_len(nrow(Z)), grid = grid,
+          objective.value.parent = NA, objective.value = objective.value.root, intImp.j = NULL,
+          objective.value.j = objective.value.root.j, improvement.met = FALSE, intImp = NULL,
+          strategy = self)
+        parent$split_node(
+          Z = Z, Y = Y,
+          objective.value.root.j = objective.value.root.j,
+          objective.value.root = objective.value.root,
+          min.node.size = tree$min.node.size,
+          n.quantiles = tree$n.quantiles,
+          impr.par = tree$impr.par,
+          depth = 1,
+          max.depth = tree$n.split + 1
+        )
+        tree$root = parent
+      })[["elapsed"]]
+
+      self$fit_timing = list(global = t_global, regional = t_regional)
+      message("aleStrategy fit timing: global ", round(t_global, 3), "s, regional ", round(t_regional, 3), "s")
       invisible(tree)
     },
     #' @description

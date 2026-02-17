@@ -1,3 +1,12 @@
+#' Build path of split conditions from root to a node
+#'
+#' Used for plot labels. Walks from \code{node} up to the root and collects
+#' split feature, operator, and value at each step.
+#'
+#' @param node Node object (with \code{id.parent}, \code{depth}).
+#' @param tree Depth-based list of nodes (from \code{convert_tree_to_list}).
+#' @return Character vector of conditions (e.g. \code{"x <= 0.5"}).
+#' @keywords internal
 track_split_condition = function(node, tree) {
   path.conditions = c()
   current.node = node

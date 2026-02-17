@@ -11,57 +11,53 @@ prepare_split_data_ale(
   n.intervals,
   feature.set = NULL,
   split.feature = NULL,
-  predict.fun = NULL
+  predict.fun = NULL,
+  order.method = "mds"
 )
 }
 \arguments{
-\item{model}{Fitted model object. The model should have a predict method.}
+\item{model}{Fitted model object with a predict interface.}
 
-\item{data}{Data frame. Training data containing features and target variable.}
+\item{data}{Data frame or data.table. Training data (features and target).}
 
-\item{target.feature.name}{Character. Name of the target variable in the data.}
+\item{target.feature.name}{Character. Name of the target variable.}
 
-\item{feature.set}{Character vector or NULL. Features to compute ALE effects for.
-If NULL, computes for all features. Will validate that all specified features exist.}
+\item{n.intervals}{Integer. Number of intervals for numeric ALE (default 10).}
 
-\item{split.feature}{Character vector or NULL. Features to consider for splitting.
-If NULL, all features are considered for splitting. Will validate that all specified features exist.}
+\item{feature.set}{Character or NULL. Features to compute ALE for; NULL = all.}
 
-\item{predict.fun}{Function or NULL. Prediction function that takes (model, data) and returns predictions.
-If NULL, uses default mlr3-compatible prediction function.}
+\item{split.feature}{Character or NULL. Features to consider for splitting; NULL = all.}
 
-\item{h}{Integer. Number of intervals for numeric features (default: 10).}
+\item{predict.fun}{Function or NULL. \code{function(model, data)} returning predictions; NULL uses mlr3-style default.}
+
+\item{order.method}{Character. How to order categorical levels: \code{"mds"},
+\code{"pca"}, \code{"random"}, or \code{"raw"} (keep existing factor level order;
+default \code{"mds"}).}
 }
 \value{
-List with the following components:
-  \item{Z}{Data frame of split features (numeric)}
-  \item{Y}{List of ALE effect data for each feature}
-  \item{grid}{List of feature value grids}
+List with:
+  \item{Z}{data.table of split features (columns in \code{split.feature}).}
+  \item{Y}{List of ALE effect data per feature (from \code{calculate_ale}).}
 }
 \description{
-This function computes ALE effects and prepares the data structure needed for
-ALE-based tree splitting. It includes robust feature validation and handles
-both feature.set and split.feature parameters with proper error checking.
+Validates features, converts character columns to ordered factors, builds the
+split-feature matrix Z, and computes ALE effects for tree splitting.
 }
 \details{
-This function performs the following steps:
-1. Validates that all specified features exist in the data
-2. Computes ALE effects using calculate_ale()
-3. Prepares split feature set Z with proper type conversion
-4. Extracts feature grids from ALE effect data
-
-The function includes robust error handling that will stop execution with
-informative messages if any specified features are not found in the data.
+Steps performed:
+\enumerate{
+  \item Resolve and validate \code{feature.set} and \code{split.feature} against \code{colnames(data)}.
+  \item For \code{union(feature.set, split.feature)}, convert character columns to factor and order levels via \code{order_categorical_levels} (using \code{droplevels} internally).
+  \item Build \code{Z} as \code{data[split.feature]} (data.table).
+  \item Call \code{calculate_ale(model, data, feature.set, ...)} to get \code{Y}.
+}
+Stops with an error if any requested feature is missing from \code{data}.
 }
 \examples{
 \dontrun{
-# Basic usage with all features
-result = prepare_split_data_ale(model, data, "target")
-
-# With specific feature sets
-result = prepare_split_data_ale(model, data, "target",
-                               feature.set = c("x1", "x2"),
-                               split.feature = c("x1", "x2", "x3"))
+result = prepare_split_data_ale(model, data, "y", n.intervals = 10)
+result = prepare_split_data_ale(model, data, "y", n.intervals = 10,
+  feature.set = c("x1", "x2"), split.feature = c("x1", "x2", "x3"))
 }
 
 }

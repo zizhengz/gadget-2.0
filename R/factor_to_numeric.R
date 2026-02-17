@@ -1,3 +1,11 @@
+#' Convert factor to numeric (level labels or level indices)
+#'
+#' If all level labels are numeric strings, converts via \code{as.character};
+#' otherwise uses \code{as.numeric(f)} (level indices).
+#'
+#' @param f Factor.
+#' @return Numeric vector.
+#' @keywords internal
 factor_to_numeric = function(f) {
   stopifnot(is.factor(f))
   f = droplevels(f)

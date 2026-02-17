@@ -65,13 +65,16 @@ Initialize the strategy with name "pd".
 \if{latex}{\out{\hypertarget{method-pdStrategy-preprocess}{}}}
 \subsection{Method \code{preprocess()}}{
 Preprocess input data to generate the split feature set Z, effect list Y, and grid.
+Applies character-to-factor conversion and data-driven level ordering for
+categorical split features via \code{order_categorical_levels}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{pdStrategy$preprocess(
   effect,
   data,
   target.feature,
   feature.set = NULL,
-  split.feature = NULL
+  split.feature = NULL,
+  order.method = "mds"
 )}\if{html}{\out{</div>}}
 }
 
@@ -92,6 +95,10 @@ Optional. Subset of features to use for effect calculation. If NULL, all feature
 
 \item{\code{split.feature}}{Character or NULL. \cr
 Optional. Features to consider for splitting at each node. If NULL, all features are considered.}
+
+\item{\code{order.method}}{Character. Categorical level order: \code{"mds"}, \code{"pca"},
+\code{"random"}, or \code{"raw"} (keep existing factor level order;
+default \code{"mds"}).}
 }
 \if{html}{\out{</div>}}
 }
@@ -227,7 +234,9 @@ Fit a PD tree using the provided data and effect object.
   data,
   target.feature.name,
   feature.set = NULL,
-  split.feature = NULL
+  split.feature = NULL,
+  order.method = "mds",
+  ...
 )}\if{html}{\out{</div>}}
 }
 
@@ -245,6 +254,13 @@ Fit a PD tree using the provided data and effect object.
 \item{\code{feature.set}}{Character or NULL. Feature subset (optional).}
 
 \item{\code{split.feature}}{Character or NULL. Split feature (optional).}
+
+\item{\code{order.method}}{Character. Categorical level order passed to
+\code{prepare_split_data_pd} and \code{order_categorical_levels}:
+\code{"mds"}, \code{"pca"}, \code{"random"}, or \code{"raw"}
+(default \code{"mds"}).}
+
+\item{\code{...}}{Additional arguments (ignored).}
 }
 \if{html}{\out{</div>}}
 }

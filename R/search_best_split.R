@@ -1,3 +1,14 @@
+#' Find best split across all columns of Z (R fallback)
+#'
+#' Calls \code{search_best_split_point} per column and returns a data frame
+#' with one row per feature. Used when C++ \code{search_best_split_cpp} is not available.
+#'
+#' @param Z Data frame of split features.
+#' @param Y List of effect matrices.
+#' @param min.node.size Integer.
+#' @param n.quantiles Integer or NULL.
+#' @return Data frame with \code{split.feature}, \code{split.point}, \code{split.objective}, \code{best.split}, etc.
+#' @keywords internal
 search_best_split = function(Z, Y, min.node.size, n.quantiles) {
   t1 = proc.time()
   res = data.table::rbindlist(

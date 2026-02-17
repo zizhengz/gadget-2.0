@@ -1,3 +1,15 @@
+#' Find best split point for a single feature z
+#'
+#' Numeric: tries quantile-based cutpoints. Categorical: tries binary splits on level subsets.
+#' Returns \code{split.point} and \code{split.objective} (heterogeneity reduction).
+#'
+#' @param z Vector of split feature values.
+#' @param Y List of effect matrices.
+#' @param n.quantiles Integer or NULL (numeric only).
+#' @param min.node.size Integer.
+#' @param is.categorical Logical.
+#' @return Data frame with \code{split.point}, \code{split.objective}.
+#' @keywords internal
 search_best_split_point = function(z, Y, n.quantiles = NULL, min.node.size, is.categorical = FALSE) {
   N = nrow(Y[[1]])
   # create split points candidates

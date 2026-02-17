@@ -11,6 +11,30 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// ale_sweep_cpp
+List ale_sweep_cpp(IntegerVector ord_idx, NumericMatrix dL_mat, IntegerMatrix interval_idx_mat, IntegerVector offsets, NumericVector tot_n, NumericVector tot_s1, NumericVector tot_s2, NumericVector r_risks, LogicalVector is_cand, int min_node_size, int split_feat_j, bool use_stabilizer, NumericVector z_sorted, int n_obs);
+RcppExport SEXP _gadget_ale_sweep_cpp(SEXP ord_idxSEXP, SEXP dL_matSEXP, SEXP interval_idx_matSEXP, SEXP offsetsSEXP, SEXP tot_nSEXP, SEXP tot_s1SEXP, SEXP tot_s2SEXP, SEXP r_risksSEXP, SEXP is_candSEXP, SEXP min_node_sizeSEXP, SEXP split_feat_jSEXP, SEXP use_stabilizerSEXP, SEXP z_sortedSEXP, SEXP n_obsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type ord_idx(ord_idxSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type dL_mat(dL_matSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type interval_idx_mat(interval_idx_matSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type offsets(offsetsSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type tot_n(tot_nSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type tot_s1(tot_s1SEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type tot_s2(tot_s2SEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type r_risks(r_risksSEXP);
+    Rcpp::traits::input_parameter< LogicalVector >::type is_cand(is_candSEXP);
+    Rcpp::traits::input_parameter< int >::type min_node_size(min_node_sizeSEXP);
+    Rcpp::traits::input_parameter< int >::type split_feat_j(split_feat_jSEXP);
+    Rcpp::traits::input_parameter< bool >::type use_stabilizer(use_stabilizerSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type z_sorted(z_sortedSEXP);
+    Rcpp::traits::input_parameter< int >::type n_obs(n_obsSEXP);
+    rcpp_result_gen = Rcpp::wrap(ale_sweep_cpp(ord_idx, dL_mat, interval_idx_mat, offsets, tot_n, tot_s1, tot_s2, r_risks, is_cand, min_node_size, split_feat_j, use_stabilizer, z_sorted, n_obs));
+    return rcpp_result_gen;
+END_RCPP
+}
 // calculate_ale_heterogeneity_single_cpp
 double calculate_ale_heterogeneity_single_cpp(NumericVector dL, IntegerVector interval_index);
 RcppExport SEXP _gadget_calculate_ale_heterogeneity_single_cpp(SEXP dLSEXP, SEXP interval_indexSEXP) {
@@ -78,6 +102,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_gadget_ale_sweep_cpp", (DL_FUNC) &_gadget_ale_sweep_cpp, 14},
     {"_gadget_calculate_ale_heterogeneity_single_cpp", (DL_FUNC) &_gadget_calculate_ale_heterogeneity_single_cpp, 2},
     {"_gadget_calculate_ale_heterogeneity_list_cpp", (DL_FUNC) &_gadget_calculate_ale_heterogeneity_list_cpp, 1},
     {"_gadget_re_mean_center_ice_cpp", (DL_FUNC) &_gadget_re_mean_center_ice_cpp, 3},

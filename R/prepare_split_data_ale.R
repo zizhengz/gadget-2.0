@@ -10,7 +10,9 @@
 #' @param feature.set Character or NULL. Features to compute ALE for; NULL = all.
 #' @param split.feature Character or NULL. Features to consider for splitting; NULL = all.
 #' @param predict.fun Function or NULL. \code{function(model, data)} returning predictions; NULL uses mlr3-style default.
-#' @param order.method Character. How to order categorical levels: \code{"mds"}, \code{"pca"}, or \code{"random"} (default \code{"mds"}).
+#' @param order.method Character. How to order categorical levels: \code{"mds"},
+#'   \code{"pca"}, \code{"random"}, or \code{"raw"} (keep existing factor level order;
+#'   default \code{"mds"}).
 #'
 #' @return List with:
 #'   \item{Z}{data.table of split features (columns in \code{split.feature}).}

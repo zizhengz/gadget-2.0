@@ -9,11 +9,18 @@ Authors@R: c(
       role = "cre"
     )
   )
-Description: More about what it does (maybe more than one line).
-    Continuation lines should be indented.
+Description: Implements the GADGET (General Additive Decomposition based on Global
+    Effect Tree) algorithm for interpretable machine learning. The package
+    recursively partitions the feature space to minimize heterogeneity of
+    feature effects (e.g., Accumulated Local Effects or Partial Dependence),
+    producing a tree of regions where effects are more stable. It supports
+    both ALE and PD strategies, integrates with 'mlr3' and 'iml', and provides
+    visualization of the interaction tree and regional effect plots.
 License: MIT
+URL: https://github.com/zizhengz/GADGET
+BugReports: https://github.com/zizhengz/GADGET/issues
 Encoding: UTF-8
-LazyData: true
+LazyData: false
 Imports: 
     ggplot2 (>= 3.5.2),
     ggraph (>= 2.2.1),

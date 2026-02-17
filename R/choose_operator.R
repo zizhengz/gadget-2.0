@@ -1,3 +1,11 @@
+#' Return comparison operator for a child relative to parent split
+#'
+#' Left child: \code{<=} (numeric) or \code{=} (categorical); right: \code{>} or \code{!=}.
+#'
+#' @param parent.node Node with \code{children} and \code{split.value}.
+#' @param current.node One of the children.
+#' @return Character \code{"<="}, \code{">"}, \code{"="}, or \code{"!="}.
+#' @keywords internal
 choose_operator = function(parent.node, current.node) {
   if (!is.null(parent.node)) {
     if (!is.null(parent.node$children[[1]]) &&

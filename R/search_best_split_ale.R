@@ -2,7 +2,7 @@ search_best_split_ale = function(
   Z, effect,
   min.node.size = 1L,
   n.quantiles = NULL,
-  with_stab =TRUE
+  with_stab = FALSE
 ) {
   #### Helper: Build per-feature interval statistics ####
   build_stats = function(effect, features) {
@@ -86,7 +86,7 @@ search_best_split_ale = function(
   # Per split.feature, compute best split once and capture per-feature vectors
   per.feature.res = lapply(split.feature.names, function(split.feat) {
     if(with_stab){
-    res = search_best_split_point_ale_with(
+    res = search_best_split_point_ale_with_cpp(
       z = Z[[split.feat]],
       effect = effect,
       st.table = st.table,

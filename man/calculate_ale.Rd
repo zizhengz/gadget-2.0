@@ -14,44 +14,35 @@ calculate_ale(
 )
 }
 \arguments{
-\item{model}{Fitted model object. The model should have a predict method.}
+\item{model}{Fitted model object with a predict interface.}
 
-\item{data}{Data frame. Training data containing features and target variable.}
+\item{data}{Data frame or data.table. Training data (features and target).}
 
-\item{target.feature.name}{Character. Name of the target variable in the data.}
+\item{feature.set}{Character. Names of features to compute ALE for; must exist in \code{data}.}
 
-\item{n.intervals}{Integer. Number of intervals for numeric features (default: 10).}
+\item{target.feature.name}{Character. Name of the target variable in \code{data}.}
 
-\item{predict.fun}{Function. Required prediction function that takes (model, data) and returns predictions.}
+\item{n.intervals}{Integer. Number of equal-frequency intervals for numeric features (default: 10).}
 
-\item{S}{Character vector. Names of features to compute ALE effects for. If NULL, computes for all features.}
+\item{predict.fun}{Function or NULL. \code{function(model, data)} returning a numeric vector of predictions; NULL uses an mlr3-style default.}
 }
 \value{
-List. Named list where each element corresponds to a feature and contains:
-  \item{feat.val}{Original feature values}
-  \item{x.left}{Left boundary of interval (for numeric) or lower category (for factors)}
-  \item{x.right}{Right boundary of interval (for numeric) or upper category (for factors)}
-  \item{dL}{Local effect (finite difference)}
-  \item{interval.index}{Index of interval/category}
-  \item{interval.width}{Width of interval (1 for categorical features)}
+Named list of data.tables, one per element of \code{feature.set}. Each data.table has columns:
+  \item{row.id}{Row index in \code{data}.}
+  \item{feat.val}{Feature value at that row.}
+  \item{x.left, x.right}{Interval/category boundaries (numeric) or left/right category (factor).}
+  \item{dL}{Local effect (finite difference).}
+  \item{interval.index}{Interval or category index.}
+  \item{int_n, int_s1, int_s2}{Per-interval count and sum(dL), sum(dL^2) for heterogeneity.}
 }
 \description{
-This function computes Accumulated Local Effects (ALE) data at the sample level.
-It calculates local finite differences for each data point across specified features.
-The output can be used for tree splitting, visualization, or other ALE-based analyses.
+Computes sample-level ALE data as local finite differences for each specified
+feature. Output is used for tree splitting, heterogeneity measures, or visualization.
 }
 \details{
-For numeric features, the function:
-1. Creates n.intervals equal-frequency intervals based on quantiles
-2. Assigns each data point to an interval
-3. Computes finite differences between interval boundaries
+Numeric features: builds \code{n.intervals} quantile-based intervals, assigns each row to an interval, and computes finite differences between interval boundaries via \code{predict.fun}.
 
-For categorical features, the function:
-1. Orders categories by their numeric encoding
-2. Computes differences between adjacent categories
-3. Uses boundary interpolation for edge categories
+Categorical features: use factor levels as given (typically pre-ordered by \code{order_categorical_levels} in \code{prepare_split_data_ale}). For each row, \code{dL} is the difference in predictions when the focal feature is set to the next vs. previous level; single-level factors get \code{dL = 0}.
 
-The resulting data retains sample-level information, including the ability to
-subset by row indices and calculate node-specific heterogeneity measures.
-This makes it suitable for various downstream applications including tree splitting.
+Sample-level columns (\code{row.id}, \code{feat.val}, \code{dL}, etc.) support subsetting by node and downstream heterogeneity calculation.
 }

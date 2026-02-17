@@ -4,15 +4,10 @@
 \alias{gadgetTree}
 \title{gadgetTree: Generalized Additive Decomposition of Global Effects Tree (R6 class)}
 \description{
-gadgetTree: Generalized Additive Decomposition of Global Effects Tree (R6 class)
-
-gadgetTree: Generalized Additive Decomposition of Global Effects Tree (R6 class)
+Main class for growing, managing, and visualizing effect-based decision trees
+using a modular strategy (e.g., \code{pdStrategy} or \code{aleStrategy}).
 }
 \details{
-Main class for growing, managing, and visualizing effect-based decision trees
-using a modular strategy (e.g., pdStrategy).
-
-
 This class manages the overall tree structure and delegates effect-specific operations
 (such as splitting and plotting) to the provided strategy object. It is the main entry
 point for fitting and visualizing effect-based decision trees in the gadget package.
@@ -133,7 +128,7 @@ gadgetTree object, invisibly. The fitted tree object.
 Visualize the tree structure and effect plots for each node.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{gadgetTree$plot(
-  effect,
+  effect = NULL,
   data,
   target.feature.name,
   depth = NULL,

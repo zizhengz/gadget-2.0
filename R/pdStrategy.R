@@ -34,6 +34,8 @@ pdStrategy = R6::R6Class(
 
     #' @description
     #' Preprocess input data to generate the split feature set Z, effect list Y, and grid.
+    #' Applies character-to-factor conversion and data-driven level ordering for
+    #' categorical split features via \code{order_categorical_levels}.
     #' @param effect R6 object or list.\cr
     #'   An object containing feature effect results, typically from FeatureEffect or FeatureEffects.
     #' @param data Data frame.\cr
@@ -44,11 +46,15 @@ pdStrategy = R6::R6Class(
     #'   Optional. Subset of features to use for effect calculation. If NULL, all features are used.
     #' @param split.feature Character or NULL. \cr
     #'   Optional. Features to consider for splitting at each node. If NULL, all features are considered.
+    #' @param order.method Character. Categorical level order: \code{"mds"}, \code{"pca"},
+    #'   \code{"random"}, or \code{"raw"} (keep existing factor level order;
+    #'   default \code{"mds"}).
     #' @return List. \cr
     #'   A list with Z (split feature set), Y (effect list), and grid (feature grid).
-    preprocess = function(effect, data, target.feature, feature.set = NULL, split.feature = NULL) {
+    preprocess = function(effect, data, target.feature, feature.set = NULL,
+      split.feature = NULL, order.method = "mds") {
       prepare_split_data_pd(effect = effect, data = data, target.feature.name = target.feature,
-        feature.set = feature.set, split.feature = split.feature)
+        feature.set = feature.set, split.feature = split.feature, order.method = order.method)
     },
 
     #' @description
@@ -120,9 +126,14 @@ pdStrategy = R6::R6Class(
     #' @param target.feature.name Character(1). Target feature name.
     #' @param feature.set Character or NULL. Feature subset (optional).
     #' @param split.feature Character or NULL. Split feature (optional).
+    #' @param order.method Character. Categorical level order passed to
+    #'   \code{prepare_split_data_pd} and \code{order_categorical_levels}:
+    #'   \code{"mds"}, \code{"pca"}, \code{"random"}, or \code{"raw"}
+    #'   (default \code{"mds"}).
     #' @param ... Additional arguments (ignored).
     #' @return gadgetTree object, invisibly. The fitted tree object.
-    fit = function(tree, effect, data, target.feature.name, feature.set = NULL, split.feature = NULL, ...) {
+    fit = function(tree, effect, data, target.feature.name,
+      feature.set = NULL, split.feature = NULL, order.method = "mds", ...) {
       if (missing(effect)) stop("pdStrategy requires 'effect' to be passed.", call. = FALSE)
       checkmate::assert_true(is.list(effect) || inherits(effect, "R6"), .var.name = "effect")
 
@@ -130,7 +141,8 @@ pdStrategy = R6::R6Class(
       prepared.data = self$preprocess(effect = effect, data = data,
         target.feature = target.feature.name,
         feature.set = feature.set,
-        split.feature = split.feature)
+        split.feature = split.feature,
+        order.method = order.method)
       Z = prepared.data$Z
       Y = prepared.data$Y
       grid = prepared.data$grid

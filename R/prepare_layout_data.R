@@ -1,3 +1,12 @@
+#' Build layout data frame for tree plot (node id, parent, labels)
+#'
+#' Converts a depth-based tree list into a data frame with one row per node,
+#' used by \code{plot_tree_structure} for \pkg{ggraph} layout and labels.
+#'
+#' @param tree List of depth levels, each a list of node objects.
+#' @return Data frame with columns \code{id}, \code{node.id}, \code{id.parent},
+#'   \code{split.feature}, \code{split.value}, \code{label}, \code{depth}, etc.
+#' @keywords internal
 prepare_layout_data = function(tree) {
   rows = vector("list", 0)
   k = 1
