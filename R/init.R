@@ -1,21 +1,11 @@
 # Package initialization
+# The C++ library is loaded automatically by R via useDynLib(gadget) in NAMESPACE,
+# which uses the correct extension (.so on Unix, .dll on Windows). Do not manually
+# dyn.load("gadget.so") here, as that fails on Windows where the file is gadget.dll.
 .onLoad = function(libname, pkgname) {
-  # Load the C++ dynamic library
-  tryCatch({
-    dyn.load(system.file("libs", "gadget.so", package = "gadget"))
-  }, error = function(e) {
-    # Only show warning if the package is properly installed
-    if (file.exists(system.file("libs", "gadget.so", package = "gadget"))) {
-      warning("Failed to load C++ dynamic library: ", e$message)
-    }
-  })
+  # Optional: any other package-level setup can go here
 }
 
 .onUnload = function(libpath) {
-  # Unload the C++ dynamic library when package is unloaded
-  tryCatch({
-    dyn.unload(system.file("libs", "gadget.so", package = "gadget"))
-  }, error = function(e) {
-    # Ignore errors during unloading
-  })
+  # R will unload the dynamic library loaded via useDynLib when the namespace is unloaded
 }
