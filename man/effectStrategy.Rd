@@ -19,6 +19,7 @@ This class is intended to be subclassed by concrete effect strategies (e.g., pdS
 All methods must be implemented in subclasses; calling them directly will result in an error.
 }
 \examples{
+\dontrun{
 # Example: Defining a custom effect strategy (skeleton)
 myStrategy = R6::R6Class(
   "myStrategy",
@@ -44,6 +45,7 @@ myStrategy = R6::R6Class(
     }
   )
 )
+}
 
 }
 \section{Public fields}{

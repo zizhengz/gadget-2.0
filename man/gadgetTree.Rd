@@ -13,6 +13,7 @@ This class manages the overall tree structure and delegates effect-specific oper
 point for fitting and visualizing effect-based decision trees in the gadget package.
 }
 \examples{
+\dontrun{
 # Example: Fit and plot a PD tree using pdStrategy and gadgetTree
 pd_strat = pdStrategy$new()
 tree = gadgetTree$new(strategy = pd_strat, n.split = 2)
@@ -20,6 +21,7 @@ tree$fit(effect, data, target.feature.name = "target")
 tree$plot(effect, data, target.feature.name = "target")
 tree$plot_tree_structure()
 split_info = tree$extract_split_info()
+}
 
 }
 \section{Public fields}{

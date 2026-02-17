@@ -14,12 +14,14 @@ tree growing, splitting, and visualization. It is not intended to be used direct
 but can be instantiated for advanced customization.
 }
 \examples{
+\dontrun{
 # Example: Fit and plot a PD tree using pdStrategy and gadgetTree
 # (Assuming effect and data are prepared)
 pd_strat = pdStrategy$new()
 tree = gadgetTree$new(strategy = pd_strat, n.split = 2)
 tree$fit(effect, data, target.feature.name = "target")
 tree$plot(effect, data, target.feature.name = "target")
+}
 
 }
 \section{Super class}{
