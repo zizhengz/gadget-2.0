@@ -38,13 +38,17 @@ search_best_split_point_ale = function(
     } else {
       z.fac = droplevels(z)
       z.nonNA = which(!is.na(z.fac))
-      if (length(z.nonNA) <= 1L) return(NULL)
+      if (length(z.nonNA) <= 1L) {
+        return(NULL)
+      }
       level.id = as.integer(z.fac[z.nonNA])
       ord.idx = z.nonNA[order(level.id)]
       n.obs = length(ord.idx)
       counts = tabulate(level.id)
       t.idx = head(cumsum(counts), -1L)
-      if (length(t.idx) == 0L) return(NULL)
+      if (length(t.idx) == 0L) {
+        return(NULL)
+      }
       is.cand = rep(FALSE, n.obs - 1L)
       is.cand[t.idx] = TRUE
       list(

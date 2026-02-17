@@ -9,8 +9,9 @@ test_that("pdStrategy find_best_split returns expected structure", {
   tryCatch({
     search_best_split_cpp(Z = data.frame(x = 1:5), Y = list(matrix(1:10, ncol = 2)), min_node_size = 2)
   }, error = function(e) {
-    if (grepl("not available for .Call", conditionMessage(e), fixed = TRUE))
+    if (grepl("not available for .Call", conditionMessage(e), fixed = TRUE)) {
       skip("C++ symbols not loaded (install package with compile)")
+    }
   })
   set.seed(1)
   n = 30
@@ -49,8 +50,9 @@ test_that("aleStrategy heterogeneity returns numeric for ALE-like list", {
     dt = data.table::data.table(row.id = 1:5, interval.index = rep(1L, 5), dL = 0, int_n = 5L, int_s1 = 0, int_s2 = 0)
     calculate_ale_heterogeneity_list_cpp(list(x = dt))
   }, error = function(e) {
-    if (grepl("not available for .Call", conditionMessage(e), fixed = TRUE))
+    if (grepl("not available for .Call", conditionMessage(e), fixed = TRUE)) {
       skip("ALE C++ symbols not loaded (install package with compile)")
+    }
   })
   n = 20
   dt = data.table::data.table(

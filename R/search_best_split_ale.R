@@ -85,25 +85,27 @@ search_best_split_ale = function(
   st.table = build_stats(effect, names(effect))
   # Per split.feature, compute best split once and capture per-feature vectors
   per.feature.res = lapply(split.feature.names, function(split.feat) {
-    if(with_stab){
-    res = search_best_split_point_ale_with_cpp(
-      z = Z[[split.feat]],
-      effect = effect,
-      st.table = st.table,
-      split.feat = split.feat,
-      is.categorical = is.factor(Z[[split.feat]]),
-      n.quantiles = n.quantiles,
-      min.node.size = min.node.size
-    )}else{
-    res = search_best_split_point_ale(
-      z = Z[[split.feat]],
-      effect = effect,
-      st.table = st.table,
-      split.feat = split.feat,
-      is.categorical = is.factor(Z[[split.feat]]),
-      n.quantiles = n.quantiles,
-      min.node.size = min.node.size
-    )}
+    if (with_stab) {
+      res = search_best_split_point_ale_with_cpp(
+        z = Z[[split.feat]],
+        effect = effect,
+        st.table = st.table,
+        split.feat = split.feat,
+        is.categorical = is.factor(Z[[split.feat]]),
+        n.quantiles = n.quantiles,
+        min.node.size = min.node.size
+      )
+    } else {
+      res = search_best_split_point_ale(
+        z = Z[[split.feat]],
+        effect = effect,
+        st.table = st.table,
+        split.feat = split.feat,
+        is.categorical = is.factor(Z[[split.feat]]),
+        n.quantiles = n.quantiles,
+        min.node.size = min.node.size
+      )
+    }
     res$split.feature = split.feat
     res$is.categorical = is.factor(Z[[split.feat]])
     res

@@ -33,7 +33,7 @@ prepare_layout_data = function(tree) {
   layout = do.call(rbind.data.frame, rows)
   rownames(layout) = NULL
   layout$label = NA
-  
+
   # Helper to format split values
   format_val = function(x) {
     num_x = suppressWarnings(as.numeric(x))

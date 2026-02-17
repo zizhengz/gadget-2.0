@@ -24,7 +24,9 @@ x.grid = dL = level = x = y = NULL
 plot_regional_ale = function(curves, color.ale = "lightcoral",
   ymin = NULL, ymax = NULL, show.point = FALSE,
   point.values = NULL, x.limits = NULL) {
-  if (!length(curves)) return(list())
+  if (!length(curves)) {
+    return(list())
+  }
 
   feats = names(curves)
   out = lapply(feats, function(feat) {

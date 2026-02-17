@@ -1,6 +1,6 @@
 plot_regional_pd = function(prepared.data, origin.data, target.feature.name, node.idx,
-    color.ice, color.pd, ymin, ymax, split.condition = NULL,
-    show.point, mean.center) {
+  color.ice, color.pd, ymin, ymax, split.condition = NULL,
+  show.point, mean.center) {
   plot = lapply(names(prepared.data), function(feat) {
     data = prepared.data[[feat]]
     subset.idx = which(data$node == node.idx)
@@ -63,15 +63,15 @@ plot_regional_pd = function(prepared.data, origin.data, target.feature.name, nod
     }
     if (feat %in% colnames(origin.data.subset)) {
       p = p + geom_point(data = origin.data.subset,
-                         aes(x = .data[[feat]], y = .data[[target.feature.name]]),
-                         alpha = if (show.point) 0.3 else 0, size = 0.8, inherit.aes = FALSE)
+        aes(x = .data[[feat]], y = .data[[target.feature.name]]),
+        alpha = if (show.point) 0.3 else 0, size = 0.8, inherit.aes = FALSE)
     }
     p = p +
       scale_color_manual(values = c("ICE" = color.ice, "PDP" = color.pd),
         labels = c("ICE" = if (mean.center) "Mean centered ICE" else "ICE",
           "PDP" = if (mean.center) "Mean centered PDP" else "PDP")) +
       coord_cartesian(ylim = c(ymin, ymax)) +
-      #ylim(ymin, ymax) +
+      # ylim(ymin, ymax) +
       theme_bw(base_size = 9) +
       labs(
         x = if (!is.null(split.condition)) paste0(feat, " | ", split.condition) else feat,

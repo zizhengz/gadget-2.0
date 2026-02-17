@@ -69,14 +69,14 @@ search_best_split_point = function(z, Y, n.quantiles = NULL, min.node.size, is.c
         Y.i.r = Y.i[-idx, , drop = FALSE]
         S.l = Rfast::colsums(Y.i.l)
         S.r = Rfast::colsums(Y.i.r)
-        sum(- S.l^2 / N.l - S.r^2 / N.r, na.rm = TRUE)
+        sum(-S.l^2 / N.l - S.r^2 / N.r, na.rm = TRUE)
       }, NA_real_), na.rm = TRUE)
     } else {
       sum(vapply(seq_along(Y.cumsum), function(i) {
         Y.i.cumsum = Y.cumsum[[i]]
         S.l = Y.i.cumsum[N.l, ]
         S.r = Y.i.cumsum[N, ] - S.l
-        sum(- S.l^2 / N.l - S.r^2 / N.r, na.rm = TRUE)
+        sum(-S.l^2 / N.l - S.r^2 / N.r, na.rm = TRUE)
       }, NA_real_), na.rm = TRUE)
     }
   }, FUN.VALUE = NA_real_)

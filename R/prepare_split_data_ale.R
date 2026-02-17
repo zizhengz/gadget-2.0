@@ -62,8 +62,9 @@ prepare_split_data_ale = function(model, data, target.feature.name, n.intervals,
   split.feature = resolve_features(split.feature, "Split features")
   data = ensure_factors(data, union(feature.set, split.feature))
   for (col in union(feature.set, split.feature)) {
-    if (is.factor(data[[col]]))
+    if (is.factor(data[[col]])) {
       data[[col]] = order_categorical_levels(droplevels(data[[col]]), data, col, target.feature.name, order.method)
+    }
   }
   Z = data.table::setDT(take_cols(data, split.feature))
   effect = calculate_ale(model = model, data = data, target.feature.name = target.feature.name,

@@ -57,8 +57,8 @@ plot_tree_pd = function(tree, effect, data, target.feature.name,
       stop(paste("No valid nodes to render at depth", depth_idx))
     }
     plots.at.depth = create_plots_for_depth(tree, prepared.data, data, target.feature.name,
-                                           depth_idx, nodes_to_render, color.ice, color.pd,
-                                           show.plot, show.point, mean.center)
+      depth_idx, nodes_to_render, color.ice, color.pd,
+      show.plot, show.point, mean.center)
     plot.list[[paste0("Depth_", depth_idx)]] = plots.at.depth
   }
 
@@ -137,7 +137,7 @@ create_node_title = function(node, depth_idx, tree) {
   if (depth_idx == 1) {
     return(paste0("Root node", " (N = ", n.samples, ")"))
   }
-  #parent.node = find_parent_by_id(tree[[depth_idx - 1]], node$id.parent)
+  # parent.node = find_parent_by_id(tree[[depth_idx - 1]], node$id.parent)
   path.conditions = track_split_condition(node, tree)
   split.condition = if (length(path.conditions) > 0) paste(path.conditions, collapse = " & ") else NULL
   paste0(depth_idx - 1, ".Split results: ", split.condition, " (N = ", n.samples, ")")
@@ -149,7 +149,9 @@ calculate_y_range = function(prepared.data, data, target.feature.name, show.poin
   values.list = lapply(prepared.data, function(df) {
     if (is.data.frame(df) && ncol(df) >= 1) {
       cols = setdiff(colnames(df), "node")
-      if (length(cols) == 0) return(numeric(0))
+      if (length(cols) == 0) {
+        return(numeric(0))
+      }
       as.numeric(unlist(df[, cols, drop = FALSE]))
     } else {
       numeric(0)

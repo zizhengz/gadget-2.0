@@ -28,7 +28,9 @@ plot_tree_ale = function(tree, effect, data, target.feature.name,
 
   select_depths = function(tree, depth, node.id) {
     if (is.null(node.id)) {
-      if (is.null(depth)) return(seq_along(tree))
+      if (is.null(depth)) {
+        return(seq_along(tree))
+      }
       depths = suppressWarnings(as.integer(depth))
       depths[!is.na(depths) & depths > 0 & depths <= length(tree)]
     } else {
@@ -57,7 +59,9 @@ plot_tree_ale = function(tree, effect, data, target.feature.name,
 
   build_node_title = function(node, depth_idx, tree) {
     n.samples = length(node$subset.idx)
-    if (depth_idx == 1) return(paste0("Root node (N = ", n.samples, ")"))
+    if (depth_idx == 1) {
+      return(paste0("Root node (N = ", n.samples, ")"))
+    }
     conds = track_split_condition(node, tree)
     cond_txt = if (length(conds)) paste(conds, collapse = " & ") else "Split"
     paste0("Depth ", depth_idx, " - Node ", node$id, " (", cond_txt, ", N = ", n.samples, ")")
@@ -67,9 +71,13 @@ plot_tree_ale = function(tree, effect, data, target.feature.name,
     features = features, mean.center = mean.center)
   y_range = calculate_y_range_ale(global_curves, data, target.feature.name, show.point)
   x_limits = lapply(features, function(feat) {
-    if (is.null(global_curves[[feat]])) return(NULL)
+    if (is.null(global_curves[[feat]])) {
+      return(NULL)
+    }
     mean_dt = global_curves[[feat]]$mean_effect
-    if (!("x.grid" %in% names(mean_dt))) return(NULL)
+    if (!("x.grid" %in% names(mean_dt))) {
+      return(NULL)
+    }
     if (is.numeric(mean_dt$x.grid)) {
       range(mean_dt$x.grid, na.rm = TRUE)
     } else if (is.factor(mean_dt$x.grid)) {
@@ -93,7 +101,7 @@ plot_tree_ale = function(tree, effect, data, target.feature.name,
     for (node_idx in nodes_to_render) {
       node = nodes[[node_idx]]
       curves = prepare_plot_data_ale(effect,
-        idx = node$subset.idx, features = features, mean.center = mean.center) 
+        idx = node$subset.idx, features = features, mean.center = mean.center)
       point_values = NULL
       if (show.point) {
         point_values = lapply(names(curves), function(feat) {

@@ -41,10 +41,10 @@ calculate_ale = function(model, data, feature.set, target.feature.name, n.interv
   eff.list = lapply(feature.set, function(feat) {
     if (is.factor(data[[feat]])) {
       ale_categorical_feature(model = model, data = data, X = X,
-                              feature = feat, target.feature.name = target.feature.name, predict.fun = predict.fun)
+        feature = feat, target.feature.name = target.feature.name, predict.fun = predict.fun)
     } else {
       ale_numeric_feature(model = model, data = data, X = X,
-                          feature = feat, target.feature.name = target.feature.name, n.intervals = n.intervals, predict.fun = predict.fun)
+        feature = feat, target.feature.name = target.feature.name, n.intervals = n.intervals, predict.fun = predict.fun)
     }
   })
   names(eff.list) = feature.set
@@ -79,7 +79,7 @@ ale_numeric_feature = function(model, data, X, feature, target.feature.name, n.i
   data.lower[[feature]] = q[interval.index]
   data.upper[[feature]] = q[interval.index + 1L]
   # Predictions at boundaries
-  loss.lower = predict.fun(model, data.lower)
+  loss.lower = predict.fun(model, data.lower) # maybe predict together and split later
   loss.upper = predict.fun(model, data.upper)
   dL = (loss.upper - loss.lower)
 
@@ -144,8 +144,8 @@ ale_categorical_feature = function(model, data, X, feature, target.feature.name,
 
   # Full-interval statistics (each category treated as an interval)
   # Note: :=, .N, and column names in by clause are data.table special syntax
-  DT[, `:=`(  # nolint: object_usage_linter
-    int_n    = .N,  # nolint: object_usage_linter
+  DT[, `:=`( # nolint: object_usage_linter
+    int_n    = .N, # nolint: object_usage_linter
     int_s1   = sum(dL),
     int_s2   = sum(dL^2)
   ), by = interval.index]

@@ -24,5 +24,5 @@ search_best_split = function(Z, Y, min.node.size, n.quantiles) {
   res$best.split = res$split.objective == min(res$split.objective, na.rm = TRUE)
   res$split.runtime = (t2 - t1)[[3]]
   return(res[, c("split.feature", "is.categorical", "split.point", "split.objective",
-                 "split.runtime", "best.split")])
+    "split.runtime", "best.split")])
 }

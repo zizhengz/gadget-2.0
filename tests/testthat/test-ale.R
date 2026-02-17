@@ -4,8 +4,9 @@ skip_ale_cpp_if_unavailable = function() {
   tryCatch({
     calculate_ale_heterogeneity_list_cpp(list(x = dt))
   }, error = function(e) {
-    if (grepl("not available for .Call", conditionMessage(e), fixed = TRUE))
+    if (grepl("not available for .Call", conditionMessage(e), fixed = TRUE)) {
       skip("ALE C++ symbols not loaded (install package with compile)")
+    }
   })
 }
 

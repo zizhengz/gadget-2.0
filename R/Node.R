@@ -161,7 +161,7 @@ Node = R6::R6Class("Node", public = list(
       self$stop.criterion.met = TRUE
       return(NULL)
     }
-    #print(split.info)
+    # print(split.info)
     # 3. Create left and right child nodes
     children.info = tryCatch({
       self$create_children(Z, Y, split.info, objective.value.root.j, objective.value.root, impr.par)

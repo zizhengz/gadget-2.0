@@ -52,7 +52,9 @@ order_categorical_levels = function(x.cat, data, feature, target.feature.name, o
       # Numeric other feature: compare ECDFs via KS distance
       grid = stats::quantile(val, probs = seq(0, 1, length.out = 100), na.rm = TRUE, names = FALSE)
       ecdf.list = tapply(val, x.cat, function(v) {
-        if (length(stats::na.omit(v)) == 0L) return(numeric(100))
+        if (length(stats::na.omit(v)) == 0L) {
+          return(numeric(100))
+        }
         stats::ecdf(v)(grid)
       })
       ecdf.mat = do.call(cbind, ecdf.list)[, levels.orig, drop = FALSE]
@@ -86,4 +88,3 @@ order_categorical_levels = function(x.cat, data, feature, target.feature.name, o
 
   factor(x.cat, levels = sorted.lev, ordered = TRUE)
 }
-

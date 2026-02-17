@@ -20,11 +20,14 @@ prepare_split_data_pd = function(effect, data, target.feature.name = NULL, featu
     if (data.table::is.data.table(d)) d[, cols, with = FALSE] else d[, cols, drop = FALSE]
   }
   resolve_features = function(requested, err_label) {
-    if (is.null(requested)) return(all.features)
+    if (is.null(requested)) {
+      return(all.features)
+    }
     miss = setdiff(requested, all.features)
-    if (length(miss) > 0L)
+    if (length(miss) > 0L) {
       stop(sprintf("%s not found in data: %s. Available: %s",
         err_label, paste(miss, collapse = ", "), paste(all.features, collapse = ", ")))
+    }
     requested
   }
   ensure_factors = function(d, cols) {
@@ -36,9 +39,11 @@ prepare_split_data_pd = function(effect, data, target.feature.name = NULL, featu
   split.feature = resolve_features(split.feature, "Split features")
   data = ensure_factors(data, union(feature.set, split.feature))
   if (!is.null(target.feature.name)) {
-    for (col in union(feature.set, split.feature))
-      if (is.factor(data[[col]]))
+    for (col in union(feature.set, split.feature)) {
+      if (is.factor(data[[col]])) {
         data[[col]] = order_categorical_levels(droplevels(data[[col]]), data, col, target.feature.name, order.method)
+      }
+    }
   }
   Z = data.table::setDT(take_cols(data, split.feature))
   wide.mean.center = mean_center_ice(effect = effect, feature.set = feature.set)

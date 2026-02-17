@@ -17,23 +17,29 @@ interval.index = x.left = x.right = dL = x.grid = level = NULL
 #'   is a list).
 prepare_plot_data_ale = function(effect, idx = NULL, features = names(effect),
   mean.center = TRUE) {
-  if (is.null(effect) || !length(effect)) return(list())
+  if (is.null(effect) || !length(effect)) {
+    return(list())
+  }
   if (is.list(idx) && length(idx) && !is.atomic(idx)) {
     idx_names = names(idx)
     res = lapply(
       idx,
-      function(one_idx) prepare_plot_data_ale(
-        effect,
-        idx = one_idx,
-        features = features,
-        mean.center = mean.center
-      )
+      function(one_idx) {
+        prepare_plot_data_ale(
+          effect,
+          idx = one_idx,
+          features = features,
+          mean.center = mean.center
+        )
+      }
     )
     if (!is.null(idx_names)) names(res) = idx_names
     return(res)
   }
   feats = intersect(features, names(effect))
-  if (!length(feats)) return(list())
+  if (!length(feats)) {
+    return(list())
+  }
   out = lapply(feats, function(feat) {
     dt = data.table::as.data.table(effect[[feat]])
     if (!is.null(idx)) {

@@ -25,7 +25,9 @@ extract_split_info = function(tree, split_benchmark = NULL) {
   all_intimp_names = all_intimp_names[!is.na(all_intimp_names)]
 
   rows = lapply(unlist(tree, recursive = FALSE), function(node) {
-    if (is.null(node)) return(NULL)
+    if (is.null(node)) {
+      return(NULL)
+    }
     n_obs = if (is.null(node$subset.idx) || length(node$subset.idx) == 0) 0 else length(node$subset.idx)
     is_final = isTRUE(node$improvement.met) | isTRUE(node$stop.criterion.met) |
       is.null(node$children) || (is.list(node$children) && all(sapply(node$children, is.null)))
@@ -70,7 +72,7 @@ extract_split_info = function(tree, split_benchmark = NULL) {
     }
     # Check if split_benchmark is valid data frame with rows
     if (is.data.frame(split_benchmark) && nrow(split_benchmark) > 0) {
-       df.split = merge(df.split, split_benchmark, by.x = c("id", "depth"), by.y = c("node.id", "depth"), all.x = TRUE, sort = TRUE)
+      df.split = merge(df.split, split_benchmark, by.x = c("id", "depth"), by.y = c("node.id", "depth"), all.x = TRUE, sort = TRUE)
     }
   }
   df.split
