@@ -6,6 +6,12 @@
 \usage{
 mean_center_ale(feat, mean.center = TRUE)
 }
+\arguments{
+\item{feat}{data.table with per-interval ALE derivatives and metadata.}
+
+\item{mean.center}{Logical. Whether to mean-center the resulting ALE
+curve (default \code{TRUE}).}
+}
 \description{
 Performs the per-feature accumulation and centering logic used by
 \code{prepare_plot_data_ale()} and returns a mean ALE curve.

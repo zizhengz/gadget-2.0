@@ -15,6 +15,7 @@
 #' @param show.plot Logical. Whether to print plots while generating.
 #' @param show.point Logical. Whether to show per-node observation points on ALE plots.
 #' @param mean.center Logical. Whether to mean-center ALE curves (default \code{TRUE}).
+#' @param ... Additional arguments passed to lower-level plotting helpers.
 #' @return Nested list (depth -> node -> patchwork object).
 #' @export
 plot_tree_ale = function(tree, effect, data, target.feature.name,

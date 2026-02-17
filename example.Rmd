@@ -1,7 +1,7 @@
 ---
-title: "Introduction to gadget - PDP/ALE method & Benchmarks"
+title: "Introduction to gadget - PDP/ALE Method & Benchmarks"
 author: "Zizheng Zhang"
-date: "2025-11-15"
+date: "2025-12-10"
 output: html_document
 ---
 
@@ -12,6 +12,7 @@ library(iml)
 library(mlr3)
 library(mlr3learners)
 library(ranger)
+library(ISLR2)
 library(bench)
 library(future)
 library(ggplot2)
@@ -20,22 +21,39 @@ library(pryr)
 
 ## Overview of the gadget Package
 
-The **gadget** package provides a framework for building interpretable, regionally-partitioned decision trees based on local feature effect estimates (such as ICE/PDP or ALE curves). The core workflow is as follows:
+**GADGET** algorithm is designed to interpret black-box models by decomposing the feature space into regions where **interaction effects** are minimized, such that the obtained prediction subregions are dominated by **main effects**. The **gadget** package provides users an extensible framework to have an interpretable and regionally-partitioned decision tree based on different local feature effect estimation methods, current we have implementation based on the following methods:
 
--   **Feature Effect Calculation**: Use external tools (e.g., the `iml` package) to compute local feature effects (for ICE/PDP) for a fitted machine learning model.
--   **Tree Construction**: Instantiate a `gadgetTree` object and use its `$fit()` method to recursively partition the data space, optimizing for regional homogeneity in feature effects. Each node is represented by a `Node` object.
--   **Visualization**: Use the tree's `$plot()` and `$plot_tree_structure()` methods to visualize the partial dependence or ICE behavior of features in each region of the tree, and the tree topology and splits.
--   **Split Information Extraction**: Use the tree's `$extract_split_info()` method to summarize the split criteria, node statistics, and regional effect heterogeneity for interpretation and reporting.
+-   Individual Conditional Expectation (**ICE**)
 
-The package is modular and extensible: different effect strategies (e.g., partial dependence, accumulated local effects) can be implemented by extending the strategy interface. This design allows users to interpret complex black-box models by partitioning the feature space into regions with distinct, interpretable effect patterns.
+-   Partial Dependence (**PD**)
+
+-   Accumulated Local Effect (**ALE**)
+
+Both ALE and PD show the average model prediction over the feature. The difference is that ALE are computed as accumulated differences over the conditional prediction distribution and PD over the marginal distribution. ICE curves describe how would one single observation change when one feature changes and can be combined with PD plots (for all observations).
+
+These effects can be pre-computed by the **iml** package or within the gadget package itself, and are then passed as input to the gadget `$fit()` function.
+
+The gadget workflow would be as follows:
+
+1.  **Feature Effect Selection**: Choose a suitable feature effect method
+
+2.  **Feature Effect Computation**: Compute local feature effects for all (or subset of) observations from a fitted machine learning model either externally (e.g. for ICE/ PD) or internally (e.g. for ALE).
+
+3.  **(Optional) Feature Set Selection**: Define interacting feature set (feature of interest) and splitting feature set. Interacting features and splitting features can be distinct, or partially, or fully overlap with each other. By default we use all features as both interacting feature set and splitting feature set.
+
+4.  **Tree Construction**: Initialize a `gadgetTree` object and use its `$fit()` method to recursively partition the feature space, minimizing regional feature interactions within predefined features of interest.
+
+5.  **Visualization**: Use `$plot()` to visualize the feature effects in each node, and `$plot_tree_structure()` to display the tree's topology and split points.
+
+6.  **Split Information Extraction**: Use `$extract_split_info()` method to summarize the tree structure and node statistics for interpretation and reporting.
 
 ## Synthetic data
 
 ### ICE/PDP Method: Get feature effects
 
 ```{r}
-set.seed(123)
-n = 5000
+set.seed(1234)
+n = 500
 x1 = runif(n, -1, 1)
 x2 = runif(n, -1, 1)
 x3 = runif(n, -1, 1)
@@ -58,7 +76,7 @@ syn.tree.pd$plot_tree_structure()
 syn.esi.pd = syn.tree.pd$extract_split_info()
 print(syn.esi.pd)
 syn.tree.pd$plot(syn.effect, syn.data, target.feature.name = "y",
-  show.plot = TRUE, show.point = FALSE, mean.center = TRUE)
+  show.plot = TRUE, show.point = T, mean.center = TRUE)
 ```
 
 ### ALE Method
@@ -72,6 +90,16 @@ print(syn.esi.ale)
 object_size(syn.tree.ale)
 ```
 
+```{r}
+syn.tree.ale$plot(
+  data   = syn.data,
+  target.feature.name = "y",
+  depth   = NULL,
+  show.plot = TRUE
+)
+```
+
+
 ## Bikeshare data
 
 ### ICE/PDP Method: Get feature effects
@@ -81,6 +109,8 @@ library(ISLR2)
 data(Bikeshare)
 set.seed(123)
 bike = data.table(Bikeshare[sample(1:8645, 1000), ])
+bike[, workingday := as.factor((workingday))]
+# working and hr is factor
 
 # bike.X = bike[, .(day, hr, temp, windspeed, weekday, workingday, hum, season, mnth, holiday, registered, weathersit, atemp, casual)]
 bike.X = bike[, .(hr, temp, workingday)]
@@ -121,11 +151,26 @@ bike.tree.pd$plot(effect.all, bike.data, target.feature.name = "target",
 ### ALE Method
 
 ```{r}
-bike.tree.ale = gadgetTree$new(strategy = aleStrategy$new(), n.split = 3)
+bike.tree.ale = gadgetTree$new(strategy = aleStrategy$new(), impr.par = 0.01, n.split = 2)
 bike.tree.ale$fit(model = bike.learner, data = bike.data, target.feature.name = "target", n.intervals = 10)
 bike.tree.ale$plot_tree_structure()
 bike.esi.ale = bike.tree.ale$extract_split_info()
 print(bike.esi.ale)
+```
+
+```{r}
+bike.tree.ale$plot(
+  data   = bike.data,
+  target.feature.name = "target",
+  #depth   = NULL,
+  #node.id = 2,
+  mean.center = FALSE,
+  show.point = TRUE,
+  show.plot = TRUE
+)
+```
+
+```{r}
 object_size(bike.esi.ale)
 ```
 

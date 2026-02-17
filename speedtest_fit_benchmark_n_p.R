@@ -31,6 +31,26 @@ datagen_p5 = function(n, seed = 1) {
   list(dat = dat, eff = eff)
 }
 
+datagen_p5 = function(n, seed = 1) {
+  set.seed(seed)
+  x1 = round(runif(n, -1, 1), 1)
+  x2 = round(runif(n, -1, 1), 3)
+  x3 = as.factor(sample(c(0, 1), size = n, replace = TRUE, prob = c(0.5, 0.5)))
+  x4 = sample(c(0, 1), size = n, replace = TRUE, prob = c(0.7, 0.3))
+  x5 = sample(c(0, 1), size = n, replace = TRUE, prob = c(0.5, 0.5))
+  dat = data.frame(x1, x2, x3, x4, x5)
+  y = 0.2 * x1 - 8 * x2 + ifelse(x3 == 0, 16 * x2, 0) + ifelse(x1 > 0, 8 * x2, 0)
+  eps = rnorm(n, 0, 0.1 * sd(y))
+  y = y + eps
+  dat$y = y
+  X = dat[, setdiff(colnames(dat), "y")]
+  mod = ranger(y ~ ., data = dat, num.trees = 100)
+  pred = function(model, newdata) predict(model, newdata)$predictions
+  model = Predictor$new(mod, data = X, y = dat$y, predict.function = pred)
+  eff = FeatureEffects$new(model, method = "ice", grid.size = 20)
+  list(dat = dat, eff = eff)
+}
+
 datagen_p10 = function(n, seed = 1) {
   set.seed(seed)
   x1 = round(runif(n, -1, 1), 1)

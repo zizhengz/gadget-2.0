@@ -41,6 +41,8 @@ plot_tree_ale(
 \item{show.point}{Logical. Whether to show per-node observation points on ALE plots.}
 
 \item{mean.center}{Logical. Whether to mean-center ALE curves (default \code{TRUE}).}
+
+\item{...}{Additional arguments passed to lower-level plotting helpers.}
 }
 \value{
 Nested list (depth -> node -> patchwork object).

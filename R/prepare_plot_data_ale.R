@@ -57,6 +57,10 @@ prepare_plot_data_ale = function(effect, idx = NULL, features = names(effect),
 #'
 #' Performs the per-feature accumulation and centering logic used by
 #' \code{prepare_plot_data_ale()} and returns a mean ALE curve.
+#'
+#' @param feat data.table with per-interval ALE derivatives and metadata.
+#' @param mean.center Logical. Whether to mean-center the resulting ALE
+#'   curve (default \code{TRUE}).
 mean_center_ale = function(feat, mean.center = TRUE) {
   feat$dL[feat$dL == 0] = NA
   data.table::setkeyv(feat, c("interval.index"))
