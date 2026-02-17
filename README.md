@@ -16,17 +16,18 @@ You can install the development version of GADGET from GitHub:
 
 ```r
 # install.packages("devtools")
-devtools::install_github("yourusername/GADGET")
+devtools::install_github("zizhengz/GADGET")
 ```
 
-## Note on dependencies
+## Dependencies
 
-- **mlr3 vs mlr**: Do not load both **mlr3** and the legacy **mlr** package in the same R session; they (and their dependencies paradox vs ParamHelpers) conflict. This package uses **mlr3** only. If you see conflicts, restart R and load only `library(mlr3)` and `library(mlr3learners)` when using GADGET.
-- **“Built under R version”**: Warnings that a package was built under R 4.5.2 (or another version) are usually harmless. To reinstall from source for your current R version: `install.packages("pkgname", type = "source")` or use `devtools::install()`.
+- **Core**: `R6`, `ggplot2`, `ggraph`, `igraph`, `patchwork`, `data.table`, `Rcpp` (installed automatically via DESCRIPTION)
+- **Recommended for examples**: `mlr3`, `mlr3learners`, `iml`, `ranger`
+- **Tip**: Avoid loading the legacy `mlr` package together with `mlr3` in the same R session, as they (and their dependencies) can conflict. When using **gadget**, just load the `mlr3` ecosystem.
 
 ## Documentation
 
-- In R: `?gadget` for the package overview; `?gadgetTree`, `?aleStrategy`, `?pdStrategy`, `?calculate_ale` for the main API.
+- In R: `?gadget` for the package overview; `?gadgetTree`, `?aleStrategy`, `?pdStrategy` for the main API.
 - The draft manuscript for the R Journal is in the [`paper/`](paper/) directory (see `paper/README.md` for building).
 
 ## Quick Start
@@ -66,6 +67,61 @@ ale_tree$plot_tree_structure()
 
 # 5. Inspect split information
 print(ale_tree$extract_split_info())
+```
+
+### Partial Dependence (PD) example and plot return value
+
+For PD-based trees we typically use the [`iml`](https://cran.r-project.org/package=iml) package to compute ICE/PD effects, and then let `pdStrategy` use them:
+
+```r
+library(iml)
+
+# 1. Reuse the trained mlr3 model and data from above
+X = as.data.frame(data[, setdiff(names(data), "count")])
+y = data$count
+
+predictor = iml::Predictor$new(
+  model = learner,
+  data  = X,
+  y     = y
+)
+
+# 2. Compute ICE/PD effects for all features
+effect_all = iml::FeatureEffects$new(
+  predictor,
+  method    = "ice",   # PD is computed as the mean over ICE
+  grid.size = 20
+)
+
+# 3. Fit a PD-based GADGET tree
+pd_tree = gadgetTree$new(
+  strategy     = pdStrategy$new(),
+  n.split      = 3,
+  min.node.size = 50
+)
+
+pd_tree$fit(
+  effect = effect_all,
+  data   = as.data.frame(data),
+  target.feature.name = "count"
+)
+
+# 4. Plot tree structure
+pd_tree$plot_tree_structure()
+
+# 5. Plot regional PD / ICE and inspect the returned object
+plots = pd_tree$plot(
+  effect = effect_all,
+  data   = as.data.frame(data),
+  target.feature.name = "count",
+  show.plot   = FALSE,   # do not auto-print
+  mean.center = FALSE
+)
+
+# `plots` is a nested list: depth -> nodes -> ggplot objects
+str(plots, max.level = 2)
+# For example, first depth, first node:
+plots[[1]][[1]]
 ```
 
 ## Methodology
