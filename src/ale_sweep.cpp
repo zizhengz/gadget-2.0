@@ -145,16 +145,17 @@ List ale_sweep_cpp(
 ) {
   const int p = dL_mat.nrow();
   const int M = tot_n.size();
+  const int j0 = split_feat_j - 1;  // 0-based index of split feature
 
   // Working copies (R passes by value for NumericVector, so we need to copy)
   std::vector<double> r_n(tot_n.begin(), tot_n.end());
   std::vector<double> r_s1(tot_s1.begin(), tot_s1.end());
   std::vector<double> r_s2(tot_s2.begin(), tot_s2.end());
-  std::vector<double> l_risks(p, 0.0);
-  std::vector<double> r_risks_vec(r_risks.begin(), r_risks.end());
+  std::vector<double> left_risks(p, 0.0);
+  std::vector<double> right_risks(r_risks.begin(), r_risks.end());
 
   double risks_sum = 0.0;
-  for (int j = 0; j < p; ++j) risks_sum += r_risks_vec[j];
+  for (int j = 0; j < p; ++j) risks_sum += right_risks[j];
 
   double best_risks_sum = R_PosInf;
   int best_t = -1;
@@ -166,7 +167,6 @@ List ale_sweep_cpp(
   NumericVector dL_j_sorted(n_obs);
   IntegerVector interval_idx_sorted(n_obs);
   if (use_stabilizer && has_self_ale && z_sorted.size() >= (size_t)n_obs) {
-    int j0 = split_feat_j - 1;  // 0-based
     for (int i = 0; i < n_obs; ++i) {
       int row = ord_idx[i] - 1;  // 1-based to 0-based
       dL_j_sorted[i] = dL_mat(j0, row);
@@ -198,8 +198,8 @@ List ale_sweep_cpp(
       r_n[m] = r_n_new;
       r_s1[m] = r_s1_new;
       r_s2[m] = r_s2_new;
-      r_risks_vec[j] -= r_risk_old;
-      r_risks_vec[j] += r_risk_new;
+      right_risks[j] -= r_risk_old;
+      right_risks[j] += r_risk_new;
 
       double l_n_old = tot_n[m] - r_n_old;
       double l_s1_old = tot_s1[m] - r_s1_old;
@@ -211,8 +211,8 @@ List ale_sweep_cpp(
       double l_s2_new = tot_s2[m] - r_s2_new;
       double l_risk_new = risk_from_stats(l_n_new, l_s1_new, l_s2_new);
 
-      l_risks[j] -= l_risk_old;
-      l_risks[j] += l_risk_new;
+      left_risks[j] -= l_risk_old;
+      left_risks[j] += l_risk_new;
       risks_sum += (-l_risk_old - r_risk_old + l_risk_new + r_risk_new);
     }
 
@@ -226,53 +226,46 @@ List ale_sweep_cpp(
     // Compute total objective using already-maintained risks_sum,
     // avoiding per-candidate copies and full re-sum of risk vectors.
     double total = R_PosInf;
-    double adj_l = 0.0, adj_r = 0.0;
-    int j0 = split_feat_j - 1; // 0-based index of split feature (only valid if has_self_ale)
+    double adj_left = 0.0, adj_right = 0.0;
 
     if (!has_self_ale) {
-      // No self ALE: objective is simply the current total risk.
       total = risks_sum;
-    } else if (!use_stabilizer) {
-      // Exclude self ALE from objective (interaction-focused splitting).
-      double self_risk = l_risks[j0] + r_risks_vec[j0];
-      total = risks_sum - self_risk;
-    } else if (!do_stab) {
-      // Stabilizer enabled globally but not used at this t:
-      // if one side is constant in z, drop that side's self ALE.
-      double drop = 0.0;
-      if (l_const) drop += l_risks[j0];
-      if (r_const) drop += r_risks_vec[j0];
-      total = risks_sum - drop;
     } else {
-      // Full boundary stabilizer on both sides for self ALE.
-      NumericVector node_dL_left(t);
-      IntegerVector node_int_left(t);
-      for (int i = 0; i < t; ++i) {
-        node_dL_left[i] = dL_j_sorted[i];
-        node_int_left[i] = interval_idx_sorted[i];
+      double self_risk = left_risks[j0] + right_risks[j0];
+      if (!use_stabilizer) {
+        total = risks_sum - self_risk;
+      } else if (!do_stab) {
+        double drop = 0.0;
+        if (l_const) drop += left_risks[j0];
+        if (r_const) drop += right_risks[j0];
+        total = risks_sum - drop;
+      } else {
+        NumericVector node_dL_left(t);
+        IntegerVector node_int_left(t);
+        for (int i = 0; i < t; ++i) {
+          node_dL_left[i] = dL_j_sorted[i];
+          node_int_left[i] = interval_idx_sorted[i];
+        }
+        NumericVector node_dL_right(n_obs - t);
+        IntegerVector node_int_right(n_obs - t);
+        for (int i = 0; i < n_obs - t; ++i) {
+          node_dL_right[i] = dL_j_sorted[t + i];
+          node_int_right[i] = interval_idx_sorted[t + i];
+        }
+        adj_left = adjust_side_cpp(node_dL_left, node_int_left,
+            left_risks[j0], true, t, t);
+        adj_right = adjust_side_cpp(node_dL_right, node_int_right,
+            right_risks[j0], false, 0, n_obs - t);
+        total = risks_sum - self_risk + adj_left + adj_right;
       }
-      NumericVector node_dL_right(n_obs - t);
-      IntegerVector node_int_right(n_obs - t);
-      for (int i = 0; i < n_obs - t; ++i) {
-        node_dL_right[i] = dL_j_sorted[t + i];
-        node_int_right[i] = interval_idx_sorted[t + i];
-      }
-      adj_l = adjust_side_cpp(node_dL_left, node_int_left,
-          l_risks[j0], true, t, t);
-      adj_r = adjust_side_cpp(node_dL_right, node_int_right,
-          r_risks_vec[j0], false, 0, n_obs - t);
-      double risk_t_j = l_risks[j0] + r_risks_vec[j0];
-      total = risks_sum - risk_t_j + adj_l + adj_r;
     }
 
     if (!R_FINITE(total) || total >= best_risks_sum) continue;
 
-    // Update best solution and store full left/right risk vectors,
-    // applying any necessary self-ALE adjustments only once.
     best_risks_sum = total;
     best_t = t;
-    best_left_risks = l_risks;
-    best_right_risks = r_risks_vec;
+    best_left_risks = left_risks;
+    best_right_risks = right_risks;
 
     if (has_self_ale) {
       if (!use_stabilizer) {
@@ -282,8 +275,8 @@ List ale_sweep_cpp(
         if (l_const) best_left_risks[j0] = 0.0;
         if (r_const) best_right_risks[j0] = 0.0;
       } else {
-        best_left_risks[j0] = adj_l;
-        best_right_risks[j0] = adj_r;
+        best_left_risks[j0] = adj_left;
+        best_right_risks[j0] = adj_right;
       }
     }
   }
