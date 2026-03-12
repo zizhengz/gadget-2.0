@@ -36,8 +36,10 @@ Named list of data.tables, one per element of \code{feature.set}. Each data.tabl
   \item{int_n, int_s1, int_s2}{Per-interval count and sum(dL), sum(dL^2) for heterogeneity.}
 }
 \description{
-Computes sample-level ALE data as local finite differences for each specified
-feature. Output is used for tree splitting, heterogeneity measures, or visualization.
+Given model, data, feature.set, target.feature.name, n.intervals, predict.fun: for each feature, 
+computes finite differences (dL) and per-interval stats (int_n, int_s1, int_s2). 
+Numeric: quantile intervals; categorical: level-by-level prediction differences. 
+Returns named list of data.tables (row.id, feat.val, dL, interval.index, int_n, int_s1, int_s2, etc.).
 }
 \details{
 Numeric features: builds \code{n.intervals} quantile-based intervals, assigns each row to an interval, and computes finite differences between interval boundaries via \code{predict.fun}.

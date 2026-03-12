@@ -1,4 +1,4 @@
-#' Find a node by id in a flat list of nodes
+#' Find node by id in a flat list. Given node.list and id: loops and returns first node with \code{node$id == id}, or NULL.
 #'
 #' @param node.list List of node objects (each with an \code{id} field).
 #' @param id Scalar; node id to look up.

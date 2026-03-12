@@ -9,8 +9,7 @@ prepare_split_data_pd(
   data,
   target.feature.name = NULL,
   feature.set = NULL,
-  split.feature = NULL,
-  order.method = "mds"
+  split.feature = NULL
 )
 }
 \arguments{
@@ -18,21 +17,17 @@ prepare_split_data_pd(
 
 \item{data}{Data frame or data.table. Training data (features and target).}
 
-\item{target.feature.name}{Character or NULL. Name of the target variable; required for level ordering.}
+\item{target.feature.name}{Character or NULL. Name of the target variable (for \code{all.features} resolution).}
 
 \item{feature.set}{Character or NULL. Features in effect; NULL = all non-target columns.}
 
 \item{split.feature}{Character or NULL. Features to consider for splitting; NULL = all.}
-
-\item{order.method}{Character. Categorical level order: \code{"mds"}, \code{"pca"},
-\code{"random"}, or \code{"raw"} (keep existing factor level order; default \code{"mds"}).}
 }
 \value{
 List with \code{Z} (split-feature matrix), \code{Y} (mean-centered effects), \code{grid}.
 }
 \description{
-Validates features, converts character columns to ordered factors (for categorical
-split features), builds the split-feature matrix Z, and mean-centers effects.
-Categorical level ordering uses \code{order_categorical_levels} so PD search
-(e.g. C++) receives Z with a data-driven level order without changing search code.
+Given effect, data, and optional feature/split sets: validates features;
+converts character to factor; builds Z (data.table of split columns);
+calls \code{mean_center_ice} for Y and grid. Returns list \code{Z}, \code{Y}, \code{grid}.
 }

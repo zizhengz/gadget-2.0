@@ -10,6 +10,8 @@ prepare_plot_data_pd(effect, tree, depth, feature.set, mean.center)
 \item{effect, tree, depth, feature.set, mean.center}{See PD plotting helpers.}
 }
 \description{
-Prepare PD plot data per node (internal).
+Given effect, tree, depth, feature.set, mean.center: calls \code{mean_center_ice} for Y and grid; 
+assigns each row to a node at that depth; for nodes with subset grids, sets out-of-grid cells to NA and optionally mean-centers. 
+Returns list of effect matrices (one per feature) with \code{node} column added.
 }
 \keyword{internal}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/aleStrategy.R
 \name{default_predict_fun}
 \alias{default_predict_fun}
-\title{Default prediction function for mlr3-style models (internal).}
+\title{Default prediction function for mlr3-style models. Given model and data: calls model$predict_newdata(data); if result is Prediction returns response else returns as-is.}
 \usage{
 default_predict_fun(model, data)
 }
@@ -12,6 +12,6 @@ default_predict_fun(model, data)
 \item{data}{New data.}
 }
 \description{
-Default prediction function for mlr3-style models (internal).
+Default prediction function for mlr3-style models. Given model and data: calls model$predict_newdata(data); if result is Prediction returns response else returns as-is.
 }
 \keyword{internal}

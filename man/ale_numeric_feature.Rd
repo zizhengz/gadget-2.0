@@ -18,6 +18,7 @@ ale_numeric_feature(
 \item{model, data, X, feature, target.feature.name, n.intervals, predict.fun}{See \code{\link{calculate_ale}}.}
 }
 \description{
-ALE for a single numeric feature (internal)
+Given model, data, X, feature: builds quantile intervals, assigns rows to intervals, 
+computes dL (finite difference) and int_n/int_s1/int_s2 per interval. Returns data.table.
 }
 \keyword{internal}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/mean_center_ice.R
 \name{mean_center_ice}
 \alias{mean_center_ice}
-\title{Mean-center and Extract Effect Matrices for Features}
+\title{Extract and optionally mean-center effect matrices}
 \usage{
 mean_center_ice(effect, feature.set = NULL, mean.center = TRUE)
 }
@@ -30,9 +30,8 @@ Default is `TRUE`.}
   }
 }
 \description{
-Processes feature effect results to produce a list of effect
-matrices (Y) and their corresponding grid values for each
-feature. Optionally mean-centers the effects for each observation.
+Given effect (with \code{results}), feature.set (or all), and mean.center: pivots effect results to wide matrices per feature; optionally subtracts row means. 
+Returns list \code{Y} (named list of matrices), \code{grid} (column names per feature).
 }
 \details{
 If the effect results are in `data.frame` format, the function

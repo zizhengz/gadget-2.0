@@ -40,8 +40,10 @@ List with:
   \item{Y}{List of ALE effect data per feature (from \code{calculate_ale}).}
 }
 \description{
-Validates features, converts character columns to ordered factors, builds the
-split-feature matrix Z, and computes ALE effects for tree splitting.
+Given model, data, target.feature.name, n.intervals, and optional feature/split sets:
+validates features; converts character to factor and orders levels via
+\code{order_categorical_levels}; builds Z (data.table of split columns);
+calls \code{calculate_ale} for Y. Returns list \code{Z}, \code{Y}.
 }
 \details{
 Steps performed:

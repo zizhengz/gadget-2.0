@@ -43,8 +43,6 @@
 #'   Parent node's interaction importance.
 #' @field strategy Strategy object. \cr
 #'   Used for effect-specific operations.
-#' @field cache List. \cr
-#'   Stores cached values for fast re-computation.
 #'
 #' @details
 #' This class is used internally by gadgetTree and strategy objects to represent
@@ -80,10 +78,9 @@ Node = R6::R6Class("Node", public = list(
   intImp = NULL,
   intImp.parent = NULL,
   strategy = NULL,
-  cache = NULL,
 
   #' @description
-  #' Constructor for a node.
+  #' Create a node from id, depth, subset indices, and grid. Assigns fields and sets \code{stop.criterion.met = FALSE}.
   #' @param id Integer. Node identifier.
   #' @param depth Integer or NULL. Node depth (root is 1).
   #' @param subset.idx Integer vector. Row indices of data in this node.
@@ -124,7 +121,8 @@ Node = R6::R6Class("Node", public = list(
   },
 
   #' @description
-  #' Recursively split the node using the provided data and effect list.
+  #' Given Z, Y, root objectives, and tree params: checks stopping criteria; finds best split; creates and applies children; recurses into child nodes. 
+  #' Returns NULL if no valid split.
   #' @param Z Data frame. Split feature set.
   #' @param Y List. Effect list.
   #' @param objective.value.root.j Numeric vector. Root node's objective values for each feature.
@@ -161,7 +159,6 @@ Node = R6::R6Class("Node", public = list(
       self$stop.criterion.met = TRUE
       return(NULL)
     }
-    # print(split.info)
     # 3. Create left and right child nodes
     children.info = tryCatch({
       self$create_children(Z, Y, split.info, objective.value.root.j, objective.value.root, impr.par)
@@ -208,7 +205,8 @@ Node = R6::R6Class("Node", public = list(
   },
 
   #' @description
-  #' Find the best split for the node using the effect list.
+  #' Given Z (subset by node indices), Y.curr, and params: calls \code{strategy$find_best_split} and returns list with 
+  #' \code{split.feature}, \code{split.value}, \code{is.categorical} (and for aleStrategy: \code{left/right.objective.value.j}).
   #' @param Z Data frame. Split feature set.
   #' @param Y.curr List. Effect list for current node.
   #' @param min.node.size Integer. Minimum node size.
@@ -248,7 +246,9 @@ Node = R6::R6Class("Node", public = list(
   },
 
   #' @description
-  #' Create left and right child nodes after splitting.
+  #' Given Z, Y, split.info, and root objectives: computes idx.left/right, child grids, objective values; checks improvement threshold; 
+  #' creates left/right Node instances and sets parent info. 
+  #' Returns list of \code{left.child}, \code{right.child}, \code{intImp}, \code{intImp.j} or NULL if improvement too small.
   #' @param Z Data frame. Split feature set.
   #' @param Y List. Effect list.
   #' @param split.info List. Information about the split.
@@ -339,7 +339,8 @@ Node = R6::R6Class("Node", public = list(
   },
 
   #' @description
-  #' Create grid values for left and right child nodes.
+  #' Given split.feature, split.value, and is.categorical: partitions \code{self$grid[[split.feature]]} into left (<= or ==) and right (> or !=). 
+  #' Returns list \code{grid.left}, \code{grid.right}.
   #' @param split.feature Character. Feature used for splitting.
   #' @param split.value Numeric or factor. Value used for splitting.
   #' @param is.categorical Logical. Whether the split feature is categorical.
@@ -362,7 +363,7 @@ Node = R6::R6Class("Node", public = list(
   },
 
   #' @description
-  #' Update node with split and children information.
+  #' Given split.info and children.info: sets \code{split.feature}, \code{split.value}, \code{intImp}, \code{intImp.j}, \code{children}.
   #' @param split.info List. Information about the split.
   #' @param children.info List. Information about the children.
   #' @return NULL
@@ -372,17 +373,5 @@ Node = R6::R6Class("Node", public = list(
     self$intImp = children.info$intImp
     self$intImp.j = children.info$intImp.j
     self$children = list("left.child" = children.info$left.child, "right.child" = children.info$right.child)
-  },
-
-  #' @description
-  #' Retrieve a cached value or compute and cache it.
-  #' @param key Character. Cache key.
-  #' @param compute_func Function. Function to compute the value if not cached.
-  #' @return Value from cache or computed.
-  get_cached_or_compute = function(key, compute_func) {
-    if (is.null(self$cache[[key]])) {
-      self$cache[[key]] = compute_func()
-    }
-    self$cache[[key]]
   }
 ))

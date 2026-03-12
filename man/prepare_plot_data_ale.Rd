@@ -27,6 +27,7 @@ Named list where each element contains a single \code{mean_effect}
   is a list).
 }
 \description{
-Extends the original helper to support arbitrary node subsets via row indices.
-When \code{idx} is a list, a nested list mirroring the input structure is returned.
+Given effect (from \code{calculate_ale}), idx (row indices or list of such), features, 
+mean.center: subsets ALE rows by idx; calls \code{mean_center_ale} per feature for cumulative and optional centering. 
+Returns named list of \code{mean_effect} data.tables (or nested list if idx is list).
 }

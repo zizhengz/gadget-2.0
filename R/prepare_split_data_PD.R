@@ -1,20 +1,17 @@
 #' Prepare PD Data for Tree Splitting
 #'
-#' Validates features, converts character columns to ordered factors (for categorical
-#' split features), builds the split-feature matrix Z, and mean-centers effects.
-#' Categorical level ordering uses \code{order_categorical_levels} so PD search
-#' (e.g. C++) receives Z with a data-driven level order without changing search code.
+#' Given effect, data, and optional feature/split sets: validates features;
+#' converts character to factor; builds Z (data.table of split columns);
+#' calls \code{mean_center_ice} for Y and grid. Returns list \code{Z}, \code{Y}, \code{grid}.
 #'
 #' @param effect Effect object or list (e.g. from FeatureEffect).
 #' @param data Data frame or data.table. Training data (features and target).
-#' @param target.feature.name Character or NULL. Name of the target variable; required for level ordering.
+#' @param target.feature.name Character or NULL. Name of the target variable (for \code{all.features} resolution).
 #' @param feature.set Character or NULL. Features in effect; NULL = all non-target columns.
 #' @param split.feature Character or NULL. Features to consider for splitting; NULL = all.
-#' @param order.method Character. Categorical level order: \code{"mds"}, \code{"pca"},
-#'   \code{"random"}, or \code{"raw"} (keep existing factor level order; default \code{"mds"}).
 #' @return List with \code{Z} (split-feature matrix), \code{Y} (mean-centered effects), \code{grid}.
 prepare_split_data_pd = function(effect, data, target.feature.name = NULL, feature.set = NULL,
-  split.feature = NULL, order.method = "mds") {
+  split.feature = NULL) {
   all.features = if (is.null(target.feature.name)) colnames(data) else setdiff(colnames(data), target.feature.name)
   take_cols = function(d, cols) {
     if (data.table::is.data.table(d)) d[, cols, with = FALSE] else d[, cols, drop = FALSE]
@@ -38,13 +35,6 @@ prepare_split_data_pd = function(effect, data, target.feature.name = NULL, featu
   feature.set = resolve_features(feature.set, "Features")
   split.feature = resolve_features(split.feature, "Split features")
   data = ensure_factors(data, union(feature.set, split.feature))
-  if (!is.null(target.feature.name)) {
-    for (col in union(feature.set, split.feature)) {
-      if (is.factor(data[[col]])) {
-        data[[col]] = order_categorical_levels(droplevels(data[[col]]), data, col, target.feature.name, order.method)
-      }
-    }
-  }
   Z = data.table::setDT(take_cols(data, split.feature))
   wide.mean.center = mean_center_ice(effect = effect, feature.set = feature.set)
   list(Z = Z, Y = wide.mean.center$Y, grid = wide.mean.center$grid)

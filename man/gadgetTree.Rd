@@ -4,8 +4,8 @@
 \alias{gadgetTree}
 \title{gadgetTree: Generalized Additive Decomposition of Global Effects Tree (R6 class)}
 \description{
-Main class for growing, managing, and visualizing effect-based decision trees
-using a modular strategy (e.g., \code{pdStrategy} or \code{aleStrategy}).
+Wrapper for effect-based trees: given a strategy (pd/ale), fits tree via \code{$fit()}, plots effects via \code{$plot()}, extracts splits via \code{$extract_split_info()}. 
+Delegates all effect logic to the strategy.
 }
 \details{
 This class manages the overall tree structure and delegates effect-specific operations
@@ -58,7 +58,8 @@ split_info = tree$extract_split_info()
 \if{html}{\out{<a id="method-gadgetTree-new"></a>}}
 \if{latex}{\out{\hypertarget{method-gadgetTree-new}{}}}
 \subsection{Method \code{new()}}{
-Constructor for the gadgetTree object.
+Given strategy and tree params (n.split, impr.par, min.node.size, n.quantiles): stores them and initializes empty \code{split_benchmark}. 
+Returns the gadgetTree instance.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{gadgetTree$new(
   strategy,
@@ -89,7 +90,8 @@ Constructor for the gadgetTree object.
 \if{html}{\out{<a id="method-gadgetTree-fit"></a>}}
 \if{latex}{\out{\hypertarget{method-gadgetTree-fit}{}}}
 \subsection{Method \code{fit()}}{
-Fit the tree to the provided data and effect object.
+Given data, target.feature.name, and optional feature/split sets: calls \code{strategy$fit()} with ... (effect/model as required by strategy); clears \code{split_benchmark}; optionally runs \code{strategy$clean()}. 
+Returns tree invisibly.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{gadgetTree$fit(
   data,
@@ -127,7 +129,8 @@ gadgetTree object, invisibly. The fitted tree object.
 \if{html}{\out{<a id="method-gadgetTree-plot"></a>}}
 \if{latex}{\out{\hypertarget{method-gadgetTree-plot}{}}}
 \subsection{Method \code{plot()}}{
-Visualize the tree structure and effect plots for each node.
+Given effect (or NULL for ale cached effect), data, target.feature.name, and optional depth/node.id/features: converts root to depth-list; calls \code{strategy$plot()}. 
+Returns list of ggplot2 objects.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{gadgetTree$plot(
   effect = NULL,
@@ -167,20 +170,18 @@ List. List of ggplot2 objects for different depths and nodes.
 \if{html}{\out{<a id="method-gadgetTree-plot_tree_structure"></a>}}
 \if{latex}{\out{\hypertarget{method-gadgetTree-plot_tree_structure}{}}}
 \subsection{Method \code{plot_tree_structure()}}{
-Visualize the tree structure as a graph.
+Converts root to depth-list and calls \code{plot_tree_structure()}. Prints graph.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{gadgetTree$plot_tree_structure()}\if{html}{\out{</div>}}
 }
 
-\subsection{Returns}{
-NULL
-}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-gadgetTree-extract_split_info"></a>}}
 \if{latex}{\out{\hypertarget{method-gadgetTree-extract_split_info}{}}}
 \subsection{Method \code{extract_split_info()}}{
-Extract split information for all nodes in the tree.
+Converts root to depth-list and calls \code{extract_split_info()} with \code{split_benchmark}. 
+Returns data frame (depth, id, split.feature, split.value, intImp, etc.).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{gadgetTree$extract_split_info()}\if{html}{\out{</div>}}
 }

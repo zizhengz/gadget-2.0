@@ -2,7 +2,9 @@
 % Please edit documentation in R/re_mean_center_ice.R
 \name{re_mean_center_ice}
 \alias{re_mean_center_ice}
-\title{mean-centering of ICE matrices}
+\title{Mean-center ICE matrices for a node. Given Y (list of effect matrices), grid (column names per feature), 
+idx: subsets rows by idx; sets non-grid columns to NA; subtracts row means. 
+Returns list of mean-centered matrices.}
 \usage{
 re_mean_center_ice(Y, grid, idx)
 }
@@ -17,5 +19,7 @@ re_mean_center_ice(Y, grid, idx)
 List of mean-centered matrices
 }
 \description{
-mean-centering of ICE matrices
+Mean-center ICE matrices for a node. Given Y (list of effect matrices), grid (column names per feature), 
+idx: subsets rows by idx; sets non-grid columns to NA; subtracts row means. 
+Returns list of mean-centered matrices.
 }

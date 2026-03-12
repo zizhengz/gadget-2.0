@@ -1,7 +1,7 @@
 #' Find best split across all columns of Z (R fallback)
 #'
-#' Calls \code{search_best_split_point} per column and returns a data frame
-#' with one row per feature. Used when C++ \code{search_best_split_cpp} is not available.
+#' Given Z, Y, min.node.size, n.quantiles: loops over each column, calls \code{search_best_split_point}; rbind results; adds split.feature, is.categorical, best.split, split.runtime. 
+#' Returns data frame (one row per feature).
 #'
 #' @param Z Data frame of split features.
 #' @param Y List of effect matrices.

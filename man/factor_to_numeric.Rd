@@ -2,7 +2,9 @@
 % Please edit documentation in R/factor_to_numeric.R
 \name{factor_to_numeric}
 \alias{factor_to_numeric}
-\title{Convert factor to numeric (level labels or level indices)}
+\title{Convert factor to numeric. Given f: if all level labels parse as numbers, 
+uses as.numeric(as.character(f)); otherwise uses as.numeric(f) (level indices). 
+Returns numeric vector.}
 \usage{
 factor_to_numeric(f)
 }
@@ -13,7 +15,8 @@ factor_to_numeric(f)
 Numeric vector.
 }
 \description{
-If all level labels are numeric strings, converts via \code{as.character};
-otherwise uses \code{as.numeric(f)} (level indices).
+Convert factor to numeric. Given f: if all level labels parse as numbers, 
+uses as.numeric(as.character(f)); otherwise uses as.numeric(f) (level indices). 
+Returns numeric vector.
 }
 \keyword{internal}

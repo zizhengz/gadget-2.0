@@ -85,9 +85,6 @@ Parent node's interaction importance.}
 
 \item{\code{strategy}}{Strategy object. \cr
 Used for effect-specific operations.}
-
-\item{\code{cache}}{List. \cr
-Stores cached values for fast re-computation.}
 }
 \if{html}{\out{</div>}}
 }
@@ -100,7 +97,6 @@ Stores cached values for fast re-computation.}
 \item \href{#method-Node-create_children}{\code{Node$create_children()}}
 \item \href{#method-Node-create_child_grids}{\code{Node$create_child_grids()}}
 \item \href{#method-Node-apply_split}{\code{Node$apply_split()}}
-\item \href{#method-Node-get_cached_or_compute}{\code{Node$get_cached_or_compute()}}
 \item \href{#method-Node-clone}{\code{Node$clone()}}
 }
 }
@@ -108,7 +104,7 @@ Stores cached values for fast re-computation.}
 \if{html}{\out{<a id="method-Node-new"></a>}}
 \if{latex}{\out{\hypertarget{method-Node-new}{}}}
 \subsection{Method \code{new()}}{
-Constructor for a node.
+Create a node from id, depth, subset indices, and grid. Assigns fields and sets \code{stop.criterion.met = FALSE}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Node$new(
   id,
@@ -163,7 +159,8 @@ Constructor for a node.
 \if{html}{\out{<a id="method-Node-split_node"></a>}}
 \if{latex}{\out{\hypertarget{method-Node-split_node}{}}}
 \subsection{Method \code{split_node()}}{
-Recursively split the node using the provided data and effect list.
+Given Z, Y, root objectives, and tree params: checks stopping criteria; finds best split; creates and applies children; recurses into child nodes. 
+Returns NULL if no valid split.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Node$split_node(
   Z,
@@ -209,7 +206,8 @@ NULL
 \if{html}{\out{<a id="method-Node-find_best_split"></a>}}
 \if{latex}{\out{\hypertarget{method-Node-find_best_split}{}}}
 \subsection{Method \code{find_best_split()}}{
-Find the best split for the node using the effect list.
+Given Z (subset by node indices), Y.curr, and params: calls \code{strategy$find_best_split} and returns list with 
+\code{split.feature}, \code{split.value}, \code{is.categorical} (and for aleStrategy: \code{left/right.objective.value.j}).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Node$find_best_split(Z, Y.curr, min.node.size, n.quantiles)}\if{html}{\out{</div>}}
 }
@@ -235,7 +233,9 @@ List or NULL. Best split information or NULL if no valid split.
 \if{html}{\out{<a id="method-Node-create_children"></a>}}
 \if{latex}{\out{\hypertarget{method-Node-create_children}{}}}
 \subsection{Method \code{create_children()}}{
-Create left and right child nodes after splitting.
+Given Z, Y, split.info, and root objectives: computes idx.left/right, child grids, objective values; checks improvement threshold; 
+creates left/right Node instances and sets parent info. 
+Returns list of \code{left.child}, \code{right.child}, \code{intImp}, \code{intImp.j} or NULL if improvement too small.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Node$create_children(
   Z,
@@ -272,7 +272,8 @@ List. Contains left and right child nodes and split statistics.
 \if{html}{\out{<a id="method-Node-create_child_grids"></a>}}
 \if{latex}{\out{\hypertarget{method-Node-create_child_grids}{}}}
 \subsection{Method \code{create_child_grids()}}{
-Create grid values for left and right child nodes.
+Given split.feature, split.value, and is.categorical: partitions \code{self$grid[[split.feature]]} into left (<= or ==) and right (> or !=). 
+Returns list \code{grid.left}, \code{grid.right}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Node$create_child_grids(split.feature, split.value, is.categorical)}\if{html}{\out{</div>}}
 }
@@ -296,7 +297,7 @@ List. List with grid.left and grid.right.
 \if{html}{\out{<a id="method-Node-apply_split"></a>}}
 \if{latex}{\out{\hypertarget{method-Node-apply_split}{}}}
 \subsection{Method \code{apply_split()}}{
-Update node with split and children information.
+Given split.info and children.info: sets \code{split.feature}, \code{split.value}, \code{intImp}, \code{intImp.j}, \code{children}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Node$apply_split(split.info, children.info)}\if{html}{\out{</div>}}
 }
@@ -312,28 +313,6 @@ Update node with split and children information.
 }
 \subsection{Returns}{
 NULL
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Node-get_cached_or_compute"></a>}}
-\if{latex}{\out{\hypertarget{method-Node-get_cached_or_compute}{}}}
-\subsection{Method \code{get_cached_or_compute()}}{
-Retrieve a cached value or compute and cache it.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Node$get_cached_or_compute(key, compute_func)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{key}}{Character. Cache key.}
-
-\item{\code{compute_func}}{Function. Function to compute the value if not cached.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-Value from cache or computed.
 }
 }
 \if{html}{\out{<hr>}}

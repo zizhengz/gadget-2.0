@@ -1,7 +1,9 @@
 #' Prepare ALE Data for Tree Splitting
 #'
-#' Validates features, converts character columns to ordered factors, builds the
-#' split-feature matrix Z, and computes ALE effects for tree splitting.
+#' Given model, data, target.feature.name, n.intervals, and optional feature/split sets:
+#' validates features; converts character to factor and orders levels via
+#' \code{order_categorical_levels}; builds Z (data.table of split columns);
+#' calls \code{calculate_ale} for Y. Returns list \code{Z}, \code{Y}.
 #'
 #' @param model Fitted model object with a predict interface.
 #' @param data Data frame or data.table. Training data (features and target).

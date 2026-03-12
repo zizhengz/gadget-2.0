@@ -1,7 +1,6 @@
 #' Find best split point for a single feature z
 #'
-#' Numeric: tries quantile-based cutpoints. Categorical: tries binary splits on level subsets.
-#' Returns \code{split.point} and \code{split.objective} (heterogeneity reduction).
+#' Given z, Y, n.quantiles, min.node.size, is.categorical: for numeric, sorts z, builds quantile cutpoints, evaluates objective (sum of -S_l^2/N_l - S_r^2/N_r) per cutpoint; for categorical, evaluates one-level vs rest. Returns data frame with \code{split.point}, \code{split.objective}.
 #'
 #' @param z Vector of split feature values.
 #' @param Y List of effect matrices.
@@ -50,7 +49,7 @@ search_best_split_point = function(z, Y, n.quantiles = NULL, min.node.size, is.c
     }
     Y.cumsum = lapply(Y, function(Y.i) {
       Y.i = as.matrix(Y.i[ord, ])
-      Y.i.cumsum = Rfast::colCumSums(Y.i)
+      Y.i.cumsum = apply(Y.i, 2, cumsum)
       Y.i.cumsum
     })
   }
@@ -67,8 +66,8 @@ search_best_split_point = function(z, Y, n.quantiles = NULL, min.node.size, is.c
         Y.i = Y[[i]]
         Y.i.l = Y.i[idx, , drop = FALSE]
         Y.i.r = Y.i[-idx, , drop = FALSE]
-        S.l = Rfast::colsums(Y.i.l)
-        S.r = Rfast::colsums(Y.i.r)
+        S.l = colSums(Y.i.l, na.rm = TRUE)
+        S.r = colSums(Y.i.r, na.rm = TRUE)
         sum(-S.l^2 / N.l - S.r^2 / N.r, na.rm = TRUE)
       }, NA_real_), na.rm = TRUE)
     } else {

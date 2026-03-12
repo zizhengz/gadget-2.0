@@ -1,4 +1,4 @@
-#' Default prediction function for mlr3-style models (internal).
+#' Default prediction function for mlr3-style models. Given model and data: calls model$predict_newdata(data); if result is Prediction returns response else returns as-is.
 #' @param model Fitted model.
 #' @param data New data.
 #' @keywords internal
@@ -10,10 +10,9 @@ default_predict_fun = function(model, data) {
 #' @title aleStrategy: Generalized additive decomposition based on ALE effects.
 #'
 #' @description
-#' Implements the effectStrategy interface for ALE-based trees: preprocessing via
-#' \code{prepare_split_data_ale}, node-wise ALE transform, heterogeneity from ALE
-#' derivatives, and best-split search. Used by \code{gadgetTree} when \code{strategy = "ale"}.
+#' ALE-based strategy: given model and data, preprocesses to Z/Y via \code{prepare_split_data_ale}; transforms ALE effects per node; computes ALE-derivative heterogeneity; finds best split via \code{search_best_split_ale}; fits tree and plots ALE curves.
 #'
+#' @field name Character. Strategy name (e.g., \code{"ale"}).
 #' @field tree_ref Reference to the associated \code{gadgetTree} instance.
 #' @field fit_timing Named numeric vector with global/regional fit times (seconds).
 #' @field model Fitted model (persistent after \code{fit}).
@@ -40,8 +39,8 @@ default_predict_fun = function(model, data) {
 #' @export
 aleStrategy = R6::R6Class(
   "aleStrategy",
-  inherit = effectStrategy,
   public = list(
+    name = NULL,
     tree_ref = NULL,
     fit_timing = NULL,
     # Persistent context fields (declared to allow assignment outside initialize)
@@ -55,13 +54,13 @@ aleStrategy = R6::R6Class(
     effect_root = NULL,
 
     #' @description
-    #' Initialize the strategy with name "ale".
+    #' Sets \code{name = "ale"}. Returns the strategy instance.
     initialize = function() {
       self$name = "ale"
     },
 
     #' @description
-    #' Preprocess data into split-feature matrix Z and ALE effect list Y by calling \code{prepare_split_data_ale}.
+    #' Given model, data, target.feature.name, n.intervals, and optional feature/split sets: computes ALE per feature; builds Z (split features) and Y (named list of ALE data.tables) via \code{prepare_split_data_ale}. Returns list \code{Z}, \code{Y}.
     #' @param model Fitted model object.
     #' @param data Data frame or data.table with features and target.
     #' @param target.feature.name Character(1). Name of the target variable.
@@ -87,7 +86,7 @@ aleStrategy = R6::R6Class(
     },
 
     #' @description
-    #' Transform ALE effects for a node: subset by \code{idx}, handle single-value and recalc categorical as needed.
+    #' Given Y (ALE effect list), idx, and split.feature: subsets ALE rows by idx; handles single-interval numeric and recalculates categorical if split.feature changes. Returns list of ALE data.tables.
     #' @param Y List. ALE effect list (each element a data.frame/data.table from \code{calculate_ale}).
     #' @param idx Integer. Row indices of samples in the node.
     #' @param split.feature Character(1) or NULL. Feature used for the split leading to this node.
@@ -111,7 +110,7 @@ aleStrategy = R6::R6Class(
     },
 
     #' @description
-    #' Compute heterogeneity (variance of ALE derivatives) per feature from effect list \code{Y}.
+    #' Given Y (list of ALE effect data.tables): computes sum of squared dL per feature via \code{calculate_ale_heterogeneity_cpp}. Returns numeric vector of length \code{length(Y)}.
     #' @param Y List. ALE effect list (each element a data.table from \code{calculate_ale}).
     #' @return Numeric vector of heterogeneity, one per feature.
     #' @seealso \code{\link{calculate_ale_heterogeneity_cpp}}
@@ -123,7 +122,7 @@ aleStrategy = R6::R6Class(
     },
 
     #' @description
-    #' Find the best split for a node by ALE heterogeneity reduction.
+    #' Given Z, Y (ALE effect list), min.node.size, n.quantiles: calls \code{search_best_split_ale} to evaluate all features. Returns list with \code{split.feature}, \code{split.point}, \code{best.split}, \code{left/right.objective.value.j}, etc.
     #' @param Z Data frame or data.table. Split-feature matrix (columns = \code{split.feature}).
     #' @param Y List. ALE effect list from \code{calculate_ale}.
     #' @param min.node.size Integer(1). Minimum node size.
@@ -146,7 +145,7 @@ aleStrategy = R6::R6Class(
     },
 
     #' @description
-    #' Visualize ALE curves for selected nodes by delegating to \code{plot_tree_ale()}.
+    #' Given tree, effect (or cached \code{effect_root}), data, target.feature.name, and optional depth/node.id/features: calls \code{plot_tree_ale}. Returns nested list of patchwork/ggplot objects (depth -> node).
     #' @param tree Depth-based list of Node objects (typically from \code{convert_tree_to_list}).
     #' @param effect Optional ALE effect list (from \code{calculate_ale}); if \code{NULL},
     #'   uses the cached \code{effect_root} from the last \code{$fit()} call.
@@ -185,7 +184,7 @@ aleStrategy = R6::R6Class(
     },
 
     #' @description
-    #' Fit an ALE tree: run \code{preprocess} to get Z and Y, then grow the tree by recursive splitting.
+    #' Given tree, model, data, target.feature.name: preprocesses Z/Y; creates root Node; recursively splits; stores effect_root and fit_timing. Returns tree invisibly.
     #' @param tree \code{gadgetTree} instance.
     #' @param model Fitted model.
     #' @param data Data frame or data.table (features and target).
@@ -258,7 +257,7 @@ aleStrategy = R6::R6Class(
       invisible(tree)
     },
     #' @description
-    #' Clean up large objects (data, model) after fitting to save memory.
+    #' Sets \code{data} and \code{model} to NULL to free memory. Returns NULL.
     clean = function() {
       self$data = NULL
       self$model = NULL

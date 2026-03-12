@@ -2,7 +2,9 @@
 % Please edit documentation in R/choose_operator.R
 \name{choose_operator}
 \alias{choose_operator}
-\title{Return comparison operator for a child relative to parent split}
+\title{Return comparison operator for child relative to parent. 
+Given parent.node and current.node: if current is left child returns \code{<=} (numeric) or \code{=} (categorical); 
+if right returns \code{>} or \code{!=}.}
 \usage{
 choose_operator(parent.node, current.node)
 }
@@ -15,6 +17,8 @@ choose_operator(parent.node, current.node)
 Character \code{"<="}, \code{">"}, \code{"="}, or \code{"!="}.
 }
 \description{
-Left child: \code{<=} (numeric) or \code{=} (categorical); right: \code{>} or \code{!=}.
+Return comparison operator for child relative to parent. 
+Given parent.node and current.node: if current is left child returns \code{<=} (numeric) or \code{=} (categorical); 
+if right returns \code{>} or \code{!=}.
 }
 \keyword{internal}

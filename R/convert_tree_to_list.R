@@ -1,7 +1,7 @@
-#' Convert Recursive Tree to Depth-based List Structure
+#' Convert Recursive Tree to Depth-based List
 #'
-#' Converts a recursively built tree (with Node objects) to a depth-based list structure
-#' where each depth contains a list of nodes at that depth.
+#' Given root.node and optional max.depth: traverses children recursively, collects nodes by depth. 
+#' Returns list of lists (depth 1, 2, ...), each element a list of Node objects at that depth.
 #'
 #' @param root.node A Node object representing the root of the tree
 #' @param max.depth Maximum depth to traverse (optional)

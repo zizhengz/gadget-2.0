@@ -2,26 +2,30 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 ale_sweep_cpp <- function(ord_idx, dL_mat, interval_idx_mat, offsets, tot_n, tot_s1, tot_s2, r_risks, is_cand, min_node_size, split_feat_j, use_stabilizer, z_sorted, n_obs) {
-    .Call('_gadget_ale_sweep_cpp', PACKAGE = 'gadget', ord_idx, dL_mat, interval_idx_mat, offsets, tot_n, tot_s1, tot_s2, r_risks, is_cand, min_node_size, split_feat_j, use_stabilizer, z_sorted, n_obs)
+    .Call(`_gadget_ale_sweep_cpp`, ord_idx, dL_mat, interval_idx_mat, offsets, tot_n, tot_s1, tot_s2, r_risks, is_cand, min_node_size, split_feat_j, use_stabilizer, z_sorted, n_obs)
 }
 
 calculate_ale_heterogeneity_single_cpp <- function(dL, interval_index) {
-    .Call('_gadget_calculate_ale_heterogeneity_single_cpp', PACKAGE = 'gadget', dL, interval_index)
+    .Call(`_gadget_calculate_ale_heterogeneity_single_cpp`, dL, interval_index)
 }
 
 calculate_ale_heterogeneity_list_cpp <- function(Y) {
-    .Call('_gadget_calculate_ale_heterogeneity_list_cpp', PACKAGE = 'gadget', Y)
+    .Call(`_gadget_calculate_ale_heterogeneity_list_cpp`, Y)
+}
+
+node_heterogeneity_cpp <- function(Y) {
+    .Call(`_gadget_node_heterogeneity_cpp`, Y)
 }
 
 re_mean_center_ice_cpp <- function(Y, grid, idx) {
-    .Call('_gadget_re_mean_center_ice_cpp', PACKAGE = 'gadget', Y, grid, idx)
+    .Call(`_gadget_re_mean_center_ice_cpp`, Y, grid, idx)
 }
 
 search_best_split_cpp <- function(Z, Y, min_node_size, n_quantiles = NULL) {
-    .Call('_gadget_search_best_split_cpp', PACKAGE = 'gadget', Z, Y, min_node_size, n_quantiles)
+    .Call(`_gadget_search_best_split_cpp`, Z, Y, min_node_size, n_quantiles)
 }
 
 search_best_split_point_cpp <- function(z, Y, n_quantiles = NULL, is_categorical = FALSE, min_node_size = 1L) {
-    .Call('_gadget_search_best_split_point_cpp', PACKAGE = 'gadget', z, Y, n_quantiles, is_categorical, min_node_size)
+    .Call(`_gadget_search_best_split_point_cpp`, z, Y, n_quantiles, is_categorical, min_node_size)
 }
 

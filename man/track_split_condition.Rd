@@ -2,7 +2,7 @@
 % Please edit documentation in R/track_split_condition.R
 \name{track_split_condition}
 \alias{track_split_condition}
-\title{Build path of split conditions from root to a node}
+\title{Build path of split conditions from root to node}
 \usage{
 track_split_condition(node, tree)
 }
@@ -15,7 +15,8 @@ track_split_condition(node, tree)
 Character vector of conditions (e.g. \code{"x <= 0.5"}).
 }
 \description{
-Used for plot labels. Walks from \code{node} up to the root and collects
-split feature, operator, and value at each step.
+Given node and tree (depth-list): walks parent chain via \code{find_parent_by_id}; 
+at each step builds condition string (e.g. "x <= 0.5") via \code{choose_operator}. 
+Returns character vector of conditions (root to node).
 }
 \keyword{internal}

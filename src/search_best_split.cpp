@@ -12,7 +12,7 @@
 // [[Rcpp::depends(RcppArmadillo)]]
 #include <RcppArmadillo.h>
 #include <chrono>
-#include <algorithm>          // std::sort, std::upper_bound
+#include <algorithm>  // std::sort
 
 using namespace Rcpp;
 
@@ -21,23 +21,12 @@ using namespace Rcpp;
  * ------------------------------------------------------------------ */
 
 /**
- * @brief Remove duplicates from a numeric vector efficiently
- *
- * Uses std::set for O(n log n) complexity without tree allocations.
- * This is more efficient than the commented alternative below.
- *
- * @param x Input numeric vector
- * @return NumericVector with unique values in sorted order
+ * @brief Remove consecutive duplicates. Assumes x is sorted. O(n).
  */
 inline NumericVector unique_cpp(NumericVector x) {
-  std::set<double> s(x.begin(), x.end());
-  return NumericVector(s.begin(), s.end());
+  x.erase(std::unique(x.begin(), x.end()), x.end());
+  return x;
 }
-// inline NumericVector unique_cpp(NumericVector x) {
-//   std::sort(x.begin(), x.end());
-//   x.erase(std::unique(x.begin(), x.end()), x.end());
-//   return x;
-// }
 
 /**
  * @brief Calculate R type-7 quantile for sorted vector
@@ -53,6 +42,7 @@ inline NumericVector unique_cpp(NumericVector x) {
 inline double quantile_type7(const NumericVector& x, double p) {  // & = reference, const = read-only, avoids copying vector
   const int n = x.size();
   if (n == 0) return NA_REAL;
+  if (n == 1) return x[0];
   if (p <= 0.0) return x[0];
   if (p >= 1.0) return x[n - 1];
 
@@ -132,17 +122,18 @@ List search_best_split_point_cpp_internal(
     for (int l = 0; l < Ly; ++l)
       SumL[l].assign(K, arma::rowvec(Ym[l].n_cols, arma::fill::zeros));
 
-    // Accumulate sums for each level
+    // Accumulate sums for each level (skip NA)
     for (int i = 0; i < N; ++i) {
-      int k = z_fac[i] - 1;                  // Convert to 0-based indexing
+      if (z_fac[i] == NA_INTEGER) continue;
+      int k = z_fac[i] - 1;
       ++countL[k];
       for (int l = 0; l < Ly; ++l) {
         SumL[l][k] += Ym[l].row(i);  // Direct accumulation, NaN already processed in preprocessing
       }
     }
 
-    // Evaluate each level as potential split (last level is reference)
-    for (int k = 0; k < K - 1; ++k) {
+    // Evaluate each level as potential split (one vs rest)
+    for (int k = 0; k < K; ++k) {
       int NL = countL[k], NR = N - NL;
 
       // Skip if either child node would be too small
@@ -188,9 +179,7 @@ List search_best_split_point_cpp_internal(
 
   // Create sorted index and sorted values
   IntegerVector ord = Rcpp::seq(0, N - 1);
-  std::sort(ord.begin(), ord.end(),
-      // Custom comparator: sorts indices so that their corresponding feature values are in ascending order
-      [&](int i, int j){ return z_num[i] < z_num[j]; });
+  std::sort(ord.begin(), ord.end(), [&](int i, int j){ return z_num[i] < z_num[j]; });
 
   NumericVector z_sorted(N);
   for (int i = 0; i < N; ++i) z_sorted[i] = z_num[ord[i]];
@@ -258,7 +247,7 @@ List search_best_split_point_cpp_internal(
     if (v <= best_split && v > Lft) Lft = v;
     if (v >  best_split && v < Rgt) Rgt = v;
   }
-  double mid = (Lft + Rgt) / 2.0;
+  double mid = std::isinf(Rgt) ? Lft : (Lft + Rgt) / 2.0;
 
   return List::create(_["split.point"]     = mid,
     _["split.objective"] = best_obj);
@@ -308,9 +297,9 @@ DataFrame search_best_split_cpp(
     Ym[l].replace(arma::datum::nan, 0.0);  // Process all NaN values once
     S_tot[l] = arma::sum(Ym[l], 0);        // Precompute column sums
   }
-
   // Start timing
   auto t0 = std::chrono::high_resolution_clock::now();
+
 
   // Evaluate each feature
   for (int j = 0; j < p; ++j) {
@@ -327,14 +316,9 @@ DataFrame search_best_split_cpp(
     split_obj[j]       = res["split.objective"];
     split_point_out[j] = as<CharacterVector>(wrap(res["split.point"]))[0];
   }
-
   // Calculate total runtime and identify best split
   auto t1 = std::chrono::high_resolution_clock::now();
   split_runtime.fill(std::chrono::duration<double>(t1 - t0).count());
-  
-  // Find best valid split (original)
-  //double best_val = min(split_obj);
-  //LogicalVector best_split = (split_obj == best_val);
 
   // Find best valid split (filter out NA/NaN split points)
   double best_val = R_PosInf;

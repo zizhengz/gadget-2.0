@@ -1,9 +1,9 @@
 #' Order Levels of a Categorical Feature
 #'
-#' Computes a data-driven ordering of factor levels from other features, then
-#' returns the factor with levels reordered. Intended for use in effect/split
-#' strategies (e.g. ALE, PD) so categories are ordered by similarity rather than
-#' alphabetically or by appearance.
+#' Given x.cat (factor), data, feature, target.feature.name, 
+#' order.method: builds KxK distance matrix from other features (ECDF diff for numeric, L1 for categorical); 
+#' embeds in 1D via MDS/PCA/random/raw; reorders levels. 
+#' Returns factor with reordered levels (or x.cat unchanged if K<=1 or no other features).
 #'
 #' @param x.cat Factor. Focal feature values; must be \code{droplevels()}-ed so
 #'   unused levels are dropped.

@@ -1,8 +1,8 @@
 #' gadgetTree: Generalized Additive Decomposition of Global Effects Tree (R6 class)
 #'
 #' @description
-#' Main class for growing, managing, and visualizing effect-based decision trees
-#' using a modular strategy (e.g., \code{pdStrategy} or \code{aleStrategy}).
+#' Wrapper for effect-based trees: given a strategy (pd/ale), fits tree via \code{$fit()}, plots effects via \code{$plot()}, extracts splits via \code{$extract_split_info()}. 
+#' Delegates all effect logic to the strategy.
 #'
 #' @field strategy Strategy object (e.g., pdStrategy) that implements effect-specific logic.
 #' @field root Node object. Root node of the tree.
@@ -41,7 +41,8 @@ gadgetTree = R6::R6Class(
     split_benchmark = NULL,
 
     #' @description
-    #' Constructor for the gadgetTree object.
+    #' Given strategy and tree params (n.split, impr.par, min.node.size, n.quantiles): stores them and initializes empty \code{split_benchmark}. 
+    #' Returns the gadgetTree instance.
     #' @param strategy Strategy object (e.g., pdStrategy) that implements effect-specific logic.
     #' @param n.split Integer. Maximum number of splits (tree depth minus one).
     #' @param impr.par Numeric. Improvement threshold for splitting.
@@ -61,7 +62,8 @@ gadgetTree = R6::R6Class(
     },
 
     #' @description
-    #' Fit the tree to the provided data and effect object.
+    #' Given data, target.feature.name, and optional feature/split sets: calls \code{strategy$fit()} with ... (effect/model as required by strategy); clears \code{split_benchmark}; optionally runs \code{strategy$clean()}. 
+    #' Returns tree invisibly.
     #' @param data Data frame. Data frame containing features and the target variable.
     #' @param target.feature.name Character(1). Name of the target feature to explain.
     #' @param feature.set Character or NULL. \cr
@@ -97,7 +99,8 @@ gadgetTree = R6::R6Class(
     },
 
     #' @description
-    #' Visualize the tree structure and effect plots for each node.
+    #' Given effect (or NULL for ale cached effect), data, target.feature.name, and optional depth/node.id/features: converts root to depth-list; calls \code{strategy$plot()}. 
+    #' Returns list of ggplot2 objects.
     #' @param effect R6 object or list. Object containing feature effect results.
     #' @param data Data frame. Data frame.
     #' @param target.feature.name Character(1). Name of the target feature to explain.
@@ -119,15 +122,15 @@ gadgetTree = R6::R6Class(
     },
 
     #' @description
-    #' Visualize the tree structure as a graph.
-    #' @return NULL
+    #' Converts root to depth-list and calls \code{plot_tree_structure()}. Prints graph.
     plot_tree_structure = function() {
       tree_for_structure = convert_tree_to_list(self$root, self$n.split + 1)
       plot_tree_structure(tree_for_structure)
     },
 
     #' @description
-    #' Extract split information for all nodes in the tree.
+    #' Converts root to depth-list and calls \code{extract_split_info()} with \code{split_benchmark}. 
+    #' Returns data frame (depth, id, split.feature, split.value, intImp, etc.).
     #' @return Data frame. Split information for all nodes.
     extract_split_info = function() {
       tree_for_info = convert_tree_to_list(self$root, self$n.split + 1)

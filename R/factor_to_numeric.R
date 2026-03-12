@@ -1,7 +1,6 @@
-#' Convert factor to numeric (level labels or level indices)
-#'
-#' If all level labels are numeric strings, converts via \code{as.character};
-#' otherwise uses \code{as.numeric(f)} (level indices).
+#' Convert factor to numeric. Given f: if all level labels parse as numbers, 
+#' uses as.numeric(as.character(f)); otherwise uses as.numeric(f) (level indices). 
+#' Returns numeric vector.
 #'
 #' @param f Factor.
 #' @return Numeric vector.

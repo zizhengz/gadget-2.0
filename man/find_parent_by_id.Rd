@@ -2,7 +2,7 @@
 % Please edit documentation in R/find_parent_by_id.R
 \name{find_parent_by_id}
 \alias{find_parent_by_id}
-\title{Find a node by id in a flat list of nodes}
+\title{Find node by id in a flat list. Given node.list and id: loops and returns first node with \code{node$id == id}, or NULL.}
 \usage{
 find_parent_by_id(node.list, id)
 }
@@ -15,6 +15,6 @@ find_parent_by_id(node.list, id)
 The node with \code{id} or \code{NULL}.
 }
 \description{
-Find a node by id in a flat list of nodes
+Find node by id in a flat list. Given node.list and id: loops and returns first node with \code{node$id == id}, or NULL.
 }
 \keyword{internal}

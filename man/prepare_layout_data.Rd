@@ -2,7 +2,7 @@
 % Please edit documentation in R/prepare_layout_data.R
 \name{prepare_layout_data}
 \alias{prepare_layout_data}
-\title{Build layout data frame for tree plot (node id, parent, labels)}
+\title{Build layout data frame for tree structure plot}
 \usage{
 prepare_layout_data(tree)
 }
@@ -14,7 +14,7 @@ Data frame with columns \code{id}, \code{node.id}, \code{id.parent},
   \code{split.feature}, \code{split.value}, \code{label}, \code{depth}, etc.
 }
 \description{
-Converts a depth-based tree list into a data frame with one row per node,
-used by \code{plot_tree_structure} for \pkg{ggraph} layout and labels.
+Given tree (depth-list of Node objects): flattens to one row per node; extracts id, id.parent, 
+split.feature, split.value, N, depth; builds label. Returns data frame for \code{plot_tree_structure} (ggraph).
 }
 \keyword{internal}

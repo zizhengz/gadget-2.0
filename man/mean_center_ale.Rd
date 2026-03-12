@@ -2,7 +2,7 @@
 % Please edit documentation in R/prepare_plot_data_ale.R
 \name{mean_center_ale}
 \alias{mean_center_ale}
-\title{Internal ALE Curve Computation}
+\title{Internal ALE curve computation}
 \usage{
 mean_center_ale(feat, mean.center = TRUE)
 }
@@ -13,6 +13,6 @@ mean_center_ale(feat, mean.center = TRUE)
 curve (default \code{TRUE}).}
 }
 \description{
-Performs the per-feature accumulation and centering logic used by
-\code{prepare_plot_data_ale()} and returns a mean ALE curve.
+Given ALE data.table for one feature and mean.center: cumsums dL by interval; 
+optionally subtracts global mean. Returns data.table with x.grid and .value (cumulative ALE).
 }

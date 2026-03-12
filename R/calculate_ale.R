@@ -1,7 +1,9 @@
 #' Calculate Accumulated Local Effects (ALE)
 #'
-#' Computes sample-level ALE data as local finite differences for each specified
-#' feature. Output is used for tree splitting, heterogeneity measures, or visualization.
+#' Given model, data, feature.set, target.feature.name, n.intervals, predict.fun: for each feature, 
+#' computes finite differences (dL) and per-interval stats (int_n, int_s1, int_s2). 
+#' Numeric: quantile intervals; categorical: level-by-level prediction differences. 
+#' Returns named list of data.tables (row.id, feat.val, dL, interval.index, int_n, int_s1, int_s2, etc.).
 #'
 #' @param model Fitted model object with a predict interface.
 #' @param data Data frame or data.table. Training data (features and target).
@@ -52,6 +54,9 @@ calculate_ale = function(model, data, feature.set, target.feature.name, n.interv
 }
 
 #' ALE for a single numeric feature (internal)
+#'
+#' Given model, data, X, feature: builds quantile intervals, assigns rows to intervals, 
+#' computes dL (finite difference) and int_n/int_s1/int_s2 per interval. Returns data.table.
 #' @param model,data,X,feature,target.feature.name,n.intervals,predict.fun See \code{\link{calculate_ale}}.
 #' @keywords internal
 ale_numeric_feature = function(model, data, X, feature, target.feature.name, n.intervals = 10, predict.fun = NULL) {

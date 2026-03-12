@@ -1,11 +1,12 @@
 #' @title pdStrategy: Generalized additive decomposition based on PD effects.
 #'
 #' @description
-#' Implements the effectStrategy interface for building and analyzing Partial Dependence (PD) trees.
-#' This strategy supports data preprocessing, node transformation, heterogeneity calculation,
-#' best split search, tree fitting, and visualization.
+#' PD-based strategy: given effect and data, preprocesses to Z/Y/grid; mean-centers effects per node; computes sum-of-variances heterogeneity; 
+#' finds best split via C++; fits tree and plots PD/ICE.
 #'
+#' @field name Character. Strategy name (e.g., \code{"pd"}).
 #' @field tree_ref Reference to the associated tree instance.
+#' @field fit_timing Named numeric vector with fit times (seconds), or NULL.
 #'
 #' @details
 #' This class is used internally by the gadgetTree framework to implement partial dependence
@@ -25,20 +26,20 @@
 #' @export
 pdStrategy = R6::R6Class(
   "pdStrategy",
-  inherit = effectStrategy,
   public = list(
+    name = NULL,
     tree_ref = NULL,
+    fit_timing = NULL,
 
     #' @description
-    #' Initialize the strategy with name "pd".
+    #' Sets \code{name = "pd"}. Returns the strategy instance.
     initialize = function() {
       self$name = "pd"
     },
 
     #' @description
-    #' Preprocess input data to generate the split feature set Z, effect list Y, and grid.
-    #' Applies character-to-factor conversion and data-driven level ordering for
-    #' categorical split features via \code{order_categorical_levels}.
+    #' Given effect, data, target.feature, and optional feature/split sets: validates features; converts character to factor; 
+    #' builds Z (split features) and mean-centered Y via \code{prepare_split_data_pd}. Returns list \code{Z}, \code{Y}, \code{grid}.
     #' @param effect R6 object or list.\cr
     #'   An object containing feature effect results, typically from FeatureEffect or FeatureEffects.
     #' @param data Data frame.\cr
@@ -49,19 +50,17 @@ pdStrategy = R6::R6Class(
     #'   Optional. Subset of features to use for effect calculation. If NULL, all features are used.
     #' @param split.feature Character or NULL. \cr
     #'   Optional. Features to consider for splitting at each node. If NULL, all features are considered.
-    #' @param order.method Character. Categorical level order: \code{"mds"}, \code{"pca"},
-    #'   \code{"random"}, or \code{"raw"} (keep existing factor level order;
-    #'   default \code{"mds"}).
     #' @return List. \cr
     #'   A list with Z (split feature set), Y (effect list), and grid (feature grid).
     preprocess = function(effect, data, target.feature, feature.set = NULL,
-      split.feature = NULL, order.method = "mds") {
+      split.feature = NULL) {
       prepare_split_data_pd(effect = effect, data = data, target.feature.name = target.feature,
-        feature.set = feature.set, split.feature = split.feature, order.method = order.method)
+        feature.set = feature.set, split.feature = split.feature)
     },
 
     #' @description
-    #' Mean-center the effect list Y within the node and return the centered list.
+    #' Given Y (list of effect matrices), grid, and idx: subset rows by idx, mean-center each matrix per row, 
+    #' return list of centered matrices via \code{re_mean_center_ice_cpp}.
     #' @param Y List. Each element is an effect matrix for a feature.
     #' @param grid List. Feature grids.
     #' @param idx Integer. Sample indices for the current node.
@@ -73,7 +72,8 @@ pdStrategy = R6::R6Class(
     },
 
     #' @description
-    #' Calculate the heterogeneity (sum of variances) of effects within the node.
+    #' Given Y (list of effect matrices): computes sum of column variances per matrix via \code{node_heterogeneity}. 
+    #' Returns numeric vector of length \code{length(Y)}.
     #' @param Y List. List of effect matrices.
     #' @return Numeric. Numeric vector, heterogeneity for each feature.
     heterogeneity = function(Y) {
@@ -82,7 +82,8 @@ pdStrategy = R6::R6Class(
     },
 
     #' @description
-    #' Find the best split point for a node.
+    #' Given Z, Y, min.node.size, n.quantiles: calls \code{search_best_split_cpp} to evaluate all features and returns data frame with \code{split.feature}, 
+    #' \code{split.point}, \code{split.objective}, \code{best.split}, etc.
     #' @param Z Data frame. Split feature set.
     #' @param Y List. Effect matrices.
     #' @param min.node.size Integer(1). Minimum node size.
@@ -99,7 +100,8 @@ pdStrategy = R6::R6Class(
     },
 
     #' @description
-    #' Visualize the PD tree structure and partial dependence plots for each node.
+    #' Given tree, effect, data, target.feature.name, and optional depth/node.id/features: prepares plot data and calls \code{plot_tree_pd}. 
+    #' Returns list of ggplot2 objects (by depth and node).
     #' @param tree List. Tree structure as a list of Node objects.
     #' @param effect R6 object or list. Model effect object.
     #' @param data Data frame. Data frame.
@@ -122,21 +124,18 @@ pdStrategy = R6::R6Class(
     },
 
     #' @description
-    #' Fit a PD tree using the provided data and effect object.
+    #' Given tree, effect, data, target.feature.name: preprocesses Z/Y/grid; creates root Node; recursively splits; records fit time in \code{fit_timing}. 
+    #' Returns tree invisibly.
     #' @param tree gadgetTree object. Tree object instance.
     #' @param effect R6 object or list. Model effect object.
     #' @param data Data frame. Data frame.
     #' @param target.feature.name Character(1). Target feature name.
     #' @param feature.set Character or NULL. Feature subset (optional).
     #' @param split.feature Character or NULL. Split feature (optional).
-    #' @param order.method Character. Categorical level order passed to
-    #'   \code{prepare_split_data_pd} and \code{order_categorical_levels}:
-    #'   \code{"mds"}, \code{"pca"}, \code{"random"}, or \code{"raw"}
-    #'   (default \code{"mds"}).
     #' @param ... Additional arguments (ignored).
     #' @return gadgetTree object, invisibly. The fitted tree object.
     fit = function(tree, effect, data, target.feature.name,
-      feature.set = NULL, split.feature = NULL, order.method = "mds", ...) {
+      feature.set = NULL, split.feature = NULL, ...) {
       if (missing(effect)) stop("pdStrategy requires 'effect' to be passed.", call. = FALSE)
       checkmate::assert_true(is.list(effect) || inherits(effect, "R6"), .var.name = "effect")
 
@@ -144,8 +143,7 @@ pdStrategy = R6::R6Class(
       prepared.data = self$preprocess(effect = effect, data = data,
         target.feature = target.feature.name,
         feature.set = feature.set,
-        split.feature = split.feature,
-        order.method = order.method)
+        split.feature = split.feature)
       Z = prepared.data$Z
       Y = prepared.data$Y
       grid = prepared.data$grid
@@ -155,18 +153,21 @@ pdStrategy = R6::R6Class(
         objective.value.parent = NA, objective.value = objective.value.root, intImp.j = NULL,
         objective.value.j = objective.value.root.j, improvement.met = FALSE, intImp = NULL,
         strategy = self)
-      # Recursively build the tree from the root node
-      parent$split_node(
-        Z = Z, Y = Y,
-        objective.value.root.j = objective.value.root.j,
-        objective.value.root = objective.value.root,
-        min.node.size = tree$min.node.size,
-        n.quantiles = tree$n.quantiles,
-        impr.par = tree$impr.par,
-        depth = 1,
-        max.depth = tree$n.split + 1
-      )
-      tree$root = parent
+      # Recursively build the tree from the root node (regional part, timed)
+      t_regional = system.time({
+        parent$split_node(
+          Z = Z, Y = Y,
+          objective.value.root.j = objective.value.root.j,
+          objective.value.root = objective.value.root,
+          min.node.size = tree$min.node.size,
+          n.quantiles = tree$n.quantiles,
+          impr.par = tree$impr.par,
+          depth = 1,
+          max.depth = tree$n.split + 1
+        )
+        tree$root = parent
+      })[["elapsed"]]
+      self$fit_timing = list(regional = t_regional)
       invisible(tree)
     }
   )

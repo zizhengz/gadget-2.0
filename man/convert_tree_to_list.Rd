@@ -2,7 +2,7 @@
 % Please edit documentation in R/convert_tree_to_list.R
 \name{convert_tree_to_list}
 \alias{convert_tree_to_list}
-\title{Convert Recursive Tree to Depth-based List Structure}
+\title{Convert Recursive Tree to Depth-based List}
 \usage{
 convert_tree_to_list(root.node, max.depth = NULL)
 }
@@ -15,7 +15,7 @@ convert_tree_to_list(root.node, max.depth = NULL)
 A list where each element represents a depth level and contains a list of Node objects
 }
 \description{
-Converts a recursively built tree (with Node objects) to a depth-based list structure
-where each depth contains a list of nodes at that depth.
+Given root.node and optional max.depth: traverses children recursively, collects nodes by depth. 
+Returns list of lists (depth 1, 2, ...), each element a list of Node objects at that depth.
 }
 \keyword{internal}

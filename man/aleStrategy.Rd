@@ -4,9 +4,7 @@
 \alias{aleStrategy}
 \title{aleStrategy: Generalized additive decomposition based on ALE effects.}
 \description{
-Implements the effectStrategy interface for ALE-based trees: preprocessing via
-\code{prepare_split_data_ale}, node-wise ALE transform, heterogeneity from ALE
-derivatives, and best-split search. Used by \code{gadgetTree} when \code{strategy = "ale"}.
+ALE-based strategy: given model and data, preprocesses to Z/Y via \code{prepare_split_data_ale}; transforms ALE effects per node; computes ALE-derivative heterogeneity; finds best split via \code{search_best_split_ale}; fits tree and plots ALE curves.
 }
 \details{
 Intended for use through \code{gadgetTree$new(strategy = aleStrategy$new())} and
@@ -23,12 +21,11 @@ tree$fit(model = model, data = data, target.feature.name = "y")
 \seealso{
 \code{\link{calculate_ale_heterogeneity_cpp}}
 }
-\section{Super class}{
-\code{\link[gadget:effectStrategy]{gadget::effectStrategy}} -> \code{aleStrategy}
-}
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
+\item{\code{name}}{Character. Strategy name (e.g., \code{"ale"}).}
+
 \item{\code{tree_ref}}{Reference to the associated \code{gadgetTree} instance.}
 
 \item{\code{fit_timing}}{Named numeric vector with global/regional fit times (seconds).}
@@ -70,7 +67,7 @@ tree$fit(model = model, data = data, target.feature.name = "y")
 \if{html}{\out{<a id="method-aleStrategy-new"></a>}}
 \if{latex}{\out{\hypertarget{method-aleStrategy-new}{}}}
 \subsection{Method \code{new()}}{
-Initialize the strategy with name "ale".
+Sets \code{name = "ale"}. Returns the strategy instance.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{aleStrategy$new()}\if{html}{\out{</div>}}
 }
@@ -80,7 +77,7 @@ Initialize the strategy with name "ale".
 \if{html}{\out{<a id="method-aleStrategy-preprocess"></a>}}
 \if{latex}{\out{\hypertarget{method-aleStrategy-preprocess}{}}}
 \subsection{Method \code{preprocess()}}{
-Preprocess data into split-feature matrix Z and ALE effect list Y by calling \code{prepare_split_data_ale}.
+Given model, data, target.feature.name, n.intervals, and optional feature/split sets: computes ALE per feature; builds Z (split features) and Y (named list of ALE data.tables) via \code{prepare_split_data_ale}. Returns list \code{Z}, \code{Y}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{aleStrategy$preprocess(
   model,
@@ -124,7 +121,7 @@ List with \code{Z} (data.table of split features) and \code{Y} (named list of AL
 \if{html}{\out{<a id="method-aleStrategy-node_transform"></a>}}
 \if{latex}{\out{\hypertarget{method-aleStrategy-node_transform}{}}}
 \subsection{Method \code{node_transform()}}{
-Transform ALE effects for a node: subset by \code{idx}, handle single-value and recalc categorical as needed.
+Given Y (ALE effect list), idx, and split.feature: subsets ALE rows by idx; handles single-interval numeric and recalculates categorical if split.feature changes. Returns list of ALE data.tables.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{aleStrategy$node_transform(Y, idx, split.feature = NULL)}\if{html}{\out{</div>}}
 }
@@ -148,7 +145,7 @@ List of transformed ALE effect data.tables.
 \if{html}{\out{<a id="method-aleStrategy-heterogeneity"></a>}}
 \if{latex}{\out{\hypertarget{method-aleStrategy-heterogeneity}{}}}
 \subsection{Method \code{heterogeneity()}}{
-Compute heterogeneity (variance of ALE derivatives) per feature from effect list \code{Y}.
+Given Y (list of ALE effect data.tables): computes sum of squared dL per feature via \code{calculate_ale_heterogeneity_cpp}. Returns numeric vector of length \code{length(Y)}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{aleStrategy$heterogeneity(Y)}\if{html}{\out{</div>}}
 }
@@ -168,7 +165,7 @@ Numeric vector of heterogeneity, one per feature.
 \if{html}{\out{<a id="method-aleStrategy-find_best_split"></a>}}
 \if{latex}{\out{\hypertarget{method-aleStrategy-find_best_split}{}}}
 \subsection{Method \code{find_best_split()}}{
-Find the best split for a node by ALE heterogeneity reduction.
+Given Z, Y (ALE effect list), min.node.size, n.quantiles: calls \code{search_best_split_ale} to evaluate all features. Returns list with \code{split.feature}, \code{split.point}, \code{best.split}, \code{left/right.objective.value.j}, etc.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{aleStrategy$find_best_split(Z, Y, min.node.size, n.quantiles)}\if{html}{\out{</div>}}
 }
@@ -194,7 +191,7 @@ List with best split feature, cutpoint/level, and related fields.
 \if{html}{\out{<a id="method-aleStrategy-plot"></a>}}
 \if{latex}{\out{\hypertarget{method-aleStrategy-plot}{}}}
 \subsection{Method \code{plot()}}{
-Visualize ALE curves for selected nodes by delegating to \code{plot_tree_ale()}.
+Given tree, effect (or cached \code{effect_root}), data, target.feature.name, and optional depth/node.id/features: calls \code{plot_tree_ale}. Returns nested list of patchwork/ggplot objects (depth -> node).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{aleStrategy$plot(
   tree,
@@ -244,7 +241,7 @@ uses the cached \code{effect_root} from the last \code{$fit()} call.}
 \if{html}{\out{<a id="method-aleStrategy-fit"></a>}}
 \if{latex}{\out{\hypertarget{method-aleStrategy-fit}{}}}
 \subsection{Method \code{fit()}}{
-Fit an ALE tree: run \code{preprocess} to get Z and Y, then grow the tree by recursive splitting.
+Given tree, model, data, target.feature.name: preprocesses Z/Y; creates root Node; recursively splits; stores effect_root and fit_timing. Returns tree invisibly.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{aleStrategy$fit(
   tree,
@@ -297,7 +294,7 @@ The \code{tree} object, invisibly.
 \if{html}{\out{<a id="method-aleStrategy-clean"></a>}}
 \if{latex}{\out{\hypertarget{method-aleStrategy-clean}{}}}
 \subsection{Method \code{clean()}}{
-Clean up large objects (data, model) after fitting to save memory.
+Sets \code{data} and \code{model} to NULL to free memory. Returns NULL.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{aleStrategy$clean()}\if{html}{\out{</div>}}
 }

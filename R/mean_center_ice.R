@@ -1,8 +1,7 @@
-#' Mean-center and Extract Effect Matrices for Features
+#' Extract and optionally mean-center effect matrices
 #'
-#' Processes feature effect results to produce a list of effect
-#' matrices (Y) and their corresponding grid values for each
-#' feature. Optionally mean-centers the effects for each observation.
+#' Given effect (with \code{results}), feature.set (or all), and mean.center: pivots effect results to wide matrices per feature; optionally subtracts row means. 
+#' Returns list \code{Y} (named list of matrices), \code{grid} (column names per feature).
 #'
 #' @param effect (`R6` object or list)\cr
 #'   An object containing feature effect results, typically with
@@ -83,47 +82,6 @@ mean_center_ice = function(effect, feature.set = NULL, mean.center = TRUE) {
     grid = lapply(Y, function(Y.i) {
       colnames(Y.i)
     })
-    #### try data.table, not working (no faster) ####
-    # # Pre-allocate everything
-    # n_features = length(effect.results)
-    # Y = vector("list", n_features)
-    # grid = vector("list", n_features)
-    # feature_names = names(effect.results)
-    #
-    # # Batch process factor conversions
-    # borders_columns = lapply(effect.results, function(x) x$.borders)
-    # factor_indices = which(sapply(borders_columns, is.factor))
-    #
-    # if (length(factor_indices) > 0) {
-    #   for (idx in factor_indices) {
-    #     effect.results[[idx]]$.borders = factor_to_numeric(effect.results[[idx]]$.borders)
-    #   }
-    # }
-    #
-    # # Process each feature with ultra-fast operations
-    # for (i in seq_len(n_features)) {
-    #   feat_data = effect.results[[i]]
-    #
-    #   # Pivot operation
-    #   pivoted = data_table_pivot(feat_data, names_from = ".borders", values_from = ".value")
-    #
-    #   # Column filtering
-    #   cols_to_remove = c(".type", ".id", ".feature")
-    #   keep_cols = setdiff(colnames(pivoted), cols_to_remove)
-    #   filtered = pivoted[, keep_cols, drop = FALSE]
-    #
-    #   # Mean centering
-    #   if (mean.center) {
-    #     filtered = filtered - rowMeans(filtered, na.rm = TRUE)
-    #   }
-    #
-    #   Y[[i]] = filtered
-    #   grid[[i]] = keep_cols
-    # }
-    #
-    # # Set names back
-    # names(Y) = feature_names
-    # names(grid) = feature_names
   }
   return(list(Y = Y, grid = grid))
 }

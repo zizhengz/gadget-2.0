@@ -2,7 +2,7 @@
 % Please edit documentation in R/extract_split_info.R
 \name{extract_split_info}
 \alias{extract_split_info}
-\title{extract_split_info: Extract Split Information from Tree Structure}
+\title{Extract Split Information from Tree Structure}
 \usage{
 extract_split_info(tree, split_benchmark = NULL)
 }
@@ -18,8 +18,8 @@ Optional. A data frame or list containing split timing information, with columns
   A data frame where each row summarizes a node, including split feature, split value, statistics, and (if available) split timing.
 }
 \description{
-Extracts split criteria, node statistics, and (optionally) split benchmark information from a tree structure.
-This function traverses a depth-based list of Node objects and returns a data frame summarizing each node's split details, statistics, and (if provided) split timing.
+Given tree (depth-list of Node objects) and optional split_benchmark: flattens nodes; builds one row per node (depth, id, n.obs, split.feature, split.value, intImp, intImp.j, etc.); merges timing if split_benchmark has node.id/depth. 
+Returns data frame.
 }
 \details{
 This function is used internally by the gadgetTree framework to extract and summarize the structure and statistics of effect-based decision trees. It is useful for interpretation, reporting, and benchmarking.

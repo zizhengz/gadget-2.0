@@ -58,6 +58,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// node_heterogeneity_cpp
+NumericVector node_heterogeneity_cpp(List Y);
+RcppExport SEXP _gadget_node_heterogeneity_cpp(SEXP YSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type Y(YSEXP);
+    rcpp_result_gen = Rcpp::wrap(node_heterogeneity_cpp(Y));
+    return rcpp_result_gen;
+END_RCPP
+}
 // re_mean_center_ice_cpp
 /**   * @brief Mean-center ICE matrices for each feature, only on grid columns.   *   * For each feature matrix in Y, this function:   *   - Selects only the rows specified by idx   *   - Sets columns not in grid to NA   *   - For each row, mean-centers only the valid grid and non-NA columns   *   - Returns a list of centered matrices, preserving column names   *   * @param Y   List of NumericMatrix, one per feature with dimnames   * @param grid List of CharacterVector, each specifying valid grid columns for the feature   * @param idx IntegerVector of row indices, 1-based as in R   * @return List of mean-centered NumericMatrix, with column names preserved   */  List re_mean_center_ice_cpp(List Y, List grid, IntegerVector idx);
 RcppExport SEXP _gadget_re_mean_center_ice_cpp(SEXP YSEXP, SEXP gridSEXP, SEXP idxSEXP) {
@@ -105,6 +116,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gadget_ale_sweep_cpp", (DL_FUNC) &_gadget_ale_sweep_cpp, 14},
     {"_gadget_calculate_ale_heterogeneity_single_cpp", (DL_FUNC) &_gadget_calculate_ale_heterogeneity_single_cpp, 2},
     {"_gadget_calculate_ale_heterogeneity_list_cpp", (DL_FUNC) &_gadget_calculate_ale_heterogeneity_list_cpp, 1},
+    {"_gadget_node_heterogeneity_cpp", (DL_FUNC) &_gadget_node_heterogeneity_cpp, 1},
     {"_gadget_re_mean_center_ice_cpp", (DL_FUNC) &_gadget_re_mean_center_ice_cpp, 3},
     {"_gadget_search_best_split_cpp", (DL_FUNC) &_gadget_search_best_split_cpp, 4},
     {"_gadget_search_best_split_point_cpp", (DL_FUNC) &_gadget_search_best_split_point_cpp, 5},

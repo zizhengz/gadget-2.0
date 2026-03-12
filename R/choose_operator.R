@@ -1,6 +1,6 @@
-#' Return comparison operator for a child relative to parent split
-#'
-#' Left child: \code{<=} (numeric) or \code{=} (categorical); right: \code{>} or \code{!=}.
+#' Return comparison operator for child relative to parent. 
+#' Given parent.node and current.node: if current is left child returns \code{<=} (numeric) or \code{=} (categorical); 
+#' if right returns \code{>} or \code{!=}.
 #'
 #' @param parent.node Node with \code{children} and \code{split.value}.
 #' @param current.node One of the children.

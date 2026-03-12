@@ -13,7 +13,8 @@ plot_tree_structure(tree)
 A `ggplot` object representing the tree structure.
 }
 \description{
-This function visualizes the decision tree structure using the `ggraph` and `igraph` packages.
-It creates a plot where nodes are labeled with split information and edges represent the tree hierarchy.
+Given tree (depth-list of Node objects): calls \code{prepare_layout_data} to build layout data; 
+creates parent map; builds edge list; creates ggraph plot with nodes labeled by split info and edges representing tree hierarchy.
+Returns ggplot object.
 }
 \keyword{internal}

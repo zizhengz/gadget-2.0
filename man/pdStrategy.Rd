@@ -4,9 +4,8 @@
 \alias{pdStrategy}
 \title{pdStrategy: Generalized additive decomposition based on PD effects.}
 \description{
-Implements the effectStrategy interface for building and analyzing Partial Dependence (PD) trees.
-This strategy supports data preprocessing, node transformation, heterogeneity calculation,
-best split search, tree fitting, and visualization.
+PD-based strategy: given effect and data, preprocesses to Z/Y/grid; mean-centers effects per node; computes sum-of-variances heterogeneity; 
+finds best split via C++; fits tree and plots PD/ICE.
 }
 \details{
 This class is used internally by the gadgetTree framework to implement partial dependence
@@ -24,13 +23,14 @@ tree$plot(effect, data, target.feature.name = "target")
 }
 
 }
-\section{Super class}{
-\code{\link[gadget:effectStrategy]{gadget::effectStrategy}} -> \code{pdStrategy}
-}
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
+\item{\code{name}}{Character. Strategy name (e.g., \code{"pd"}).}
+
 \item{\code{tree_ref}}{Reference to the associated tree instance.}
+
+\item{\code{fit_timing}}{Named numeric vector with fit times (seconds), or NULL.}
 }
 \if{html}{\out{</div>}}
 }
@@ -51,7 +51,7 @@ tree$plot(effect, data, target.feature.name = "target")
 \if{html}{\out{<a id="method-pdStrategy-new"></a>}}
 \if{latex}{\out{\hypertarget{method-pdStrategy-new}{}}}
 \subsection{Method \code{new()}}{
-Initialize the strategy with name "pd".
+Sets \code{name = "pd"}. Returns the strategy instance.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{pdStrategy$new()}\if{html}{\out{</div>}}
 }
@@ -61,17 +61,15 @@ Initialize the strategy with name "pd".
 \if{html}{\out{<a id="method-pdStrategy-preprocess"></a>}}
 \if{latex}{\out{\hypertarget{method-pdStrategy-preprocess}{}}}
 \subsection{Method \code{preprocess()}}{
-Preprocess input data to generate the split feature set Z, effect list Y, and grid.
-Applies character-to-factor conversion and data-driven level ordering for
-categorical split features via \code{order_categorical_levels}.
+Given effect, data, target.feature, and optional feature/split sets: validates features; converts character to factor; 
+builds Z (split features) and mean-centered Y via \code{prepare_split_data_pd}. Returns list \code{Z}, \code{Y}, \code{grid}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{pdStrategy$preprocess(
   effect,
   data,
   target.feature,
   feature.set = NULL,
-  split.feature = NULL,
-  order.method = "mds"
+  split.feature = NULL
 )}\if{html}{\out{</div>}}
 }
 
@@ -92,10 +90,6 @@ Optional. Subset of features to use for effect calculation. If NULL, all feature
 
 \item{\code{split.feature}}{Character or NULL. \cr
 Optional. Features to consider for splitting at each node. If NULL, all features are considered.}
-
-\item{\code{order.method}}{Character. Categorical level order: \code{"mds"}, \code{"pca"},
-\code{"random"}, or \code{"raw"} (keep existing factor level order;
-default \code{"mds"}).}
 }
 \if{html}{\out{</div>}}
 }
@@ -108,7 +102,8 @@ List. \cr
 \if{html}{\out{<a id="method-pdStrategy-node_transform"></a>}}
 \if{latex}{\out{\hypertarget{method-pdStrategy-node_transform}{}}}
 \subsection{Method \code{node_transform()}}{
-Mean-center the effect list Y within the node and return the centered list.
+Given Y (list of effect matrices), grid, and idx: subset rows by idx, mean-center each matrix per row, 
+return list of centered matrices via \code{re_mean_center_ice_cpp}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{pdStrategy$node_transform(Y, grid, idx)}\if{html}{\out{</div>}}
 }
@@ -132,7 +127,8 @@ List. List of centered effects.
 \if{html}{\out{<a id="method-pdStrategy-heterogeneity"></a>}}
 \if{latex}{\out{\hypertarget{method-pdStrategy-heterogeneity}{}}}
 \subsection{Method \code{heterogeneity()}}{
-Calculate the heterogeneity (sum of variances) of effects within the node.
+Given Y (list of effect matrices): computes sum of column variances per matrix via \code{node_heterogeneity}. 
+Returns numeric vector of length \code{length(Y)}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{pdStrategy$heterogeneity(Y)}\if{html}{\out{</div>}}
 }
@@ -152,7 +148,8 @@ Numeric. Numeric vector, heterogeneity for each feature.
 \if{html}{\out{<a id="method-pdStrategy-find_best_split"></a>}}
 \if{latex}{\out{\hypertarget{method-pdStrategy-find_best_split}{}}}
 \subsection{Method \code{find_best_split()}}{
-Find the best split point for a node.
+Given Z, Y, min.node.size, n.quantiles: calls \code{search_best_split_cpp} to evaluate all features and returns data frame with \code{split.feature}, 
+\code{split.point}, \code{split.objective}, \code{best.split}, etc.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{pdStrategy$find_best_split(Z, Y, min.node.size, n.quantiles)}\if{html}{\out{</div>}}
 }
@@ -180,7 +177,8 @@ List. List with best split feature, split point, etc.
 \if{html}{\out{<a id="method-pdStrategy-plot"></a>}}
 \if{latex}{\out{\hypertarget{method-pdStrategy-plot}{}}}
 \subsection{Method \code{plot()}}{
-Visualize the PD tree structure and partial dependence plots for each node.
+Given tree, effect, data, target.feature.name, and optional depth/node.id/features: prepares plot data and calls \code{plot_tree_pd}. 
+Returns list of ggplot2 objects (by depth and node).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{pdStrategy$plot(
   tree,
@@ -223,7 +221,8 @@ List. List of ggplot2 objects for different depths and nodes.
 \if{html}{\out{<a id="method-pdStrategy-fit"></a>}}
 \if{latex}{\out{\hypertarget{method-pdStrategy-fit}{}}}
 \subsection{Method \code{fit()}}{
-Fit a PD tree using the provided data and effect object.
+Given tree, effect, data, target.feature.name: preprocesses Z/Y/grid; creates root Node; recursively splits; records fit time in \code{fit_timing}. 
+Returns tree invisibly.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{pdStrategy$fit(
   tree,
@@ -232,7 +231,6 @@ Fit a PD tree using the provided data and effect object.
   target.feature.name,
   feature.set = NULL,
   split.feature = NULL,
-  order.method = "mds",
   ...
 )}\if{html}{\out{</div>}}
 }
@@ -251,11 +249,6 @@ Fit a PD tree using the provided data and effect object.
 \item{\code{feature.set}}{Character or NULL. Feature subset (optional).}
 
 \item{\code{split.feature}}{Character or NULL. Split feature (optional).}
-
-\item{\code{order.method}}{Character. Categorical level order passed to
-\code{prepare_split_data_pd} and \code{order_categorical_levels}:
-\code{"mds"}, \code{"pca"}, \code{"random"}, or \code{"raw"}
-(default \code{"mds"}).}
 
 \item{\code{...}}{Additional arguments (ignored).}
 }

@@ -1,7 +1,8 @@
-#' Build path of split conditions from root to a node
+#' Build path of split conditions from root to node
 #'
-#' Used for plot labels. Walks from \code{node} up to the root and collects
-#' split feature, operator, and value at each step.
+#' Given node and tree (depth-list): walks parent chain via \code{find_parent_by_id}; 
+#' at each step builds condition string (e.g. "x <= 0.5") via \code{choose_operator}. 
+#' Returns character vector of conditions (root to node).
 #'
 #' @param node Node object (with \code{id.parent}, \code{depth}).
 #' @param tree Depth-based list of nodes (from \code{convert_tree_to_list}).

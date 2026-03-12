@@ -1,7 +1,6 @@
 test_that("pdStrategy can be created", {
   strategy = pdStrategy$new()
   expect_true(inherits(strategy, "pdStrategy"))
-  expect_true(inherits(strategy, "effectStrategy"))
   expect_equal(strategy$name, "pd")
 })
 
@@ -41,7 +40,6 @@ test_that("pdStrategy heterogeneity returns numeric vector", {
 test_that("aleStrategy can be created", {
   strategy = aleStrategy$new()
   expect_true(inherits(strategy, "aleStrategy"))
-  expect_true(inherits(strategy, "effectStrategy"))
   expect_equal(strategy$name, "ale")
 })
 
@@ -70,17 +68,3 @@ test_that("aleStrategy heterogeneity returns numeric for ALE-like list", {
   expect_true(h >= 0)
 })
 
-test_that("effectStrategy can be created (abstract)", {
-  strategy = effectStrategy$new()
-  expect_true(inherits(strategy, "effectStrategy"))
-  expect_true(inherits(strategy, "R6"))
-})
-
-test_that("effectStrategy find_best_split throws (not implemented)", {
-  strategy = effectStrategy$new()
-  expect_error(
-    strategy$find_best_split(Z = data.frame(x = 1:5), Y = list(matrix(1:10, ncol = 2)),
-      min.node.size = 1, n.quantiles = NULL),
-    "Not implemented"
-  )
-})

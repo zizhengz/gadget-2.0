@@ -27,7 +27,6 @@ search_best_split_point(
 Data frame with \code{split.point}, \code{split.objective}.
 }
 \description{
-Numeric: tries quantile-based cutpoints. Categorical: tries binary splits on level subsets.
-Returns \code{split.point} and \code{split.objective} (heterogeneity reduction).
+Given z, Y, n.quantiles, min.node.size, is.categorical: for numeric, sorts z, builds quantile cutpoints, evaluates objective (sum of -S_l^2/N_l - S_r^2/N_r) per cutpoint; for categorical, evaluates one-level vs rest. Returns data frame with \code{split.point}, \code{split.objective}.
 }
 \keyword{internal}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/node_heterogeneity.R
 \name{node_heterogeneity}
 \alias{node_heterogeneity}
-\title{Compute heterogeneity (sum of variances) per feature from effect matrices}
+\title{Compute heterogeneity per feature from effect matrices}
 \usage{
 node_heterogeneity(Y)
 }
@@ -13,7 +13,7 @@ node_heterogeneity(Y)
 Numeric vector of length \code{length(Y)}.
 }
 \description{
-Used by \code{pdStrategy$heterogeneity()}. For each matrix in \code{Y},
-returns the sum over columns of (sum of squares - (sum)^2/n).
+Given Y (list of numeric matrices): for each matrix, computes sum over columns of (sum of squares - (sum)^2/n) via \code{node_heterogeneity_cpp}. 
+Returns numeric vector of length \code{length(Y)}.
 }
 \keyword{internal}
