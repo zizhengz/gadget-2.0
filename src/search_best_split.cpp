@@ -1,45 +1,29 @@
 /**
  * @file search_best_split.cpp
- * @brief Fast tree splitting implementation using C++ and Armadillo
+ * @brief Fast tree splitting for PD strategy - C++/Armadillo implementation.
  *
- * This file implements efficient tree splitting algorithms for the gadget package.
- * It provides both categorical and numerical splitting.
- *
- * @author gadget Development Team
- * @version 1.0
+ * Categorical and numerical splitting with preprocessed effect matrices.
  */
 
 // [[Rcpp::depends(RcppArmadillo)]]
 #include <RcppArmadillo.h>
 #include <chrono>
-#include <algorithm>  // std::sort
+#include <algorithm>
 
 using namespace Rcpp;
 
-/* ------------------------------------------------------------------ *
- *  Helper Functions                                                   *
- * ------------------------------------------------------------------ */
+// -----------------------------------------------------------------------------
+// Helper functions (internal)
+// -----------------------------------------------------------------------------
 
-/**
- * @brief Remove consecutive duplicates. Assumes x is sorted. O(n).
- */
+/* Remove consecutive duplicates; assumes x is sorted. O(n). */
 inline NumericVector unique_cpp(NumericVector x) {
   x.erase(std::unique(x.begin(), x.end()), x.end());
   return x;
 }
 
-/**
- * @brief Calculate R type-7 quantile for sorted vector
- *
- * Implements R's type-7 quantile algorithm for sorted vectors.
- * This is the default quantile type in R and provides good
- * statistical properties for continuous data.
- *
- * @param x Sorted numeric vector - passed by reference (&) to avoid copying
- * @param p Probability (0 <= p <= 1)
- * @return Quantile value
- */
-inline double quantile_type7(const NumericVector& x, double p) {  // & = reference, const = read-only, avoids copying vector
+/* R type-7 quantile for sorted vector (R default). */
+inline double quantile_type7(const NumericVector& x, double p) {
   const int n = x.size();
   if (n == 0) return NA_REAL;
   if (n == 1) return x[0];
@@ -53,43 +37,29 @@ inline double quantile_type7(const NumericVector& x, double p) {  // & = referen
   return x[lo] + f * (x[lo + 1] - x[lo]);
 }
 
-/**
- * @brief Convert R object to Armadillo matrix with zero-copy when possible
- *
- * Attempts to create an Armadillo view of the R matrix without copying data.
- * Falls back to conversion if the object is not a numeric matrix.
- *
- * @param obj R object (matrix or convertible to matrix)
- * @return Armadillo matrix (zero copy)
- */
+/* Convert R matrix to Armadillo (zero-copy when possible). */
 inline arma::mat arma_view(SEXP obj) {
   if (!Rf_isMatrix(obj) || TYPEOF(obj) != REALSXP) {
     static Rcpp::Function as_matrix("as.matrix");
     obj = as_matrix(obj);
   }
   Rcpp::NumericMatrix M(obj);
-  return arma::mat(M.begin(), M.nrow(), M.ncol(), /*copy*/ false);
+  return arma::mat(M.begin(), M.nrow(), M.ncol(), false);
 }
 
-
-/* ------------------------------------------------------------------ *
- *  Core Splitting Algorithm                                          *
- * ------------------------------------------------------------------ */
-
-/**
- * @brief Internal function for finding the best split point for a single feature
- *
- * This is the core splitting algorithm that handles both categorical and numerical
- * variables. It accepts preprocessed data for maximum efficiency.
- *
- * @param z Feature vector (numeric or categorical)
- * @param Ym Vector of effect matrices (preprocessed) - passed by reference (&) to avoid copying
- * @param S_tot Vector of total sums for each effect matrix - passed by reference (&) to avoid copying
- * @param n_quantiles Number of quantiles for numerical splitting (optional)
- * @param is_categorical Whether the feature is categorical
- * @param min_node_size Minimum number of observations per node
- * @return List with split.point and split.objective
- */
+// -----------------------------------------------------------------------------
+// search_best_split_point_cpp_internal
+// Purpose:
+//   Find best split for a single feature (categorical or numerical).
+//   Accepts preprocessed Ym and S_tot for efficiency.
+// Inputs:
+//   z: Feature vector (numeric or categorical)
+//   Ym: Preprocessed effect matrices (NaN replaced with 0)
+//   S_tot: Column sums per matrix
+//   n_quantiles, is_categorical, min_node_size
+// Output:
+//   List: split.point, split.objective
+// -----------------------------------------------------------------------------
 List search_best_split_point_cpp_internal(
     SEXP              z,
     const std::vector<arma::mat>& Ym,        // & = reference, const = read-only, avoids copying large matrices
@@ -253,24 +223,17 @@ List search_best_split_point_cpp_internal(
     _["split.objective"] = best_obj);
 }
 
-
-/* ------------------------------------------------------------------ *
- *  Main Interface Functions                                           *
- * ------------------------------------------------------------------ */
-
-/**
- * @brief Find the best split for all features in a dataset
- *
- * This is the main exported function that evaluates all features and finds
- * the best split point for each one. It preprocesses the data once for
- * efficiency and returns a DataFrame with results for all features.
- *
- * @param Z DataFrame of features
- * @param Y List of effect matrices
- * @param min_node_size Minimum number of observations per node
- * @param n_quantiles Number of quantiles for numerical splitting (optional)
- * @return DataFrame with split results for all features
- */
+// -----------------------------------------------------------------------------
+// search_best_split_cpp
+// Purpose:
+//   Evaluate all features in Z, find best split per feature, return full results.
+// Inputs:
+//   Z: DataFrame of features
+//   Y: List of effect matrices
+//   min_node_size, n_quantiles
+// Output:
+//   DataFrame: split.feature, is.categorical, split.point, split.objective, etc.
+// -----------------------------------------------------------------------------
 // [[Rcpp::export]]
 DataFrame search_best_split_cpp(
     DataFrame       Z,
@@ -348,20 +311,16 @@ DataFrame search_best_split_cpp(
   );
 }
 
-/**
- * @brief Find the best split point for a single feature
- *
- * This is a wrapper function that preprocesses the data and calls the
- * internal splitting function. It handles NaN values and converts data
- * to the format expected by the core algorithm.
- *
- * @param z Feature vector (numeric or categorical)
- * @param Y List of response matrices
- * @param n_quantiles Number of quantiles for numerical splitting (optional)
- * @param is_categorical Whether the feature is categorical
- * @param min_node_size Minimum number of observations per node
- * @return List with split.point and split.objective
- */
+// -----------------------------------------------------------------------------
+// search_best_split_point_cpp
+// Purpose:
+//   Wrapper: preprocess Y, call internal split function for a single feature.
+// Inputs:
+//   z: Feature vector; Y: List of effect matrices
+//   n_quantiles, is_categorical, min_node_size
+// Output:
+//   List: split.point, split.objective
+// -----------------------------------------------------------------------------
 // [[Rcpp::export]]
 List search_best_split_point_cpp(
     SEXP              z,
