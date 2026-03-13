@@ -6,10 +6,10 @@
 #'
 #' @field strategy Strategy object (e.g., pdStrategy) that implements effect-specific logic.
 #' @field root Node object. Root node of the tree.
-#' @field n.split Integer. Maximum number of splits (tree depth minus one).
-#' @field impr.par Numeric. Improvement threshold for splitting.
-#' @field min.node.size Integer. Minimum number of samples required in a node to allow further splitting.
-#' @field n.quantiles Integer or NULL. Number of quantiles for candidate split points (numeric features).
+#' @field n_split Integer. Maximum number of splits (tree depth minus one).
+#' @field impr_par Numeric. Improvement threshold for splitting.
+#' @field min_node_size Integer. Minimum number of samples required in a node to allow further splitting.
+#' @field n_quantiles Integer or NULL. Number of quantiles for candidate split points (numeric features).
 #' @field split_benchmark List. Timing information for each split (for benchmarking).
 #'
 #' @details
@@ -21,9 +21,9 @@
 #' \dontrun{
 #' # Example: Fit and plot a PD tree using pdStrategy and gadgetTree
 #' pd_strat = pdStrategy$new()
-#' tree = gadgetTree$new(strategy = pd_strat, n.split = 2)
-#' tree$fit(effect, data, target.feature.name = "target")
-#' tree$plot(effect, data, target.feature.name = "target")
+#' tree = gadgetTree$new(strategy = pd_strat, n_split = 2)
+#' tree$fit(effect, data, target_feature_name = "target")
+#' tree$plot(effect, data, target_feature_name = "target")
 #' tree$plot_tree_structure()
 #' split_info = tree$extract_split_info()
 #' }
@@ -34,60 +34,60 @@ gadgetTree = R6::R6Class(
   public = list(
     strategy = NULL,
     root = NULL,
-    n.split = NULL,
-    impr.par = NULL,
-    min.node.size = NULL,
-    n.quantiles = NULL,
+    n_split = NULL,
+    impr_par = NULL,
+    min_node_size = NULL,
+    n_quantiles = NULL,
     split_benchmark = NULL,
 
     #' @description
-    #' Given strategy and tree params (n.split, impr.par, min.node.size, n.quantiles): stores them and initializes empty \code{split_benchmark}. 
+    #' Given strategy and tree params (n_split, impr_par, min_node_size, n_quantiles): stores them and initializes empty \code{split_benchmark}. 
     #' Returns the gadgetTree instance.
     #' @param strategy Strategy object (e.g., pdStrategy) that implements effect-specific logic.
-    #' @param n.split Integer. Maximum number of splits (tree depth minus one).
-    #' @param impr.par Numeric. Improvement threshold for splitting.
-    #' @param min.node.size Integer. Minimum number of samples required in a node to allow further splitting.
-    #' @param n.quantiles Integer or NULL. Number of quantiles for candidate split points (numeric features).
-    initialize = function(strategy, n.split = 2, impr.par = 0.1, min.node.size = 10, n.quantiles = NULL) {
-      checkmate::assert_integerish(n.split, len = 1, any.missing = FALSE, .var.name = "n.split")
-      checkmate::assert_numeric(impr.par, lower = 0, len = 1, any.missing = FALSE, .var.name = "impr.par")
-      checkmate::assert_integerish(min.node.size, len = 1, any.missing = FALSE, .var.name = "min.node.size")
-      checkmate::assert_integerish(n.quantiles, len = 1, null.ok = TRUE, .var.name = "n.quantiles")
+    #' @param n_split Integer. Maximum number of splits (tree depth minus one).
+    #' @param impr_par Numeric. Improvement threshold for splitting.
+    #' @param min_node_size Integer. Minimum number of samples required in a node to allow further splitting.
+    #' @param n_quantiles Integer or NULL. Number of quantiles for candidate split points (numeric features).
+    initialize = function(strategy, n_split = 2, impr_par = 0.1, min_node_size = 10, n_quantiles = NULL) {
+      checkmate::assert_integerish(n_split, len = 1, any.missing = FALSE, .var.name = "n_split")
+      checkmate::assert_numeric(impr_par, lower = 0, len = 1, any.missing = FALSE, .var.name = "impr_par")
+      checkmate::assert_integerish(min_node_size, len = 1, any.missing = FALSE, .var.name = "min_node_size")
+      checkmate::assert_integerish(n_quantiles, len = 1, null.ok = TRUE, .var.name = "n_quantiles")
       self$strategy = strategy
-      self$n.split = n.split
-      self$impr.par = impr.par
-      self$min.node.size = min.node.size
-      self$n.quantiles = n.quantiles
+      self$n_split = n_split
+      self$impr_par = impr_par
+      self$min_node_size = min_node_size
+      self$n_quantiles = n_quantiles
       self$split_benchmark = list()
     },
 
     #' @description
-    #' Given data, target.feature.name, and optional feature/split sets: calls \code{strategy$fit()} with ... (effect/model as required by strategy); clears \code{split_benchmark}; optionally runs \code{strategy$clean()}. 
+    #' Given data, target_feature_name, and optional feature/split sets: calls \code{strategy$fit()} with ... (effect/model as required by strategy); clears \code{split_benchmark}; optionally runs \code{strategy$clean()}. 
     #' Returns tree invisibly.
     #' @param data Data frame. Data frame containing features and the target variable.
-    #' @param target.feature.name Character(1). Name of the target feature to explain.
-    #' @param feature.set Character or NULL. \cr
+    #' @param target_feature_name Character(1). Name of the target feature to explain.
+    #' @param feature_set Character or NULL. \cr
     #'   Optional. Subset of features to use for effect calculation.
     #'   If NULL, all features are used.
-    #' @param split.feature Character or NULL. \cr
+    #' @param split_feature Character or NULL. \cr
     #'   Optional. Features to consider for splitting at each node.
     #'   If NULL, all features are considered.
     #' @param ... Additional arguments passed to the strategy's fit method.
     #' @return gadgetTree object, invisibly. The fitted tree object.
-    fit = function(data, target.feature.name, feature.set = NULL, split.feature = NULL, ...) {
+    fit = function(data, target_feature_name, feature_set = NULL, split_feature = NULL, ...) {
       checkmate::assert_data_frame(data, .var.name = "data")
-      checkmate::assert_character(target.feature.name, len = 1, .var.name = "target.feature.name")
-      checkmate::assert_character(feature.set, null.ok = TRUE, .var.name = "feature.set")
-      checkmate::assert_character(split.feature, null.ok = TRUE, .var.name = "split.feature")
+      checkmate::assert_character(target_feature_name, len = 1, .var.name = "target_feature_name")
+      checkmate::assert_character(feature_set, null.ok = TRUE, .var.name = "feature_set")
+      checkmate::assert_character(split_feature, null.ok = TRUE, .var.name = "split_feature")
       self$split_benchmark = list()
 
       # The strategy is responsible for validating and handling its own arguments (via ...)
       result = self$strategy$fit(
         tree = self,
         data = data,
-        target.feature.name = target.feature.name,
-        feature.set = feature.set,
-        split.feature = split.feature,
+        target_feature_name = target_feature_name,
+        feature_set = feature_set,
+        split_feature = split_feature,
         ...
       )
 
@@ -99,41 +99,41 @@ gadgetTree = R6::R6Class(
     },
 
     #' @description
-    #' Given effect (or NULL for ale cached effect), data, target.feature.name, and optional depth/node.id/features: converts root to depth-list; calls \code{strategy$plot()}. 
+    #' Given effect (or NULL for ale cached effect), data, target_feature_name, and optional depth/node_id/features: converts root to depth-list; calls \code{strategy$plot()}. 
     #' Returns list of ggplot2 objects.
     #' @param effect R6 object or list. Object containing feature effect results.
     #' @param data Data frame. Data frame.
-    #' @param target.feature.name Character(1). Name of the target feature to explain.
+    #' @param target_feature_name Character(1). Name of the target feature to explain.
     #' @param depth Integer or NULL. Depth(s) to visualize (optional).
-    #' @param node.id Integer or NULL. Node id(s) to visualize (optional).
+    #' @param node_id Integer or NULL. Node id(s) to visualize (optional).
     #' @param features Character or NULL. Features to visualize (optional).
     #' @param ... Additional plotting arguments.
     #' @return List. List of ggplot2 objects for different depths and nodes.
-    plot = function(effect = NULL, data, target.feature.name, depth = NULL, node.id = NULL, features = NULL, ...) {
-      checkmate::assert_character(target.feature.name, len = 1, .var.name = "target.feature.name")
+    plot = function(effect = NULL, data, target_feature_name, depth = NULL, node_id = NULL, features = NULL, ...) {
+      checkmate::assert_character(target_feature_name, len = 1, .var.name = "target_feature_name")
       checkmate::assert_data_frame(data, .var.name = "data")
       checkmate::assert_integerish(depth, lower = 1, null.ok = TRUE, .var.name = "depth")
-      checkmate::assert_integerish(node.id, lower = 1, null.ok = TRUE, .var.name = "node.id")
+      checkmate::assert_integerish(node_id, lower = 1, null.ok = TRUE, .var.name = "node_id")
       checkmate::assert_character(features, null.ok = TRUE, .var.name = "features")
-      tree_for_plot = convert_tree_to_list(self$root, self$n.split + 1)
+      tree_for_plot = convert_tree_to_list(self$root, self$n_split + 1)
       self$strategy$plot(tree = tree_for_plot, effect = effect, data = data,
-        target.feature.name = target.feature.name,
-        depth = depth, node.id = node.id, features = features, ...)
+        target_feature_name = target_feature_name,
+        depth = depth, node_id = node_id, features = features, ...)
     },
 
     #' @description
     #' Converts root to depth-list and calls \code{plot_tree_structure()}. Prints graph.
     plot_tree_structure = function() {
-      tree_for_structure = convert_tree_to_list(self$root, self$n.split + 1)
+      tree_for_structure = convert_tree_to_list(self$root, self$n_split + 1)
       plot_tree_structure(tree_for_structure)
     },
 
     #' @description
     #' Converts root to depth-list and calls \code{extract_split_info()} with \code{split_benchmark}. 
-    #' Returns data frame (depth, id, split.feature, split.value, intImp, etc.).
+    #' Returns data frame (depth, id, split_feature, split_value, intImp, etc.).
     #' @return Data frame. Split information for all nodes.
     extract_split_info = function() {
-      tree_for_info = convert_tree_to_list(self$root, self$n.split + 1)
+      tree_for_info = convert_tree_to_list(self$root, self$n_split + 1)
       extract_split_info(tree_for_info, split_benchmark = self$split_benchmark)
     }
   )

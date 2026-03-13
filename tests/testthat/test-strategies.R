@@ -20,11 +20,11 @@ test_that("pdStrategy find_best_split returns expected structure", {
     matrix(rnorm(n * 2), ncol = 2)
   )
   strategy = pdStrategy$new()
-  res = strategy$find_best_split(Z = Z, Y = Y, min.node.size = 5, n.quantiles = NULL)
+  res = strategy$find_best_split(Z = Z, Y = Y, min_node_size = 5, n_quantiles = NULL)
   expect_true(is.data.frame(res))
   expect_true(nrow(res) >= 1)
-  expect_true(all(c("split.feature", "is.categorical", "split.point",
-    "split.objective", "split.runtime", "best.split") %in% names(res)))
+  expect_true(all(c("split_feature", "is_categorical", "split_point",
+    "split_objective", "split_runtime", "best_split") %in% names(res)))
 })
 
 test_that("pdStrategy heterogeneity returns numeric vector", {
@@ -45,7 +45,7 @@ test_that("aleStrategy can be created", {
 
 test_that("aleStrategy heterogeneity returns numeric for ALE-like list", {
   tryCatch({
-    dt = data.table::data.table(row.id = 1:5, interval.index = rep(1L, 5), dL = 0, int_n = 5L, int_s1 = 0, int_s2 = 0)
+    dt = data.table::data.table(row_id = 1:5, interval_index = rep(1L, 5), dL = 0, int_n = 5L, int_s1 = 0, int_s2 = 0)
     calculate_ale_heterogeneity_list_cpp(list(x = dt))
   }, error = function(e) {
     if (grepl("not available for .Call", conditionMessage(e), fixed = TRUE)) {
@@ -54,8 +54,8 @@ test_that("aleStrategy heterogeneity returns numeric for ALE-like list", {
   })
   n = 20
   dt = data.table::data.table(
-    row.id = seq_len(n),
-    interval.index = rep(1:4, length.out = n),
+    row_id = seq_len(n),
+    interval_index = rep(1:4, length.out = n),
     dL = rnorm(n),
     int_n = 5L, int_s1 = 0, int_s2 = 1
   )

@@ -18,15 +18,15 @@
 #' **Typical workflow:**
 #' \enumerate{
 #'   \item Train a model (e.g., with \pkg{mlr3}).
-#'   \item Create a tree: \code{tree = gadgetTree$new(strategy = aleStrategy$new(), n.split = 3, min.node.size = 50)}.
-#'   \item Fit: \code{tree$fit(model = learner, data = data, target.feature.name = "y", n.intervals = 20, ...)}\cr
-#'         (more control via \code{feature.set}, \code{split.feature}, \code{order.method}, \code{with_stab},\cr
-#'         and tree hyperparameters such as \code{impr.par}, \code{min.node.size}, \code{n.quantiles}, etc.).
+#'   \item Create a tree: \code{tree = gadgetTree$new(strategy = aleStrategy$new(), n_split = 3, min_node_size = 50)}.
+#'   \item Fit: \code{tree$fit(model = learner, data = data, target_feature_name = "y", n_intervals = 20, ...)}\cr
+#'         (more control via \code{feature_set}, \code{split_feature}, \code{order_method}, \code{with_stab},\cr
+#'         and tree hyperparameters such as \code{impr_par}, \code{min_node_size}, \code{n_quantiles}, etc.).
 #'   \item Visualize: \code{tree$plot_tree_structure()}, \code{tree$plot(...)}, \code{tree$extract_split_info()}.
 #' }
 #'
 #' For PD-based trees, pass an effect object from \code{iml::FeatureEffects(..., method = "ice")}
-#' to \code{tree$fit(effect = ..., data = ..., target.feature.name = ...)}.
+#' to \code{tree$fit(effect = ..., data = ..., target_feature_name = ...)}.
 #'
 #' @name gadget-package
 #' @aliases gadget gadget-package

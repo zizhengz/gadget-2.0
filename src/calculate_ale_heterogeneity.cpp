@@ -76,11 +76,11 @@ double calculate_ale_heterogeneity_single_cpp(NumericVector dL, IntegerVector in
 // calculate_ale_heterogeneity_list_cpp
 // Purpose:
 //   Vectorized interface over a list of features. For each element in Y (a
-//   DataFrame with columns dL and interval.index), compute the single-feature
+//   DataFrame with columns dL and interval_index), compute the single-feature
 //   heterogeneity and return a named list of numeric values.
 // Inputs:
 //   - Y: List of DataFrame; each DataFrame must contain columns "dL" (Numeric)
-//        and "interval.index" (Integer).
+//        and "interval_index" (Integer).
 // Notes:
 //   - Names of Y (feature names) are propagated to the result, if present.
 // Output:
@@ -94,7 +94,7 @@ List calculate_ale_heterogeneity_list_cpp(List Y) {
   for (int i = 0; i < n_feat; ++i) {
     DataFrame data = as<DataFrame>(Y[i]);
     NumericVector dL = data["dL"];
-    IntegerVector interval_index = data["interval.index"];
+    IntegerVector interval_index = data["interval_index"];
     
     double heterogeneity = calculate_ale_heterogeneity_single_cpp(dL, interval_index);
     result[i] = heterogeneity;

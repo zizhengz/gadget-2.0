@@ -58,7 +58,7 @@ inline arma::mat arma_view(SEXP obj) {
 //   S_tot: Column sums per matrix
 //   n_quantiles, is_categorical, min_node_size
 // Output:
-//   List: split.point, split.objective
+//   List: split_point, split_objective
 // -----------------------------------------------------------------------------
 List search_best_split_point_cpp_internal(
     SEXP              z,
@@ -83,8 +83,8 @@ List search_best_split_point_cpp_internal(
 
     // If only one level, no valid split possible
     if (K <= 1)
-      return List::create(_["split.point"] = R_NaString,
-        _["split.objective"] = R_PosInf);
+      return List::create(_["split_point"] = R_NaString,
+        _["split_objective"] = R_PosInf);
 
     // Calculate per-level left sums for each effect matrix
     std::vector< std::vector<arma::rowvec> > SumL(Ly);
@@ -124,8 +124,8 @@ List search_best_split_point_cpp_internal(
       }
     }
 
-    return List::create(_["split.point"]     = best_level,
-      _["split.objective"] = best_obj);
+    return List::create(_["split_point"]     = best_level,
+      _["split_objective"] = best_obj);
   }
 
   /* ================= Numerical Variable Splitting =================== */
@@ -178,8 +178,8 @@ List search_best_split_point_cpp_internal(
 
   // Check if we have any valid split candidates
   if (splits.size() == 0)
-    return List::create(_["split.point"]     = NA_REAL,
-      _["split.objective"] = R_PosInf);
+    return List::create(_["split_point"]     = NA_REAL,
+      _["split_objective"] = R_PosInf);
 
   // Stream through split candidates and accumulate left sums
   std::vector<arma::rowvec> SL(Ly);
@@ -219,8 +219,8 @@ List search_best_split_point_cpp_internal(
   }
   double mid = std::isinf(Rgt) ? Lft : (Lft + Rgt) / 2.0;
 
-  return List::create(_["split.point"]     = mid,
-    _["split.objective"] = best_obj);
+  return List::create(_["split_point"]     = mid,
+    _["split_objective"] = best_obj);
 }
 
 // -----------------------------------------------------------------------------
@@ -232,7 +232,7 @@ List search_best_split_point_cpp_internal(
 //   Y: List of effect matrices
 //   min_node_size, n_quantiles
 // Output:
-//   DataFrame: split.feature, is.categorical, split.point, split.objective, etc.
+//   DataFrame: split_feature, is_categorical, split_point, split_objective, etc.
 // -----------------------------------------------------------------------------
 // [[Rcpp::export]]
 DataFrame search_best_split_cpp(
@@ -276,8 +276,8 @@ DataFrame search_best_split_cpp(
     // Store results
     split_feature[j]   = feat_names[j];
     is_cat_vec[j]      = is_c;
-    split_obj[j]       = res["split.objective"];
-    split_point_out[j] = as<CharacterVector>(wrap(res["split.point"]))[0];
+    split_obj[j]       = res["split_objective"];
+    split_point_out[j] = as<CharacterVector>(wrap(res["split_point"]))[0];
   }
   // Calculate total runtime and identify best split
   auto t1 = std::chrono::high_resolution_clock::now();
@@ -302,12 +302,12 @@ DataFrame search_best_split_cpp(
 
   // Return results as DataFrame
   return DataFrame::create(
-    _["split.feature"]   = split_feature,
-    _["is.categorical"]  = is_cat_vec,
-    _["split.point"]     = split_point_out,
-    _["split.objective"] = split_obj,
-    _["split.runtime"]   = split_runtime,
-    _["best.split"]      = best_split
+    _["split_feature"]   = split_feature,
+    _["is_categorical"]  = is_cat_vec,
+    _["split_point"]     = split_point_out,
+    _["split_objective"] = split_obj,
+    _["split_runtime"]   = split_runtime,
+    _["best_split"]      = best_split
   );
 }
 
@@ -319,7 +319,7 @@ DataFrame search_best_split_cpp(
 //   z: Feature vector; Y: List of effect matrices
 //   n_quantiles, is_categorical, min_node_size
 // Output:
-//   List: split.point, split.objective
+//   List: split_point, split_objective
 // -----------------------------------------------------------------------------
 // [[Rcpp::export]]
 List search_best_split_point_cpp(

@@ -19,10 +19,10 @@ default_predict_fun = function(model, data) {
 #' @field fit_timing Named numeric vector with global/regional fit times (seconds).
 #' @field model Fitted model (persistent after \code{fit}).
 #' @field data Data frame or data.table with features and target (persistent after \code{fit}).
-#' @field target.feature.name Character(1). Name of the target variable.
-#' @field n.intervals Integer. Number of intervals for numeric ALE.
-#' @field predict.fun Function. \code{function(model, data)} returning predictions.
-#' @field order.method Character. Categorical level ordering: \code{"mds"}, \code{"pca"},
+#' @field target_feature_name Character(1). Name of the target variable.
+#' @field n_intervals Integer. Number of intervals for numeric ALE.
+#' @field predict_fun Function. \code{function(model, data)} returning predictions.
+#' @field order_method Character. Categorical level ordering: \code{"mds"}, \code{"pca"},
 #'   \code{"random"}, or \code{"raw"} (keep existing factor level order; default \code{"mds"}).
 #' @field with_stab Logical. Whether boundary-stabilized splits are enabled.
 #' @field effect_root Cached ALE effect list at the root node (used by \code{$plot()}).
@@ -34,8 +34,8 @@ default_predict_fun = function(model, data) {
 #' @examples
 #' \dontrun{
 #' ale_strat = aleStrategy$new()
-#' tree = gadgetTree$new(strategy = ale_strat, n.split = 2)
-#' tree$fit(model = model, data = data, target.feature.name = "y")
+#' tree = gadgetTree$new(strategy = ale_strat, n_split = 2)
+#' tree$fit(model = model, data = data, target_feature_name = "y")
 #' }
 #'
 #' @export
@@ -48,10 +48,10 @@ aleStrategy = R6::R6Class(
     # Persistent context fields (declared to allow assignment outside initialize)
     model = NULL,
     data = NULL,
-    target.feature.name = NULL,
-    n.intervals = NULL,
-    predict.fun = NULL,
-    order.method = "mds",
+    target_feature_name = NULL,
+    n_intervals = NULL,
+    predict_fun = NULL,
+    order_method = "mds",
     with_stab = FALSE,
     effect_root = NULL,
 
@@ -62,54 +62,54 @@ aleStrategy = R6::R6Class(
     },
 
     #' @description
-    #' Given model, data, target.feature.name, n.intervals, and optional feature/split sets: computes ALE per feature; 
+    #' Given model, data, target_feature_name, n_intervals, and optional feature/split sets: computes ALE per feature; 
     #' builds Z (split features) and Y (named list of ALE data.tables) via \code{prepare_split_data_ale}. Returns list \code{Z}, \code{Y}.
     #' @param model Fitted model object.
     #' @param data Data frame or data.table with features and target.
-    #' @param target.feature.name Character(1). Name of the target variable.
-    #' @param n.intervals Integer. Number of intervals for numeric ALE.
-    #' @param feature.set Character or NULL. Features to compute ALE for; NULL = all.
-    #' @param split.feature Character or NULL. Features to consider for splitting; NULL = all.
-    #' @param predict.fun Function or NULL. Prediction function; NULL uses mlr3-style default.
-    #' @param order.method Character. Categorical level order: \code{"mds"}, \code{"pca"},
+    #' @param target_feature_name Character(1). Name of the target variable.
+    #' @param n_intervals Integer. Number of intervals for numeric ALE.
+    #' @param feature_set Character or NULL. Features to compute ALE for; NULL = all.
+    #' @param split_feature Character or NULL. Features to consider for splitting; NULL = all.
+    #' @param predict_fun Function or NULL. Prediction function; NULL uses mlr3-style default.
+    #' @param order_method Character. Categorical level order: \code{"mds"}, \code{"pca"},
     #'   \code{"random"}, or \code{"raw"} (keep existing factor level order; default \code{"mds"}).
     #' @return List with \code{Z} (data.table of split features) and \code{Y} (named list of ALE effect data.tables).
-    preprocess = function(model, data, target.feature.name, n.intervals, feature.set = NULL, split.feature = NULL, predict.fun = NULL, order.method = "mds") {
+    preprocess = function(model, data, target_feature_name, n_intervals, feature_set = NULL, split_feature = NULL, predict_fun = NULL, order_method = "mds") {
       checkmate::assert_data_frame(data, .var.name = "data")
-      checkmate::assert_character(target.feature.name, len = 1, .var.name = "target.feature.name")
-      checkmate::assert_integerish(n.intervals, len = 1, lower = 1, .var.name = "n.intervals")
-      checkmate::assert_character(feature.set, null.ok = TRUE, .var.name = "feature.set")
-      checkmate::assert_character(split.feature, null.ok = TRUE, .var.name = "split.feature")
-      checkmate::assert_function(predict.fun, null.ok = TRUE, .var.name = "predict.fun")
-      checkmate::assert_character(order.method, len = 1, .var.name = "order.method")
+      checkmate::assert_character(target_feature_name, len = 1, .var.name = "target_feature_name")
+      checkmate::assert_integerish(n_intervals, len = 1, lower = 1, .var.name = "n_intervals")
+      checkmate::assert_character(feature_set, null.ok = TRUE, .var.name = "feature_set")
+      checkmate::assert_character(split_feature, null.ok = TRUE, .var.name = "split_feature")
+      checkmate::assert_function(predict_fun, null.ok = TRUE, .var.name = "predict_fun")
+      checkmate::assert_character(order_method, len = 1, .var.name = "order_method")
 
-      prepare_split_data_ale(model = model, data = data, target.feature.name = target.feature.name,
-        n.intervals = n.intervals, feature.set = feature.set, split.feature = split.feature,
-        predict.fun = predict.fun, order.method = order.method)
+      prepare_split_data_ale(model = model, data = data, target_feature_name = target_feature_name,
+        n_intervals = n_intervals, feature_set = feature_set, split_feature = split_feature,
+        predict_fun = predict_fun, order_method = order_method)
     },
 
     #' @description
-    #' Given Y (ALE effect list), idx, and split.feature: subsets ALE rows by idx; handles single-interval numeric and recalculates categorical if split.feature changes. 
+    #' Given Y (ALE effect list), idx, and split_feature: subsets ALE rows by idx; handles single-interval numeric and recalculates categorical if split_feature changes. 
     #' Returns list of ALE data.tables.
     #' @param Y List. ALE effect list (each element a data.frame/data.table from \code{calculate_ale}).
     #' @param idx Integer. Row indices of samples in the node.
-    #' @param split.feature Character(1) or NULL. Feature used for the split leading to this node.
+    #' @param split_feature Character(1) or NULL. Feature used for the split leading to this node.
     #' @return List of transformed ALE effect data.tables.
-    node_transform = function(Y, idx, split.feature = NULL) {
+    node_transform = function(Y, idx, split_feature = NULL) {
       checkmate::assert_list(Y, min.len = 1, .var.name = "Y")
       checkmate::assert_true(all(sapply(Y, is.data.frame)), .var.name = "Y")
       checkmate::assert_integerish(idx, min.len = 1, .var.name = "idx")
-      checkmate::assert_character(split.feature, len = 1, null.ok = TRUE, .var.name = "split.feature")
+      checkmate::assert_character(split_feature, len = 1, null.ok = TRUE, .var.name = "split_feature")
 
       node_transform_ale(
         Y = Y,
         idx = idx,
-        split.feature = split.feature,
+        split_feature = split_feature,
         model = self$model,
         data = self$data,
-        target.feature.name = self$target.feature.name,
-        n.intervals = self$n.intervals,
-        predict.fun = self$predict.fun
+        target_feature_name = self$target_feature_name,
+        n_intervals = self$n_intervals,
+        predict_fun = self$predict_fun
       )
     },
 
@@ -127,56 +127,56 @@ aleStrategy = R6::R6Class(
     },
 
     #' @description
-    #' Given Z, Y (ALE effect list), min.node.size, n.quantiles: calls \code{search_best_split_ale} to evaluate all features. 
-    #' Returns list with \code{split.feature}, \code{split.point}, \code{best.split}, \code{left/right.objective.value.j}, etc.
-    #' @param Z Data frame or data.table. Split-feature matrix (columns = \code{split.feature}).
+    #' Given Z, Y (ALE effect list), min_node_size, n_quantiles: calls \code{search_best_split_ale} to evaluate all features. 
+    #' Returns list with \code{split_feature}, \code{split_point}, \code{best_split}, \code{left/right_objective_value_j}, etc.
+    #' @param Z Data frame or data.table. Split-feature matrix (columns = \code{split_feature}).
     #' @param Y List. ALE effect list from \code{calculate_ale}.
-    #' @param min.node.size Integer(1). Minimum node size.
-    #' @param n.quantiles Integer(1) or NULL. Quantile-based candidate cutpoints for numeric features.
+    #' @param min_node_size Integer(1). Minimum node size.
+    #' @param n_quantiles Integer(1) or NULL. Quantile-based candidate cutpoints for numeric features.
     #' @return List with best split feature, cutpoint/level, and related fields.
-    find_best_split = function(Z, Y, min.node.size, n.quantiles) {
+    find_best_split = function(Z, Y, min_node_size, n_quantiles) {
       checkmate::assert_true(data.table::is.data.table(Z) || is.data.frame(Z), .var.name = "Z")
       checkmate::assert_list(Y, min.len = 1, .var.name = "Y")
       checkmate::assert_true(all(sapply(Y, is.data.frame)), .var.name = "Y")
-      checkmate::assert_integerish(min.node.size, len = 1, lower = 1, any.missing = FALSE, .var.name = "min.node.size")
-      checkmate::assert_integerish(n.quantiles, len = 1, lower = 1, null.ok = TRUE, .var.name = "n.quantiles")
+      checkmate::assert_integerish(min_node_size, len = 1, lower = 1, any.missing = FALSE, .var.name = "min_node_size")
+      checkmate::assert_integerish(n_quantiles, len = 1, lower = 1, null.ok = TRUE, .var.name = "n_quantiles")
 
       search_best_split_ale(
         Z = Z,
         effect = Y,
-        min.node.size = min.node.size,
-        n.quantiles = n.quantiles,
+        min_node_size = min_node_size,
+        n_quantiles = n_quantiles,
         with_stab = self$with_stab
       )
     },
 
     #' @description
-    #' Given tree, effect (or cached \code{effect_root}), data, target.feature.name, and optional depth/node.id/features: calls \code{plot_tree_ale}. 
+    #' Given tree, effect (or cached \code{effect_root}), data, target_feature_name, and optional depth/node_id/features: calls \code{plot_tree_ale}. 
     #' Returns nested list of patchwork/ggplot objects (depth -> node).
     #' @param tree Depth-based list of Node objects (typically from \code{convert_tree_to_list}).
     #' @param effect Optional ALE effect list (from \code{calculate_ale}); if \code{NULL},
     #'   uses the cached \code{effect_root} from the last \code{$fit()} call.
     #' @param data Data frame or data.table used for plotting (same data passed to \code{$fit()}).
-    #' @param target.feature.name Character(1). Name of the target variable.
+    #' @param target_feature_name Character(1). Name of the target variable.
     #' @param depth Optional integer vector of depths to plot.
-    #' @param node.id Optional integer vector of node ids to plot.
+    #' @param node_id Optional integer vector of node ids to plot.
     #' @param features Optional character vector of feature names to include.
-    #' @param show.plot Logical. If \code{TRUE}, print plots as they are created.
-    #' @param show.point Logical. If \code{TRUE}, overlay observation points.
-    #' @param mean.center Logical. Whether to mean-center ALE curves (default \code{TRUE}).
+    #' @param show_plot Logical. If \code{TRUE}, print plots as they are created.
+    #' @param show_point Logical. If \code{TRUE}, overlay observation points.
+    #' @param mean_center Logical. Whether to mean-center ALE curves (default \code{TRUE}).
     #' @param ... Passed on to \code{plot_tree_ale()}.
-    plot = function(tree, effect = NULL, data, target.feature.name,
-      depth = NULL, node.id = NULL, features = NULL,
-      show.plot = TRUE, show.point = FALSE, mean.center = TRUE, ...) {
+    plot = function(tree, effect = NULL, data, target_feature_name,
+      depth = NULL, node_id = NULL, features = NULL,
+      show_plot = TRUE, show_point = FALSE, mean_center = TRUE, ...) {
       checkmate::assert_list(tree)
       checkmate::assert_data_frame(data, .var.name = "data")
-      checkmate::assert_character(target.feature.name, len = 1, .var.name = "target.feature.name")
+      checkmate::assert_character(target_feature_name, len = 1, .var.name = "target_feature_name")
       checkmate::assert_integerish(depth, lower = 1, null.ok = TRUE, .var.name = "depth")
-      checkmate::assert_integerish(node.id, lower = 1, null.ok = TRUE, .var.name = "node.id")
+      checkmate::assert_integerish(node_id, lower = 1, null.ok = TRUE, .var.name = "node_id")
       checkmate::assert_character(features, null.ok = TRUE, .var.name = "features")
-      checkmate::assert_flag(show.plot)
-      checkmate::assert_flag(show.point)
-      checkmate::assert_flag(mean.center)
+      checkmate::assert_flag(show_plot)
+      checkmate::assert_flag(show_point)
+      checkmate::assert_flag(mean_center)
       if (is.null(effect)) {
         effect = self$effect_root
         if (is.null(effect)) {
@@ -185,77 +185,77 @@ aleStrategy = R6::R6Class(
         }
       }
       plot_tree_ale(tree = tree, effect = effect, data = data,
-        target.feature.name = target.feature.name, depth = depth,
-        node.id = node.id, features = features, show.plot = show.plot,
-        show.point = show.point, mean.center = mean.center, ...)
+        target_feature_name = target_feature_name, depth = depth,
+        node_id = node_id, features = features, show_plot = show_plot,
+        show_point = show_point, mean_center = mean_center, ...)
     },
 
     #' @description
-    #' Given tree, model, data, target.feature.name: preprocesses Z/Y; creates root Node; recursively splits; stores effect_root and fit_timing. 
+    #' Given tree, model, data, target_feature_name: preprocesses Z/Y; creates root Node; recursively splits; stores effect_root and fit_timing. 
     #' Returns tree invisibly.
     #' @param tree \code{gadgetTree} instance.
     #' @param model Fitted model.
     #' @param data Data frame or data.table (features and target).
-    #' @param target.feature.name Character(1). Target variable name.
-    #' @param n.intervals Integer. Number of intervals for numeric ALE (default 10).
-    #' @param feature.set Character or NULL. Features to compute ALE for; NULL = all.
-    #' @param split.feature Character or NULL. Features to split on; NULL = all.
-    #' @param predict.fun Function or NULL. Prediction function; NULL = default.
-    #' @param order.method Character. Categorical level order: \code{"mds"}, \code{"pca"},
+    #' @param target_feature_name Character(1). Target variable name.
+    #' @param n_intervals Integer. Number of intervals for numeric ALE (default 10).
+    #' @param feature_set Character or NULL. Features to compute ALE for; NULL = all.
+    #' @param split_feature Character or NULL. Features to split on; NULL = all.
+    #' @param predict_fun Function or NULL. Prediction function; NULL = default.
+    #' @param order_method Character. Categorical level order: \code{"mds"}, \code{"pca"},
     #'   \code{"random"}, or \code{"raw"} (keep existing factor level order; default \code{"mds"}).
     #' @param with_stab Logical. Whether to enable ALE boundary stabilizer in splitting.
     #' @param ... Ignored.
     #' @return The \code{tree} object, invisibly.
-    fit = function(tree, model, data, target.feature.name,
-      n.intervals = 10, feature.set = NULL, split.feature = NULL,
-      predict.fun = NULL, order.method = "raw", with_stab = FALSE, ...) {
+    fit = function(tree, model, data, target_feature_name,
+      n_intervals = 10, feature_set = NULL, split_feature = NULL,
+      predict_fun = NULL, order_method = "raw", with_stab = FALSE, ...) {
       if (missing(model)) stop("aleStrategy requires 'model' to be passed.", call. = FALSE)
-      # if (missing(n.intervals)) stop("aleStrategy requires 'n.intervals' to be passed.", call. = FALSE)
-      checkmate::assert_integerish(n.intervals, len = 1, lower = 1, .var.name = "n.intervals")
-      checkmate::assert_function(predict.fun, null.ok = TRUE, .var.name = "predict.fun")
+      # if (missing(n_intervals)) stop("aleStrategy requires 'n_intervals' to be passed.", call. = FALSE)
+      checkmate::assert_integerish(n_intervals, len = 1, lower = 1, .var.name = "n_intervals")
+      checkmate::assert_function(predict_fun, null.ok = TRUE, .var.name = "predict_fun")
 
       # Default prediction function for mlr3 models compatibility
-      if (is.null(predict.fun)) {
-        predict.fun = default_predict_fun
+      if (is.null(predict_fun)) {
+        predict_fun = default_predict_fun
       }
       # Store parameters for ALE-specific splitting
       # --- global part (timed) ---
       t_global = system.time({
         self$model = model
         self$data = data
-        self$target.feature.name = target.feature.name
-        self$n.intervals = n.intervals
-        self$predict.fun = predict.fun
-        self$order.method = order.method
+        self$target_feature_name = target_feature_name
+        self$n_intervals = n_intervals
+        self$predict_fun = predict_fun
+        self$order_method = order_method
         self$with_stab = with_stab
         self$tree_ref = tree
-        prepared.data = self$preprocess(model = model, data = data,
-          target.feature.name = target.feature.name, n.intervals = n.intervals,
-          feature.set = feature.set, split.feature = split.feature, predict.fun = predict.fun, order.method = order.method)
-        Z = prepared.data$Z
-        Y = prepared.data$Y
+        prepared_data = self$preprocess(model = model, data = data,
+          target_feature_name = target_feature_name, n_intervals = n_intervals,
+          feature_set = feature_set, split_feature = split_feature, predict_fun = predict_fun, order_method = order_method)
+        Z = prepared_data$Z
+        Y = prepared_data$Y
         self$effect_root = Y
         grid = vector("list", length(names(Z)))
         names(grid) = names(Z)
-        objective.value.root.j = self$heterogeneity(Y)
-        objective.value.root = sum(objective.value.root.j, na.rm = TRUE)
+        objective_value_root_j = self$heterogeneity(Y)
+        objective_value_root = sum(objective_value_root_j, na.rm = TRUE)
       })[["elapsed"]]
 
       # --- regional part (timed) ---
       t_regional = system.time({
-        parent = Node$new(id = 1, depth = 1, subset.idx = seq_len(nrow(Z)), grid = grid,
-          objective.value.parent = NA, objective.value = objective.value.root, intImp.j = NULL,
-          objective.value.j = objective.value.root.j, improvement.met = FALSE, intImp = NULL,
+        parent = Node$new(id = 1, depth = 1, subset_idx = seq_len(nrow(Z)), grid = grid,
+          objective_value_parent = NA, objective_value = objective_value_root, intImp_j = NULL,
+          objective_value_j = objective_value_root_j, improvement_met = FALSE, intImp = NULL,
           strategy = self)
         parent$split_node(
           Z = Z, Y = Y,
-          objective.value.root.j = objective.value.root.j,
-          objective.value.root = objective.value.root,
-          min.node.size = tree$min.node.size,
-          n.quantiles = tree$n.quantiles,
-          impr.par = tree$impr.par,
+          objective_value_root_j = objective_value_root_j,
+          objective_value_root = objective_value_root,
+          min_node_size = tree$min_node_size,
+          n_quantiles = tree$n_quantiles,
+          impr_par = tree$impr_par,
           depth = 1,
-          max.depth = tree$n.split + 1
+          max_depth = tree$n_split + 1
         )
         tree$root = parent
       })[["elapsed"]]

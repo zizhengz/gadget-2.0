@@ -1,6 +1,6 @@
 skip_ale_cpp_if_unavailable = function() {
   n = 5
-  dt = data.table::data.table(row.id = seq_len(n), interval.index = rep(1L, n), dL = 0, int_n = n, int_s1 = 0, int_s2 = 0)
+  dt = data.table::data.table(row_id = seq_len(n), interval_index = rep(1L, n), dL = 0, int_n = n, int_s1 = 0, int_s2 = 0)
   tryCatch({
     calculate_ale_heterogeneity_list_cpp(list(x = dt))
   }, error = function(e) {
@@ -22,15 +22,15 @@ test_that("calculate_ale returns named list of data.tables", {
   result = calculate_ale(
     model = learner,
     data = data,
-    feature.set = c("x1", "x2"),
-    target.feature.name = "y",
-    n.intervals = 5
+    feature_set = c("x1", "x2"),
+    target_feature_name = "y",
+    n_intervals = 5
   )
   expect_true(is.list(result))
   expect_equal(sort(names(result)), c("x1", "x2"))
   for (nm in names(result)) {
     expect_true(data.table::is.data.table(result[[nm]]))
-    expect_true(all(c("row.id", "dL", "interval.index") %in% names(result[[nm]])))
+    expect_true(all(c("row_id", "dL", "interval_index") %in% names(result[[nm]])))
   }
 })
 
@@ -38,12 +38,12 @@ test_that("calculate_ale_heterogeneity_cpp returns numeric", {
   skip_ale_cpp_if_unavailable()
   n = 20
   dt = data.table::data.table(
-    row.id = seq_len(n),
-    interval.index = rep(1:4, length.out = n),
+    row_id = seq_len(n),
+    interval_index = rep(1:4, length.out = n),
     dL = rnorm(n),
     int_n = 5L, int_s1 = 0, int_s2 = 1
   )
-  result = calculate_ale_heterogeneity_single_cpp(dt$dL, dt$interval.index)
+  result = calculate_ale_heterogeneity_single_cpp(dt$dL, dt$interval_index)
   expect_true(is.numeric(result))
   expect_length(result, 1)
   expect_true(!is.na(result))
@@ -54,11 +54,11 @@ test_that("calculate_ale_heterogeneity_list_cpp works with list of ALE data", {
   skip_ale_cpp_if_unavailable()
   n = 15
   dt1 = data.table::data.table(
-    row.id = seq_len(n), interval.index = rep(1:3, length.out = n),
+    row_id = seq_len(n), interval_index = rep(1:3, length.out = n),
     dL = rnorm(n), int_n = 5L, int_s1 = 0, int_s2 = 1
   )
   dt2 = data.table::data.table(
-    row.id = seq_len(n), interval.index = rep(1:5, length.out = n),
+    row_id = seq_len(n), interval_index = rep(1:5, length.out = n),
     dL = rnorm(n), int_n = 3L, int_s1 = 0, int_s2 = 1
   )
   Y = list(f1 = dt1, f2 = dt2)
@@ -81,8 +81,8 @@ test_that("ALE tree fit stores root and effect_root", {
   task = mlr3::TaskRegr$new("t", backend = data, target = "y")
   learner = mlr3::lrn("regr.ranger")
   learner$train(task)
-  tree = gadgetTree$new(strategy = aleStrategy$new(), n.split = 1, min.node.size = 15)
-  tree$fit(model = learner, data = data, target.feature.name = "y", n.intervals = 5)
+  tree = gadgetTree$new(strategy = aleStrategy$new(), n_split = 1, min_node_size = 15)
+  tree$fit(model = learner, data = data, target_feature_name = "y", n_intervals = 5)
   expect_true(!is.null(tree$root))
   strat = tree$strategy
   expect_true(!is.null(strat$effect_root))
@@ -101,9 +101,9 @@ test_that("prepare_split_data_ale returns Z and Y", {
   result = prepare_split_data_ale(
     model = learner,
     data = data,
-    target.feature.name = "y",
-    n.intervals = 5,
-    split.feature = c("x1", "x2")
+    target_feature_name = "y",
+    n_intervals = 5,
+    split_feature = c("x1", "x2")
   )
   expect_true("Z" %in% names(result))
   expect_true("Y" %in% names(result))

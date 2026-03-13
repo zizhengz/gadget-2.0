@@ -17,9 +17,9 @@ test_that("search_best_split_cpp works with numeric data", {
   result = search_best_split_cpp(Z = Z, Y = Y, min_node_size = 5)
   expect_true(is.data.frame(result))
   expect_true(nrow(result) >= 1)
-  expect_true(all(c("split.feature", "is.categorical", "split.point",
-    "split.objective", "split.runtime", "best.split") %in% names(result)))
-  expect_true(all(result$is.categorical %in% c(TRUE, FALSE)))
+  expect_true(all(c("split_feature", "is_categorical", "split_point",
+    "split_objective", "split_runtime", "best_split") %in% names(result)))
+  expect_true(all(result$is_categorical %in% c(TRUE, FALSE)))
 })
 
 test_that("search_best_split_cpp works with single feature", {
@@ -29,7 +29,7 @@ test_that("search_best_split_cpp works with single feature", {
   result = search_best_split_cpp(Z = Z, Y = Y, min_node_size = 2)
   expect_true(is.data.frame(result))
   expect_equal(nrow(result), 1)
-  expect_equal(result$split.feature[1], "x")
+  expect_equal(result$split_feature[1], "x")
 })
 
 test_that("search_best_split_cpp respects min_node_size", {

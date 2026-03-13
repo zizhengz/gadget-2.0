@@ -1,396 +1,396 @@
 #' Find best ALE split point with stabilizer (internal).
-#' @param z,effect,st.table,split.feat,is.categorical,n.quantiles,min.node.size Arguments.
+#' @param z,effect,st_table,split_feat,is_categorical,n_quantiles,min_node_size Arguments.
 #' @keywords internal
 search_best_split_point_ale_with = function(
-  z, effect, st.table, split.feat,
-  is.categorical,
-  n.quantiles = NULL,
-  min.node.size = 1L
+  z, effect, st_table, split_feat,
+  is_categorical,
+  n_quantiles = NULL,
+  min_node_size = 1L
 ) {
-  feature.names = names(effect)
-  p = length(feature.names)
-  split.feat.j = match(split.feat, feature.names)
-  has.self.ale = !is.na(split.feat.j)
+  feature_names = names(effect)
+  p = length(feature_names)
+  split_feat_j = match(split_feat, feature_names)
+  has_self_ale = !is.na(split_feat_j)
 
   # Helper: Calculate interval-wise SSE
   risk_from_stats = function(n, s1, s2) ifelse(n <= 1L, 0.0, s2 - (s1 * s1) / n)
 
   # Helper: Find split candidates
   build_order_and_candidates = function() {
-    if (!is.categorical) {
-      ord.idx = order(z, na.last = NA)
-      z.sorted = z[ord.idx]
-      n.obs = length(z.sorted)
-      if (n.obs <= 1L) {
+    if (!is_categorical) {
+      ord_idx = order(z, na.last = NA)
+      z_sorted = z[ord_idx]
+      n_obs = length(z_sorted)
+      if (n_obs <= 1L) {
         return(NULL)
       }
-      if (!is.null(n.quantiles) && length(unique(z.sorted)) >= n.quantiles) {
-        probs = seq(0, 1, length.out = n.quantiles + 2L)[-c(1L, n.quantiles + 2L)]
-        splits = unique(as.numeric(quantile(z.sorted, probs, type = 7)))
+      if (!is.null(n_quantiles) && length(unique(z_sorted)) >= n_quantiles) {
+        probs = seq(0, 1, length.out = n_quantiles + 2L)[-c(1L, n_quantiles + 2L)]
+        splits = unique(as.numeric(quantile(z_sorted, probs, type = 7)))
       } else {
-        splits = unique(z.sorted)
+        splits = unique(z_sorted)
       }
-      t.idx = findInterval(splits, z.sorted)
-      if (length(t.idx) == 0L) {
+      t_idx = findInterval(splits, z_sorted)
+      if (length(t_idx) == 0L) {
         return(NULL)
       }
-      is.cand = rep(FALSE, n.obs - 1L)
-      valid.t = t.idx[t.idx >= 1L & t.idx <= (n.obs - 1L)]
-      is.cand[unique(valid.t)] = TRUE
-      list(ord.idx = ord.idx, z.sorted = z.sorted, n.obs = n.obs, is.cand = is.cand)
+      is_cand = rep(FALSE, n_obs - 1L)
+      valid_t = t_idx[t_idx >= 1L & t_idx <= (n_obs - 1L)]
+      is_cand[unique(valid_t)] = TRUE
+      list(ord_idx = ord_idx, z_sorted = z_sorted, n_obs = n_obs, is_cand = is_cand)
     } else {
-      z.fac = droplevels(z)
-      z.nonNA = which(!is.na(z.fac))
-      if (length(z.nonNA) <= 1L) {
+      z_fac = droplevels(z)
+      z_nonNA = which(!is.na(z_fac))
+      if (length(z_nonNA) <= 1L) {
         return(NULL)
       }
-      level.id = as.integer(z.fac[z.nonNA])
-      ord.idx = z.nonNA[order(level.id)]
-      n.obs = length(ord.idx)
-      counts = tabulate(level.id)
-      t.idx = head(cumsum(counts), -1L)
-      if (length(t.idx) == 0L) {
+      level_id = as.integer(z_fac[z_nonNA])
+      ord_idx = z_nonNA[order(level_id)]
+      n_obs = length(ord_idx)
+      counts = tabulate(level_id)
+      t_idx = head(cumsum(counts), -1L)
+      if (length(t_idx) == 0L) {
         return(NULL)
       }
-      is.cand = rep(FALSE, n.obs - 1L)
-      is.cand[t.idx] = TRUE
+      is_cand = rep(FALSE, n_obs - 1L)
+      is_cand[t_idx] = TRUE
       list(
-        ord.idx = ord.idx,
-        z.sorted = z.fac[ord.idx],
-        n.obs = n.obs,
-        is.cand = is.cand,
-        boundary.pos = t.idx,
-        levels.vec = levels(z.fac)
+        ord_idx = ord_idx,
+        z_sorted = z_fac[ord_idx],
+        n_obs = n_obs,
+        is_cand = is_cand,
+        boundary_pos = t_idx,
+        levels_vec = levels(z_fac)
       )
     }
   }
 
   # Helper: Move one row across all features (updates flattened vectors and per-feature risks)
-  move_row_all = function(row.id) {
-    d = st.table$dL.mat[, row.id] # length p, dL of each feature
-    interval.idx = st.table$interval.idx.mat[, row.id] # length p, interval number of each feature
-    m = offsets + interval.idx # length p, subscript of each feature in flattened vector
+  move_row_all = function(row_id) {
+    d = st_table$dL_mat[, row_id] # length p, dL of each feature
+    interval_idx = st_table$interval_idx_mat[, row_id] # length p, interval number of each feature
+    m = offsets + interval_idx # length p, subscript of each feature in flattened vector
 
-    r.n.old = st.table$r.n[m]
-    r.s1.old = st.table$r.s1[m]
-    r.s2.old = st.table$r.s2[m]
-    r.risk.old = risk_from_stats(r.n.old, r.s1.old, r.s2.old)
+    r_n_old = st_table$r_n[m]
+    r_s1_old = st_table$r_s1[m]
+    r_s2_old = st_table$r_s2[m]
+    r_risk_old = risk_from_stats(r_n_old, r_s1_old, r_s2_old)
 
-    r.n.new = r.n.old - 1.0
-    r.s1.new = r.s1.old - d
-    r.s2.new = r.s2.old - d * d
-    r.risk.new = risk_from_stats(r.n.new, r.s1.new, r.s2.new)
+    r_n_new = r_n_old - 1.0
+    r_s1_new = r_s1_old - d
+    r_s2_new = r_s2_old - d * d
+    r_risk_new = risk_from_stats(r_n_new, r_s1_new, r_s2_new)
 
-    st.table$r.n[m] <<- r.n.new
-    st.table$r.s1[m] <<- r.s1.new
-    st.table$r.s2[m] <<- r.s2.new
-    r.risks <<- r.risks - r.risk.old + r.risk.new
+    st_table$r_n[m] <<- r_n_new
+    st_table$r_s1[m] <<- r_s1_new
+    st_table$r_s2[m] <<- r_s2_new
+    r_risks <<- r_risks - r_risk_old + r_risk_new
 
-    l.n.old = st.table$tot.n[m] - r.n.old
-    l.s1.old = st.table$tot.s1[m] - r.s1.old
-    l.s2.old = st.table$tot.s2[m] - r.s2.old
-    l.risk.old = risk_from_stats(l.n.old, l.s1.old, l.s2.old)
+    l_n_old = st_table$tot_n[m] - r_n_old
+    l_s1_old = st_table$tot_s1[m] - r_s1_old
+    l_s2_old = st_table$tot_s2[m] - r_s2_old
+    l_risk_old = risk_from_stats(l_n_old, l_s1_old, l_s2_old)
 
-    l.n.new = st.table$tot.n[m] - r.n.new
-    l.s1.new = st.table$tot.s1[m] - r.s1.new
-    l.s2.new = st.table$tot.s2[m] - r.s2.new
-    l.risk.new = risk_from_stats(l.n.new, l.s1.new, l.s2.new)
+    l_n_new = st_table$tot_n[m] - r_n_new
+    l_s1_new = st_table$tot_s1[m] - r_s1_new
+    l_s2_new = st_table$tot_s2[m] - r_s2_new
+    l_risk_new = risk_from_stats(l_n_new, l_s1_new, l_s2_new)
 
-    l.risks <<- l.risks - l.risk.old + l.risk.new
-    sum(-l.risk.old - r.risk.old + l.risk.new + r.risk.new)
+    l_risks <<- l_risks - l_risk_old + l_risk_new
+    sum(-l_risk_old - r_risk_old + l_risk_new + r_risk_new)
   }
 
   #### Old Helper: Boundary stabilizer using cumulative sums (numeric feature only) ####
   # adjust_side_for_feature = function(side, t, w) {
   #   # w = window size (# of points near boundary)
   #   if (w <= 0L) {
-  #     return(if (side == "L") l.risks[split.feat.j] else r.risks[split.feat.j])
+  #     return(if (side == "L") l_risks[split_feat_j] else r_risks[split_feat_j])
   #   }
   #   if (side == "L") {
   #     # Left node: ord[1..t]
-  #     tot.n = t
-  #     if (tot.n <= 1L) {
-  #       return(l.risks[split.feat.j])
+  #     tot_n = t
+  #     if (tot_n <= 1L) {
+  #       return(l_risks[split_feat_j])
   #     }
-  #     w = min(w, tot.n)
+  #     w = min(w, tot_n)
   #     # near: last w samples on the left
-  #     s1.near = S1[t] - if (t - w >= 1L) S1[t - w] else 0.0
-  #     s2.near = S2[t] - if (t - w >= 1L) S2[t - w] else 0.0
+  #     s1_near = S1[t] - if (t - w >= 1L) S1[t - w] else 0.0
+  #     s2_near = S2[t] - if (t - w >= 1L) S2[t - w] else 0.0
   #
-  #     risk.j = l.risks[split.feat.j]
-  #     s1.tot = S1[t]
-  #     s2.tot = S2[t]
+  #     risk_j = l_risks[split_feat_j]
+  #     s1_tot = S1[t]
+  #     s2_tot = S2[t]
   #   } else {
-  #     # Right node: ord[t+1..n.obs]
-  #     tot.n = n.obs - t
-  #     if (tot.n <= 1L) {
-  #       return(r.risks[split.feat.j])
+  #     # Right node: ord[t+1..n_obs]
+  #     tot_n = n_obs - t
+  #     if (tot_n <= 1L) {
+  #       return(r_risks[split_feat_j])
   #     }
-  #     w = min(w, tot.n)
+  #     w = min(w, tot_n)
   #     # near: first w samples on the right
-  #     s1.near = S1[t + w] - S1[t]
-  #     s2.near = S2[t + w] - S2[t]
+  #     s1_near = S1[t + w] - S1[t]
+  #     s2_near = S2[t + w] - S2[t]
   #
-  #     risk.j = r.risks[split.feat.j]
+  #     risk_j = r_risks[split_feat_j]
   #     # totals over the right node
-  #     s1.tot = S1.tot - S1[t]
-  #     s2.tot = S2.tot - S2[t]
+  #     s1_tot = S1_tot - S1[t]
+  #     s2_tot = S2_tot - S2[t]
   #   }
   #
   #   # far region = node minus near window
-  #   n.far = tot.n - w
-  #   if (n.far <= 1L) {
-  #     return(risk.j)
+  #   n_far = tot_n - w
+  #   if (n_far <= 1L) {
+  #     return(risk_j)
   #   }
-  #   s1.far = s1.tot - s1.near
-  #   s2.far = s2.tot - s2.near
-  #   var.near = (s2.near - s1.near * s1.near / w) / max(w - 1L, 1L)
-  #   var.far = (s2.far - s1.far * s1.far / n.far) / max(n.far - 1L, 1L)
-  #   if (is.na(var.far) || is.na(var.near) || var.far <= 0 || var.near < 4.0 * var.far) {
-  #     return(risk.j)
+  #   s1_far = s1_tot - s1_near
+  #   s2_far = s2_tot - s2_near
+  #   var_near = (s2_near - s1_near * s1_near / w) / max(w - 1L, 1L)
+  #   var_far = (s2_far - s1_far * s1_far / n_far) / max(n_far - 1L, 1L)
+  #   if (is.na(var_far) || is.na(var_near) || var_far <= 0 || var_near < 4.0 * var_far) {
+  #     return(risk_j)
   #   }
-  #   risk.j - risk_from_stats(w, s1.near, s2.near) + w * var.far
+  #   risk_j - risk_from_stats(w, s1_near, s2_near) + w * var_far
   # }
   #### End old adjust_side_for_feature function ####
 
   #### New Helper: Boundary stabilizer using cumulative sums (numeric feature only) ####
   adjust_side_for_feature = function(side, t) {
     # 1. Determine range of current side
-    is.left = (side == "L")
-    if (is.left) {
-      idx.start = 1L
-      idx.end = t
-      original.risk = l.risks[split.feat.j]
+    is_left = (side == "L")
+    if (is_left) {
+      idx_start = 1L
+      idx_end = t
+      original_risk = l_risks[split_feat_j]
     } else {
-      idx.start = t + 1L
-      idx.end = n.obs
-      original.risk = r.risks[split.feat.j]
+      idx_start = t + 1L
+      idx_end = n_obs
+      original_risk = r_risks[split_feat_j]
     }
-    n.side = idx.end - idx.start + 1L
+    n_side = idx_end - idx_start + 1L
     # 2. if sample size <= 20, do not smooth
-    if (n.side <= 20L) {
-      return(original.risk)
+    if (n_side <= 20L) {
+      return(original_risk)
     }
     # 3. window size w: max(10% of side samples, 10)
-    w = max(round(0.1 * n.side), 10L)
+    w = max(round(0.1 * n_side), 10L)
     # 4. Get interval indices and dL for current side
-    node.int = interval.idx.sorted[idx.start:idx.end]
-    node.dL = dL.j.sorted[idx.start:idx.end]
+    node_int = interval_idx_sorted[idx_start:idx_end]
+    node_dL = dL_j_sorted[idx_start:idx_end]
     # 5. Get unique set of interval indices within the window
-    if (is.left) {
-      window.indices = (n.side - w + 1L):n.side # Left window: last w elements
+    if (is_left) {
+      window_indices = (n_side - w + 1L):n_side # Left window: last w elements
     } else {
-      window.indices = 1L:w # Right window: first w elements
+      window_indices = 1L:w # Right window: first w elements
     }
-    target.intervals = unique(node.int[window.indices])
+    target_intervals = unique(node_int[window_indices])
     # 6. Define Near / Far samples
     # As long as it belongs to target_intervals, treat as Near (regardless of whether inside window w)
-    is.near = node.int %in% target.intervals
+    is_near = node_int %in% target_intervals
     # 7. Sample size check
-    n.near = sum(is.near)
-    n.far = n.side - n.near
-    if (n.near < 2 || n.far < 2) {
-      return(original.risk)
+    n_near = sum(is_near)
+    n_far = n_side - n_near
+    if (n_near < 2 || n_far < 2) {
+      return(original_risk)
     }
     # 8. Get dL and calculate SD
-    vals.near = node.dL[is.near]
-    vals.far = node.dL[!is.near]
-    sd.near = sd(vals.near)
-    sd.far = sd(vals.far)
+    vals_near = node_dL[is_near]
+    vals_far = node_dL[!is_near]
+    sd_near = sd(vals_near)
+    sd_far = sd(vals_far)
     # 9. Condition and replacement
-    if (!is.na(sd.near) && !is.na(sd.far) && sd.near > 2.0 * sd.far) {
-      node.dL[is.near] = rnorm(n = n.near, mean = mean(vals.far), sd = sd.far)
-      s1.vec = rowsum(node.dL, group = node.int, reorder = FALSE)
-      s2.vec = rowsum(node.dL^2, group = node.int, reorder = FALSE)
-      n.vec = rowsum(rep(1L, length(node.dL)), group = node.int, reorder = FALSE)
-      interval.sse = s2.vec - (s1.vec^2) / n.vec
-      return(sum(interval.sse))
+    if (!is.na(sd_near) && !is.na(sd_far) && sd_near > 2.0 * sd_far) {
+      node_dL[is_near] = rnorm(n = n_near, mean = mean(vals_far), sd = sd_far)
+      s1_vec = rowsum(node_dL, group = node_int, reorder = FALSE)
+      s2_vec = rowsum(node_dL^2, group = node_int, reorder = FALSE)
+      n_vec = rowsum(rep(1L, length(node_dL)), group = node_int, reorder = FALSE)
+      interval_sse = s2_vec - (s1_vec^2) / n_vec
+      return(sum(interval_sse))
     }
-    return(original.risk)
+    return(original_risk)
   }
   #### End new adjust_side_for_feature function ####
 
   plan = build_order_and_candidates()
   if (is.null(plan)) {
     return(list(
-      split.point = NA_real_,
-      split.objective = Inf,
-      objective.value.j = rep(NA_real_, p),
-      left.objective.value.j = rep(NA_real_, p),
-      right.objective.value.j = rep(NA_real_, p)
+      split_point = NA_real_,
+      split_objective = Inf,
+      objective_value_j = rep(NA_real_, p),
+      left_objective_value_j = rep(NA_real_, p),
+      right_objective_value_j = rep(NA_real_, p)
     ))
   }
-  ord.idx = plan$ord.idx
-  z.sorted = plan$z.sorted
-  n.obs = plan$n.obs
-  is.cand.t = plan$is.cand
+  ord_idx = plan$ord_idx
+  z_sorted = plan$z_sorted
+  n_obs = plan$n_obs
+  is_cand_t = plan$is_cand
 
-  offsets = st.table$offsets
-  r.risks = st.table$r.risks
-  l.risks = numeric(p)
+  offsets = st_table$offsets
+  r_risks = st_table$r_risks
+  l_risks = numeric(p)
 
   #### Code with adjust_side_for_feature ####
-  if (!is.categorical && has.self.ale) {
-    dL.j.sorted = st.table$dL.mat[split.feat.j, ord.idx] # N x 1
-    interval.idx.sorted = st.table$interval.idx.mat[split.feat.j, ord.idx]
+  if (!is_categorical && has_self_ale) {
+    dL_j_sorted = st_table$dL_mat[split_feat_j, ord_idx] # N x 1
+    interval_idx_sorted = st_table$interval_idx_mat[split_feat_j, ord_idx]
     #### Code for old adjust_side_for_feature ####
-    # S1 = cumsum(dL.j.sorted)
-    # S2 = cumsum(dL.j.sorted * dL.j.sorted)
-    # S1.tot = S1[n.obs]
-    # S2.tot = S2[n.obs]
+    # S1 = cumsum(dL_j_sorted)
+    # S2 = cumsum(dL_j_sorted * dL_j_sorted)
+    # S1_tot = S1[n_obs]
+    # S2_tot = S2[n_obs]
     #### ####
   }
   #### ####
 
-  risks.sum = sum(r.risks)
-  best.risks.sum = Inf
-  best.t = NA_integer_
-  best.left.risks = NULL
-  best.right.risks = NULL
+  risks_sum = sum(r_risks)
+  best_risks_sum = Inf
+  best_t = NA_integer_
+  best_left_risks = NULL
+  best_right_risks = NULL
 
   # Main sweep
-  for (t in 1:(n.obs - 1L)) {
-    delta = move_row_all(ord.idx[t])
-    risks.sum = risks.sum + delta
-    if (!is.cand.t[t] || t < min.node.size || (n.obs - t) < min.node.size) next
-    curr.l.risks = l.risks
-    curr.r.risks = r.risks
+  for (t in 1:(n_obs - 1L)) {
+    delta = move_row_all(ord_idx[t])
+    risks_sum = risks_sum + delta
+    if (!is_cand_t[t] || t < min_node_size || (n_obs - t) < min_node_size) next
+    curr_l_risks = l_risks
+    curr_r_risks = r_risks
     #### Code with adjust_side_for_feature ####
     # Handle single unique value case for the split feature
-    l.const = z.sorted[1] == z.sorted[t]
-    r.const = z.sorted[t + 1L] == z.sorted[n.obs]
-    if (has.self.ale) {
-      if (l.const) curr.l.risks[split.feat.j] = 0.0
-      if (r.const) curr.r.risks[split.feat.j] = 0.0
+    l_const = z_sorted[1] == z_sorted[t]
+    r_const = z_sorted[t + 1L] == z_sorted[n_obs]
+    if (has_self_ale) {
+      if (l_const) curr_l_risks[split_feat_j] = 0.0
+      if (r_const) curr_r_risks[split_feat_j] = 0.0
     }
     #### ####
     #### Code without adjust_side_for_feature ####
     # When splitting on a feature that has its own ALE, exclude its own risk from the objective
     # This avoids re-fitting the feature's main effect and focuses on interaction effects
-    # if (has.self.ale) {
-    #   curr.l.risks[split.feat.j] = 0.0
-    #   curr.r.risks[split.feat.j] = 0.0
+    # if (has_self_ale) {
+    #   curr_l_risks[split_feat_j] = 0.0
+    #   curr_r_risks[split_feat_j] = 0.0
     # }
     #### ####
-    total = sum(curr.l.risks) + sum(curr.r.risks)
+    total = sum(curr_l_risks) + sum(curr_r_risks)
     #### Code with adjust_side_for_feature ####
     # Boundary Stabilizer
-    use.stabilizer = !is.categorical && has.self.ale && !l.const && !r.const && t > 20 && (n.obs - t) > 20
-    if (use.stabilizer) {
-      risk.t.j = l.risks[split.feat.j] + r.risks[split.feat.j]
+    use_stabilizer = !is_categorical && has_self_ale && !l_const && !r_const && t > 20 && (n_obs - t) > 20
+    if (use_stabilizer) {
+      risk_t_j = l_risks[split_feat_j] + r_risks[split_feat_j]
       #### Code for old adjust_side_for_feature ####
-      # w.l = max(round(0.1 * t), 10L)
-      # w.l = min(w.l, t)
-      # w.r = max(round(0.1 * (n.obs - t)), 10L)
-      # w.r = min(w.r, n.obs - t)
-      # adj.l.risk.t.j = adjust_side_for_feature("L", t, w.l)
-      # adj.r.risk.t.j = adjust_side_for_feature("R", t, w.r)
+      # w_l = max(round(0.1 * t), 10L)
+      # w_l = min(w_l, t)
+      # w_r = max(round(0.1 * (n_obs - t)), 10L)
+      # w_r = min(w_r, n_obs - t)
+      # adj_l_risk_t_j = adjust_side_for_feature("L", t, w_l)
+      # adj_r_risk_t_j = adjust_side_for_feature("R", t, w_r)
       #### ####
-      adj.l.risk.t.j = adjust_side_for_feature("L", t)
-      adj.r.risk.t.j = adjust_side_for_feature("R", t)
-      adj.risk.t.j = adj.l.risk.t.j + adj.r.risk.t.j
-      total = risks.sum - risk.t.j + adj.risk.t.j
+      adj_l_risk_t_j = adjust_side_for_feature("L", t)
+      adj_r_risk_t_j = adjust_side_for_feature("R", t)
+      adj_risk_t_j = adj_l_risk_t_j + adj_r_risk_t_j
+      total = risks_sum - risk_t_j + adj_risk_t_j
     }
     #### ####
-    if (!is.na(total) && !is.infinite(total) && total < best.risks.sum) {
-      best.risks.sum = total
-      best.t = t
-      best.left.risks = curr.l.risks
-      best.right.risks = curr.r.risks
+    if (!is.na(total) && !is.infinite(total) && total < best_risks_sum) {
+      best_risks_sum = total
+      best_t = t
+      best_left_risks = curr_l_risks
+      best_right_risks = curr_r_risks
       #### Code with adjust_side_for_feature ####
-      if (use.stabilizer) {
-        best.left.risks[split.feat.j] = adj.l.risk.t.j
-        best.right.risks[split.feat.j] = adj.r.risk.t.j
+      if (use_stabilizer) {
+        best_left_risks[split_feat_j] = adj_l_risk_t_j
+        best_right_risks[split_feat_j] = adj_r_risk_t_j
       }
       #### ####
     }
   }
-  if (is.na(best.t)) {
+  if (is.na(best_t)) {
     return(list(
-      split.point = NA_real_,
-      split.objective = Inf,
-      objective.value.j = rep(NA_real_, p),
-      left.objective.value.j = rep(NA_real_, p),
-      right.objective.value.j = rep(NA_real_, p)
+      split_point = NA_real_,
+      split_objective = Inf,
+      objective_value_j = rep(NA_real_, p),
+      left_objective_value_j = rep(NA_real_, p),
+      right_objective_value_j = rep(NA_real_, p)
     ))
   }
-  if (!is.categorical) {
-    left.value = max(z.sorted[1:best.t])
-    right.value = min(z.sorted[-(1:best.t)])
-    best.split.point = (left.value + right.value) / 2
+  if (!is_categorical) {
+    left_value = max(z_sorted[1:best_t])
+    right_value = min(z_sorted[-(1:best_t)])
+    best_split_point = (left_value + right_value) / 2
   } else {
-    k = which(plan$boundary.pos == best.t)[1]
-    best.split.point = if (!is.na(k)) plan$levels.vec[k] else NA
+    k = which(plan$boundary_pos == best_t)[1]
+    best_split_point = if (!is.na(k)) plan$levels_vec[k] else NA
   }
   list(
-    split.point = best.split.point,
-    split.objective = best.risks.sum,
-    objective.value.j = best.left.risks + best.right.risks,
-    left.objective.value.j = best.left.risks,
-    right.objective.value.j = best.right.risks
+    split_point = best_split_point,
+    split_objective = best_risks_sum,
+    objective_value_j = best_left_risks + best_right_risks,
+    left_objective_value_j = best_left_risks,
+    right_objective_value_j = best_right_risks
   )
 }
 
 #' Find best ALE split point via C++ sweep (internal).
-#' @param z,effect,st.table,split.feat,is.categorical,n.quantiles,min.node.size Arguments.
+#' @param z,effect,st_table,split_feat,is_categorical,n_quantiles,min_node_size Arguments.
 #' @keywords internal
 search_best_split_point_ale_with_cpp = function(
-  z, effect, st.table, split.feat,
-  is.categorical,
-  n.quantiles = NULL,
-  min.node.size = 1L
+  z, effect, st_table, split_feat,
+  is_categorical,
+  n_quantiles = NULL,
+  min_node_size = 1L
 ) {
-  feature.names = names(effect)
-  p = length(feature.names)
-  split.feat.j = match(split.feat, feature.names)
-  has.self.ale = !is.na(split.feat.j)
+  feature_names = names(effect)
+  p = length(feature_names)
+  split_feat_j = match(split_feat, feature_names)
+  has_self_ale = !is.na(split_feat_j)
 
   # Helper: Find split candidates (mirror of build_order_and_candidates above)
   build_order_and_candidates = function() {
-    if (!is.categorical) {
-      ord.idx = order(z, na.last = NA)
-      z.sorted = z[ord.idx]
-      n.obs = length(z.sorted)
-      if (n.obs <= 1L) {
+    if (!is_categorical) {
+      ord_idx = order(z, na.last = NA)
+      z_sorted = z[ord_idx]
+      n_obs = length(z_sorted)
+      if (n_obs <= 1L) {
         return(NULL)
       }
-      if (!is.null(n.quantiles) && length(unique(z.sorted)) >= n.quantiles) {
-        probs = seq(0, 1, length.out = n.quantiles + 2L)[-c(1L, n.quantiles + 2L)]
-        splits = unique(as.numeric(quantile(z.sorted, probs, type = 7)))
+      if (!is.null(n_quantiles) && length(unique(z_sorted)) >= n_quantiles) {
+        probs = seq(0, 1, length.out = n_quantiles + 2L)[-c(1L, n_quantiles + 2L)]
+        splits = unique(as.numeric(quantile(z_sorted, probs, type = 7)))
       } else {
-        splits = unique(z.sorted)
+        splits = unique(z_sorted)
       }
-      t.idx = findInterval(splits, z.sorted)
-      if (length(t.idx) == 0L) {
+      t_idx = findInterval(splits, z_sorted)
+      if (length(t_idx) == 0L) {
         return(NULL)
       }
-      is.cand = rep(FALSE, n.obs - 1L)
-      valid.t = t.idx[t.idx >= 1L & t.idx <= (n.obs - 1L)]
-      is.cand[unique(valid.t)] = TRUE
-      list(ord.idx = ord.idx, z.sorted = z.sorted, n.obs = n.obs, is.cand = is.cand)
+      is_cand = rep(FALSE, n_obs - 1L)
+      valid_t = t_idx[t_idx >= 1L & t_idx <= (n_obs - 1L)]
+      is_cand[unique(valid_t)] = TRUE
+      list(ord_idx = ord_idx, z_sorted = z_sorted, n_obs = n_obs, is_cand = is_cand)
     } else {
-      z.fac = droplevels(z)
-      z.nonNA = which(!is.na(z.fac))
-      if (length(z.nonNA) <= 1L) {
+      z_fac = droplevels(z)
+      z_nonNA = which(!is.na(z_fac))
+      if (length(z_nonNA) <= 1L) {
         return(NULL)
       }
-      level.id = as.integer(z.fac[z.nonNA])
-      ord.idx = z.nonNA[order(level.id)]
-      n.obs = length(ord.idx)
-      counts = tabulate(level.id)
-      t.idx = head(cumsum(counts), -1L)
-      if (length(t.idx) == 0L) {
+      level_id = as.integer(z_fac[z_nonNA])
+      ord_idx = z_nonNA[order(level_id)]
+      n_obs = length(ord_idx)
+      counts = tabulate(level_id)
+      t_idx = head(cumsum(counts), -1L)
+      if (length(t_idx) == 0L) {
         return(NULL)
       }
-      is.cand = rep(FALSE, n.obs - 1L)
-      is.cand[t.idx] = TRUE
+      is_cand = rep(FALSE, n_obs - 1L)
+      is_cand[t_idx] = TRUE
       list(
-        ord.idx = ord.idx,
-        z.sorted = z.fac[ord.idx],
-        n.obs = n.obs,
-        is.cand = is.cand,
-        boundary.pos = t.idx,
-        levels.vec = levels(z.fac)
+        ord_idx = ord_idx,
+        z_sorted = z_fac[ord_idx],
+        n_obs = n_obs,
+        is_cand = is_cand,
+        boundary_pos = t_idx,
+        levels_vec = levels(z_fac)
       )
     }
   }
@@ -398,65 +398,65 @@ search_best_split_point_ale_with_cpp = function(
   plan = build_order_and_candidates()
   if (is.null(plan)) {
     return(list(
-      split.point = NA_real_,
-      split.objective = Inf,
-      objective.value.j = rep(NA_real_, p),
-      left.objective.value.j = rep(NA_real_, p),
-      right.objective.value.j = rep(NA_real_, p)
+      split_point = NA_real_,
+      split_objective = Inf,
+      objective_value_j = rep(NA_real_, p),
+      left_objective_value_j = rep(NA_real_, p),
+      right_objective_value_j = rep(NA_real_, p)
     ))
   }
-  ord.idx = plan$ord.idx
-  z.sorted = plan$z.sorted
-  n.obs = plan$n.obs
-  is.cand.t = plan$is.cand
+  ord_idx = plan$ord_idx
+  z_sorted = plan$z_sorted
+  n_obs = plan$n_obs
+  is_cand_t = plan$is_cand
 
-  split_feat_j_arg = if (has.self.ale) split.feat.j else 0L
-  use_stab = !is.categorical && has.self.ale
-  z_sorted_num = if (is.numeric(z.sorted)) as.numeric(z.sorted) else rep(0.0, n.obs)
+  split_feat_j_arg = if (has_self_ale) split_feat_j else 0L
+  use_stab = !is_categorical && has_self_ale
+  z_sorted_num = if (is.numeric(z_sorted)) as.numeric(z_sorted) else rep(0.0, n_obs)
 
   cpp_res = ale_sweep_cpp(
-    ord_idx = ord.idx,
-    dL_mat = st.table$dL.mat,
-    interval_idx_mat = st.table$interval.idx.mat,
-    offsets = st.table$offsets,
-    tot_n = st.table$tot.n,
-    tot_s1 = st.table$tot.s1,
-    tot_s2 = st.table$tot.s2,
-    r_risks = st.table$r.risks,
-    is_cand = is.cand.t,
-    min_node_size = min.node.size,
+    ord_idx = ord_idx,
+    dL_mat = st_table$dL_mat,
+    interval_idx_mat = st_table$interval_idx_mat,
+    offsets = st_table$offsets,
+    tot_n = st_table$tot_n,
+    tot_s1 = st_table$tot_s1,
+    tot_s2 = st_table$tot_s2,
+    r_risks = st_table$r_risks,
+    is_cand = is_cand_t,
+    min_node_size = min_node_size,
     split_feat_j = split_feat_j_arg,
     use_stabilizer = use_stab,
     z_sorted = z_sorted_num,
-    n_obs = n.obs
+    n_obs = n_obs
   )
-  best.t = cpp_res$best_t
-  best.risks.sum = cpp_res$best_risks_sum
-  best.left.risks = cpp_res$best_left_risks
-  best.right.risks = cpp_res$best_right_risks
+  best_t = cpp_res$best_t
+  best_risks_sum = cpp_res$best_risks_sum
+  best_left_risks = cpp_res$best_left_risks
+  best_right_risks = cpp_res$best_right_risks
 
-  if (is.na(best.t) || best.t < 0L) { # in cpp: best_t = -1 means no valid split point found
+  if (is.na(best_t) || best_t < 0L) { # in cpp: best_t = -1 means no valid split point found
     return(list(
-      split.point = NA_real_,
-      split.objective = Inf,
-      objective.value.j = rep(NA_real_, p),
-      left.objective.value.j = rep(NA_real_, p),
-      right.objective.value.j = rep(NA_real_, p)
+      split_point = NA_real_,
+      split_objective = Inf,
+      objective_value_j = rep(NA_real_, p),
+      left_objective_value_j = rep(NA_real_, p),
+      right_objective_value_j = rep(NA_real_, p)
     ))
   }
-  if (!is.categorical) {
-    left.value = max(z.sorted[1:best.t])
-    right.value = min(z.sorted[-(1:best.t)])
-    best.split.point = (left.value + right.value) / 2
+  if (!is_categorical) {
+    left_value = max(z_sorted[1:best_t])
+    right_value = min(z_sorted[-(1:best_t)])
+    best_split_point = (left_value + right_value) / 2
   } else {
-    k = which(plan$boundary.pos == best.t)[1]
-    best.split.point = if (!is.na(k)) plan$levels.vec[k] else NA
+    k = which(plan$boundary_pos == best_t)[1]
+    best_split_point = if (!is.na(k)) plan$levels_vec[k] else NA
   }
   list(
-    split.point = best.split.point,
-    split.objective = best.risks.sum,
-    objective.value.j = best.left.risks + best.right.risks,
-    left.objective.value.j = best.left.risks,
-    right.objective.value.j = best.right.risks
+    split_point = best_split_point,
+    split_objective = best_risks_sum,
+    objective_value_j = best_left_risks + best_right_risks,
+    left_objective_value_j = best_left_risks,
+    right_objective_value_j = best_right_risks
   )
 }

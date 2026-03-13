@@ -9,7 +9,7 @@ calculate_ale_heterogeneity_cpp = function(Y) {
   # Handle both data.frame and list cases
   if (is.data.frame(Y)) {
     dL = Y$dL
-    interval_index = Y$interval.index
+    interval_index = Y$interval_index
     calculate_ale_heterogeneity_single_cpp(dL, interval_index)
   } else if (is.list(Y)) {
     calculate_ale_heterogeneity_list_cpp(Y)
@@ -23,9 +23,9 @@ calculate_ale_heterogeneity_cpp = function(Y) {
 #' @keywords internal
 ss_ale_dt = function(y_list) {
   lapply(y_list, function(feat) {
-    delta.aggr = feat[, list(dL = mean(dL, na.rm = TRUE),
-      interval.n = .N), by = c("interval.index", "x.left", "x.right")]
-    df = merge(feat, delta.aggr, by = "interval.index")
+    delta_aggr = feat[, list(dL = mean(dL, na.rm = TRUE),
+      interval_n = .N), by = c("interval_index", "x_left", "x_right")]
+    df = merge(feat, delta_aggr, by = "interval_index")
     sum((df$dL.x - df$dL.y)^2, na.rm = TRUE)
   })
 }

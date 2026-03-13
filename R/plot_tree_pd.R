@@ -1,21 +1,21 @@
 #' Plot PD tree by depth and node (internal).
-#' @param tree,effect,data,target.feature.name,color.ice,color.pd,show.plot,show.point,mean.center,depth,node.id,features Plot arguments.
+#' @param tree,effect,data,target_feature_name,color_ice,color_pd,show_plot,show_point,mean_center,depth,node_id,features Plot arguments.
 #' @keywords internal
-plot_tree_pd = function(tree, effect, data, target.feature.name,
-  color.ice = "lightblue", color.pd = "lightcoral",
-  show.plot = TRUE, show.point = FALSE, mean.center = TRUE,
-  depth = NULL, node.id = NULL, features = NULL) {
+plot_tree_pd = function(tree, effect, data, target_feature_name,
+  color_ice = "lightblue", color_pd = "lightcoral",
+  show_plot = TRUE, show_point = FALSE, mean_center = TRUE,
+  depth = NULL, node_id = NULL, features = NULL) {
 
   # Pre-process data once for all depths
-  wide.mean.center = mean_center_ice(effect, feature.set = features, mean.center = mean.center)
-  Y = wide.mean.center$Y
-  grid.total = wide.mean.center$grid
+  wide_mean_center = mean_center_ice(effect, feature_set = features, mean_center = mean_center)
+  Y = wide_mean_center$Y
+  grid_total = wide_mean_center$grid
 
   # Pre-calculate all node data
-  all_node_data = preprocess_node_data(tree, Y, grid.total, mean.center)
+  all_node_data = preprocess_node_data(tree, Y, grid_total, mean_center)
 
   # Determine depths and nodes to render
-  if (is.null(node.id)) {
+  if (is.null(node_id)) {
     # If no specific nodes requested, render all depths
     depths_to_render = if (is.null(depth)) {
       seq_along(tree)
@@ -25,7 +25,7 @@ plot_tree_pd = function(tree, effect, data, target.feature.name,
     }
   } else {
     # If specific nodes requested, find which depths contain these nodes
-    node_ids = suppressWarnings(as.integer(node.id))
+    node_ids = suppressWarnings(as.integer(node_id))
     depths_to_render = c()
     for (depth_idx in seq_along(tree)) {
       nodes_at_depth = sapply(tree[[depth_idx]], function(n) !is.null(n) && n$id %in% node_ids)
@@ -46,55 +46,55 @@ plot_tree_pd = function(tree, effect, data, target.feature.name,
     return(invisible(list()))
   }
 
-  plot.list = list()
+  plot_list = list()
 
   for (depth_idx in depths_to_render) {
-    prepared.data = all_node_data[[depth_idx]]
-    if (is.null(node.id)) {
+    prepared_data = all_node_data[[depth_idx]]
+    if (is.null(node_id)) {
       nodes_to_render = seq_along(tree[[depth_idx]])
     } else {
-      node_ids = suppressWarnings(as.integer(node.id))
+      node_ids = suppressWarnings(as.integer(node_id))
       nodes_to_render = which(sapply(tree[[depth_idx]], function(n) !is.null(n) && n$id %in% node_ids))
     }
     if (length(nodes_to_render) == 0) {
       stop(paste("No valid nodes to render at depth", depth_idx))
     }
-    plots.at.depth = create_plots_for_depth(tree, prepared.data, data, target.feature.name,
-      depth_idx, nodes_to_render, color.ice, color.pd,
-      show.plot, show.point, mean.center)
-    plot.list[[paste0("Depth_", depth_idx)]] = plots.at.depth
+    plots_at_depth = create_plots_for_depth(tree, prepared_data, data, target_feature_name,
+      depth_idx, nodes_to_render, color_ice, color_pd,
+      show_plot, show_point, mean_center)
+    plot_list[[paste0("Depth_", depth_idx)]] = plots_at_depth
   }
 
-  invisible(plot.list)
+  invisible(plot_list)
 }
 
 #' Preprocess PD node data by depth (internal).
 #' @keywords internal
-preprocess_node_data = function(tree, Y, grid.total, mean.center) {
+preprocess_node_data = function(tree, Y, grid_total, mean_center) {
   all_node_data = list()
   for (depth_idx in seq_along(tree)) {
     nodes = tree[[depth_idx]]
     Y_processed = lapply(names(Y), function(i) {
-      Y.i = Y[[i]]
-      Y.i$node = NA_integer_
-      grid.i.total = grid.total[[i]]
-      for (node.idx in seq_along(nodes)) {
-        node = nodes[[node.idx]]
+      Y_i = Y[[i]]
+      Y_i$node = NA_integer_
+      grid_i_total = grid_total[[i]]
+      for (node_idx in seq_along(nodes)) {
+        node = nodes[[node_idx]]
         if (!is.null(node)) {
-          subset.idx = node$subset.idx
-          grid.i.curr = node$grid[[i]]
-          Y.i$node[subset.idx] = node.idx
+          subset_idx = node$subset_idx
+          grid_i_curr = node$grid[[i]]
+          Y_i$node[subset_idx] = node_idx
 
-          if (length(grid.i.curr) < length(grid.i.total)) {
-            Y.i[subset.idx, which(!(grid.i.total %in% grid.i.curr))] = NA
-            if (mean.center && length(grid.i.curr) > 1) {
-              Y.i[subset.idx, grid.i.total] = Y.i[subset.idx, grid.i.total] -
-                rowMeans(Y.i[subset.idx, grid.i.total], na.rm = TRUE)
+          if (length(grid_i_curr) < length(grid_i_total)) {
+            Y_i[subset_idx, which(!(grid_i_total %in% grid_i_curr))] = NA
+            if (mean_center && length(grid_i_curr) > 1) {
+              Y_i[subset_idx, grid_i_total] = Y_i[subset_idx, grid_i_total] -
+                rowMeans(Y_i[subset_idx, grid_i_total], na.rm = TRUE)
             }
           }
         }
       }
-      Y.i
+      Y_i
     })
     names(Y_processed) = names(Y)
     all_node_data[[depth_idx]] = Y_processed
@@ -104,56 +104,56 @@ preprocess_node_data = function(tree, Y, grid.total, mean.center) {
 
 #' Create PD plots for one depth (internal).
 #' @keywords internal
-create_plots_for_depth = function(tree, prepared.data, data, target.feature.name,
-  depth_idx, nodes_to_render, color.ice, color.pd,
-  show.plot, show.point, mean.center) {
-  plots.at.depth = list()
-  for (node.idx in nodes_to_render) {
-    node = tree[[depth_idx]][[node.idx]]
+create_plots_for_depth = function(tree, prepared_data, data, target_feature_name,
+  depth_idx, nodes_to_render, color_ice, color_pd,
+  show_plot, show_point, mean_center) {
+  plots_at_depth = list()
+  for (node_idx in nodes_to_render) {
+    node = tree[[depth_idx]][[node_idx]]
     if (!is.null(node)) {
       title = create_node_title(node, depth_idx, tree)
-      y_range = calculate_y_range(prepared.data, data, target.feature.name, show.point)
+      y_range = calculate_y_range(prepared_data, data, target_feature_name, show_point)
 
-      plots = plot_regional_pd(prepared.data = prepared.data,
-        origin.data = data,
-        target.feature.name = target.feature.name,
-        node.idx = node.idx,
-        color.ice = color.ice,
-        color.pd = color.pd,
+      plots = plot_regional_pd(prepared_data = prepared_data,
+        origin_data = data,
+        target_feature_name = target_feature_name,
+        node_idx = node_idx,
+        color_ice = color_ice,
+        color_pd = color_pd,
         ymin = y_range$ymin,
         ymax = y_range$ymax,
-        split.condition = node$split.condition,
-        show.point = show.point,
-        mean.center = mean.center)
+        split_condition = node$split_condition,
+        show_point = show_point,
+        mean_center = mean_center)
 
-      p = patchwork::wrap_plots(plots, ncol = min(length(prepared.data), 3)) +
+      p = patchwork::wrap_plots(plots, ncol = min(length(prepared_data), 3)) +
         patchwork::plot_annotation(title = title) &
         theme(plot.title = element_text(hjust = 0.5))
-      if (show.plot) print(p)
-      plots.at.depth[[paste0("Node_", node.idx)]] = p
+      if (show_plot) print(p)
+      plots_at_depth[[paste0("Node_", node_idx)]] = p
     }
   }
-  plots.at.depth
+  plots_at_depth
 }
 
 #' Create node title for PD plot (internal).
 #' @keywords internal
 create_node_title = function(node, depth_idx, tree) {
-  n.samples = length(node$subset.idx)
+  n_samples = length(node$subset_idx)
   if (depth_idx == 1) {
-    return(paste0("Root node", " (N = ", n.samples, ")"))
+    return(paste0("Root node", " (N = ", n_samples, ")"))
   }
-  # parent.node = find_parent_by_id(tree[[depth_idx - 1]], node$id.parent)
-  path.conditions = track_split_condition(node, tree)
-  split.condition = if (length(path.conditions) > 0) paste(path.conditions, collapse = " & ") else NULL
-  paste0(depth_idx - 1, ".Split results: ", split.condition, " (N = ", n.samples, ")")
+  # parent_node = find_parent_by_id(tree[[depth_idx - 1]], node$id_parent)
+  path_conditions = track_split_condition(node, tree)
+  split_condition = if (length(path_conditions) > 0) paste(path_conditions, collapse = " & ") else NULL
+  paste0(depth_idx - 1, ".Split results: ", split_condition, " (N = ", n_samples, ")")
 }
 
 #' Compute y-axis range for PD plots (internal).
 #' @keywords internal
-calculate_y_range = function(prepared.data, data, target.feature.name, show.point) {
+calculate_y_range = function(prepared_data, data, target_feature_name, show_point) {
   # Collect ICE values excluding the 'node' column by name from each data.frame
-  values.list = lapply(prepared.data, function(df) {
+  values_list = lapply(prepared_data, function(df) {
     if (is.data.frame(df) && ncol(df) >= 1) {
       cols = setdiff(colnames(df), "node")
       if (length(cols) == 0) {
@@ -164,20 +164,20 @@ calculate_y_range = function(prepared.data, data, target.feature.name, show.poin
       numeric(0)
     }
   })
-  effect.values = unlist(values.list, use.names = FALSE)
+  effect_values = unlist(values_list, use.names = FALSE)
 
-  ymin.effect = min(effect.values, na.rm = TRUE)
-  ymax.effect = max(effect.values, na.rm = TRUE)
-  if (show.point) {
-    ymin.data = min(data[[target.feature.name]], na.rm = TRUE)
-    ymax.data = max(data[[target.feature.name]], na.rm = TRUE)
-    ymax = max(ymax.data, ymax.effect)
-    ymin = min(ymin.data, ymin.effect)
+  ymin_effect = min(effect_values, na.rm = TRUE)
+  ymax_effect = max(effect_values, na.rm = TRUE)
+  if (show_point) {
+    ymin_data = min(data[[target_feature_name]], na.rm = TRUE)
+    ymax_data = max(data[[target_feature_name]], na.rm = TRUE)
+    ymax = max(ymax_data, ymax_effect)
+    ymin = min(ymin_data, ymin_effect)
   } else {
-    ymax = ymax.effect
-    ymin = ymin.effect
+    ymax = ymax_effect
+    ymin = ymin_effect
   }
-  y.range = ymax - ymin
-  ymax = ymax + 0.2 * y.range
+  y_range = ymax - ymin
+  ymax = ymax + 0.2 * y_range
   list(ymin = ymin, ymax = ymax)
 }

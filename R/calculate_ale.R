@@ -1,104 +1,104 @@
 #' Calculate Accumulated Local Effects (ALE)
 #'
-#' Given model, data, feature.set, target.feature.name, n.intervals, predict.fun: for each feature, 
+#' Given model, data, feature_set, target_feature_name, n_intervals, predict_fun: for each feature, 
 #' computes finite differences (dL) and per-interval stats (int_n, int_s1, int_s2). 
 #' Numeric: quantile intervals; categorical: level-by-level prediction differences. 
-#' Returns named list of data.tables (row.id, feat.val, dL, interval.index, int_n, int_s1, int_s2, etc.).
+#' Returns named list of data.tables (row_id, feat_val, dL, interval_index, int_n, int_s1, int_s2, etc.).
 #'
 #' @param model Fitted model object with a predict interface.
 #' @param data Data frame or data.table. Training data (features and target).
-#' @param feature.set Character. Names of features to compute ALE for; must exist in \code{data}.
-#' @param target.feature.name Character. Name of the target variable in \code{data}.
-#' @param n.intervals Integer. Number of equal-frequency intervals for numeric features (default: 10).
-#' @param predict.fun Function or NULL. \code{function(model, data)} returning a numeric vector of predictions; NULL uses an mlr3-style default.
+#' @param feature_set Character. Names of features to compute ALE for; must exist in \code{data}.
+#' @param target_feature_name Character. Name of the target variable in \code{data}.
+#' @param n_intervals Integer. Number of equal-frequency intervals for numeric features (default: 10).
+#' @param predict_fun Function or NULL. \code{function(model, data)} returning a numeric vector of predictions; NULL uses an mlr3-style default.
 #'
-#' @return Named list of data.tables, one per element of \code{feature.set}. Each data.table has columns:
-#'   \item{row.id}{Row index in \code{data}.}
-#'   \item{feat.val}{Feature value at that row.}
-#'   \item{x.left, x.right}{Interval/category boundaries (numeric) or left/right category (factor).}
+#' @return Named list of data.tables, one per element of \code{feature_set}. Each data.table has columns:
+#'   \item{row_id}{Row index in \code{data}.}
+#'   \item{feat_val}{Feature value at that row.}
+#'   \item{x_left, x_right}{Interval/category boundaries (numeric) or left/right category (factor).}
 #'   \item{dL}{Local effect (finite difference).}
-#'   \item{interval.index}{Interval or category index.}
+#'   \item{interval_index}{Interval or category index.}
 #'   \item{int_n, int_s1, int_s2}{Per-interval count and sum(dL), sum(dL^2) for heterogeneity.}
 #'
 #' @details
-#' Numeric features: builds \code{n.intervals} quantile-based intervals, assigns each row to an interval, and computes finite differences between interval boundaries via \code{predict.fun}.
+#' Numeric features: builds \code{n_intervals} quantile-based intervals, assigns each row to an interval, and computes finite differences between interval boundaries via \code{predict_fun}.
 #'
 #' Categorical features: use factor levels as given (typically pre-ordered by \code{order_categorical_levels} in \code{prepare_split_data_ale}). For each row, \code{dL} is the difference in predictions when the focal feature is set to the next vs. previous level; single-level factors get \code{dL = 0}.
 #'
-#' Sample-level columns (\code{row.id}, \code{feat.val}, \code{dL}, etc.) support subsetting by node and downstream heterogeneity calculation.
+#' Sample-level columns (\code{row_id}, \code{feat_val}, \code{dL}, etc.) support subsetting by node and downstream heterogeneity calculation.
 #'
 #' @export
-calculate_ale = function(model, data, feature.set, target.feature.name, n.intervals = 10, predict.fun = NULL) {
-  if (is.null(predict.fun)) {
-    predict.fun = function(model, data) {
+calculate_ale = function(model, data, feature_set, target_feature_name, n_intervals = 10, predict_fun = NULL) {
+  if (is.null(predict_fun)) {
+    predict_fun = function(model, data) {
       pred = model$predict_newdata(data)
       if (inherits(pred, "Prediction")) pred$response else pred
     }
   }
   if (data.table::is.data.table(data)) {
-    X = data[, setdiff(colnames(data), target.feature.name), with = FALSE]
+    X = data[, setdiff(colnames(data), target_feature_name), with = FALSE]
   } else {
-    X = data[, setdiff(colnames(data), target.feature.name), drop = FALSE]
+    X = data[, setdiff(colnames(data), target_feature_name), drop = FALSE]
   }
-  eff.list = lapply(feature.set, function(feat) {
+  eff_list = lapply(feature_set, function(feat) {
     if (is.factor(data[[feat]])) {
       ale_categorical_feature(model = model, data = data, X = X,
-        feature = feat, target.feature.name = target.feature.name, predict.fun = predict.fun)
+        feature = feat, target_feature_name = target_feature_name, predict_fun = predict_fun)
     } else {
       ale_numeric_feature(model = model, data = data, X = X,
-        feature = feat, target.feature.name = target.feature.name, n.intervals = n.intervals, predict.fun = predict.fun)
+        feature = feat, target_feature_name = target_feature_name, n_intervals = n_intervals, predict_fun = predict_fun)
     }
   })
-  names(eff.list) = feature.set
-  eff.list
+  names(eff_list) = feature_set
+  eff_list
 }
 
 #' ALE for a single numeric feature (internal)
 #'
 #' Given model, data, X, feature: builds quantile intervals, assigns rows to intervals, 
 #' computes dL (finite difference) and int_n/int_s1/int_s2 per interval. Returns data.table.
-#' @param model,data,X,feature,target.feature.name,n.intervals,predict.fun See \code{\link{calculate_ale}}.
+#' @param model,data,X,feature,target_feature_name,n_intervals,predict_fun See \code{\link{calculate_ale}}.
 #' @keywords internal
-ale_numeric_feature = function(model, data, X, feature, target.feature.name, n.intervals = 10, predict.fun = NULL) {
-  x.num = data[[feature]]
-  n.rows = nrow(data)
+ale_numeric_feature = function(model, data, X, feature, target_feature_name, n_intervals = 10, predict_fun = NULL) {
+  x_num = data[[feature]]
+  n_rows = nrow(data)
   # If constant or all NA: return minimal DT
-  if (length(unique(na.omit(x.num))) <= 1L) {
+  if (length(unique(na.omit(x_num))) <= 1L) {
     return(data.table::data.table(
-      row.id         = seq_len(n.rows),
-      feat.val       = x.num,
-      x.left         = x.num,
-      x.right        = x.num,
+      row_id         = seq_len(n_rows),
+      feat_val       = x_num,
+      x_left         = x_num,
+      x_right        = x_num,
       dL             = 0,
-      interval.index = 1L,
-      int_n          = length(x.num),
+      interval_index = 1L,
+      int_n          = length(x_num),
       int_s1         = 0,
       int_s2         = 0
     ))
   }
   # Quantile-based interval boundaries
-  q = stats::quantile(x.num, 0:n.intervals / n.intervals, type = 7, na.rm = TRUE)
-  interval.index = findInterval(x.num, q, left.open = TRUE)
-  interval.index[interval.index == 0L] = 1L
+  q = stats::quantile(x_num, 0:n_intervals / n_intervals, type = 7, na.rm = TRUE)
+  interval_index = findInterval(x_num, q, left.open = TRUE)
+  interval_index[interval_index == 0L] = 1L
   max_id = length(q) - 1L
-  interval.index[interval.index > max_id] = max_id
+  interval_index[interval_index > max_id] = max_id
   # Build boundary datasets
-  data.lower = data.table::copy(X)
-  data.upper = data.table::copy(X)
-  data.lower[[feature]] = q[interval.index]
-  data.upper[[feature]] = q[interval.index + 1L]
+  data_lower = data.table::copy(X)
+  data_upper = data.table::copy(X)
+  data_lower[[feature]] = q[interval_index]
+  data_upper[[feature]] = q[interval_index + 1L]
   # Predictions at boundaries
-  loss.lower = predict.fun(model, data.lower) # maybe predict together and split later
-  loss.upper = predict.fun(model, data.upper)
-  dL = (loss.upper - loss.lower)
+  loss_lower = predict_fun(model, data_lower) # maybe predict together and split later
+  loss_upper = predict_fun(model, data_upper)
+  dL = (loss_upper - loss_lower)
 
   DT = data.table::data.table(
-    row.id         = seq_len(n.rows),
-    feat.val       = x.num,
-    x.left         = q[interval.index],
-    x.right        = q[interval.index + 1L],
+    row_id         = seq_len(n_rows),
+    feat_val       = x_num,
+    x_left         = q[interval_index],
+    x_right        = q[interval_index + 1L],
     dL             = dL,
-    interval.index = interval.index
+    interval_index = interval_index
   )
 
   # Compute per-interval statistics
@@ -106,53 +106,53 @@ ale_numeric_feature = function(model, data, X, feature, target.feature.name, n.i
     int_n    = .N,
     int_s1   = sum(dL),
     int_s2   = sum(dL^2)
-  ), by = interval.index]
+  ), by = interval_index]
   DT
 }
 
 #' ALE for a single categorical feature (internal)
-#' @param model,data,X,feature,target.feature.name,predict.fun See \code{\link{calculate_ale}}.
+#' @param model,data,X,feature,target_feature_name,predict_fun See \code{\link{calculate_ale}}.
 #' @keywords internal
-ale_categorical_feature = function(model, data, X, feature, target.feature.name, predict.fun = NULL) {
-  data.copy = data
-  x.cat = droplevels(data.copy[[feature]])
-  K = nlevels(x.cat)
-  n.rows = nrow(data.copy)
+ale_categorical_feature = function(model, data, X, feature, target_feature_name, predict_fun = NULL) {
+  data_copy = data
+  x_cat = droplevels(data_copy[[feature]])
+  K = nlevels(x_cat)
+  n_rows = nrow(data_copy)
   # If only one level, dL is zero
   if (K <= 1) {
     return(data.table::data.table(
-      row.id         = seq_len(n.rows),
-      feat.val       = x.cat,
-      x.left         = x.cat,
-      x.right        = x.cat,
+      row_id         = seq_len(n_rows),
+      feat_val       = x_cat,
+      x_left         = x_cat,
+      x_right        = x_cat,
       dL             = 0,
-      interval.index = as.numeric(x.cat),
-      int_n          = length(x.cat),
+      interval_index = as.numeric(x_cat),
+      int_n          = length(x_cat),
       int_s1         = 0,
       int_s2         = 0
     ))
   }
-  levels.orig = levels(x.cat)
-  levels.id = as.numeric(x.cat)
+  levels_orig = levels(x_cat)
+  levels_id = as.numeric(x_cat)
   # Indices for adjacent category replacement
-  row.ind.plus = seq_len(nrow(data.copy))[levels.id < K] # not the highest level
-  row.ind.neg = seq_len(nrow(data.copy))[levels.id > 1] # not the lowest level
+  row_ind_plus = seq_len(nrow(data_copy))[levels_id < K] # not the highest level
+  row_ind_neg = seq_len(nrow(data_copy))[levels_id > 1] # not the lowest level
 
-  X.plus = data.table::copy(X)
-  X.neg = data.table::copy(X)
-  X.plus[row.ind.plus, feature] = levels.orig[levels.id[row.ind.plus] + 1L]
-  X.neg[row.ind.neg, feature] = levels.orig[levels.id[row.ind.neg] - 1L]
-  y.hat.plus = predict.fun(model, X.plus)
-  y.hat.neg = predict.fun(model, X.neg)
-  delta = y.hat.plus - y.hat.neg
+  X_plus = data.table::copy(X)
+  X_neg = data.table::copy(X)
+  X_plus[row_ind_plus, feature] = levels_orig[levels_id[row_ind_plus] + 1L]
+  X_neg[row_ind_neg, feature] = levels_orig[levels_id[row_ind_neg] - 1L]
+  y_hat_plus = predict_fun(model, X_plus)
+  y_hat_neg = predict_fun(model, X_neg)
+  delta = y_hat_plus - y_hat_neg
 
   DT = data.table::data.table(
-    row.id         = seq_len(n.rows),
-    feat.val       = data.copy[[feature]],
-    x.left         = X.neg[[feature]],
-    x.right        = X.plus[[feature]],
+    row_id         = seq_len(n_rows),
+    feat_val       = data_copy[[feature]],
+    x_left         = X_neg[[feature]],
+    x_right        = X_plus[[feature]],
     dL             = delta,
-    interval.index = levels.id
+    interval_index = levels_id
   )
 
   # Full-interval statistics (each category treated as an interval)
@@ -161,51 +161,51 @@ ale_categorical_feature = function(model, data, X, feature, target.feature.name,
     int_n    = .N, # nolint: object_usage_linter
     int_s1   = sum(dL),
     int_s2   = sum(dL^2)
-  ), by = interval.index]
+  ), by = interval_index]
   DT
 }
 
 #### Old ale_categorical_feature ####
-# ale_categorical_feature = function(model, data, X, feature, target.feature.name, predict.fun = NULL) {
-#   data.copy = data
-#   x.cat = droplevels(data.copy[[feature]])
-#   K = nlevels(x.cat)
-#   n.rows = nrow(data.copy)
+# ale_categorical_feature = function(model, data, X, feature, target_feature_name, predict_fun = NULL) {
+#   data_copy = data
+#   x_cat = droplevels(data_copy[[feature]])
+#   K = nlevels(x_cat)
+#   n_rows = nrow(data_copy)
 #   # If only one level, dL is zero
 #   if (K <= 1) {
 #     return(data.table::data.table(
-#       row.id         = seq_len(n.rows),
-#       feat.val       = x.cat,
-#       x.left         = x.cat,
-#       x.right        = x.cat,
+#       row_id         = seq_len(n_rows),
+#       feat_val       = x_cat,
+#       x_left         = x_cat,
+#       x_right        = x_cat,
 #       dL             = 0,
-#       interval.index = as.numeric(x.cat),
-#       int_n          = length(x.cat),
+#       interval_index = as.numeric(x_cat),
+#       int_n          = length(x_cat),
 #       int_s1         = 0,
 #       int_s2         = 0
 #     ))
 #   }
-#   levels.orig = levels(x.cat)
-#   levels.id = as.numeric(x.cat)
+#   levels_orig = levels(x_cat)
+#   levels_id = as.numeric(x_cat)
 #   # Indices for adjacent category replacement
-#   row.ind.plus = seq_len(nrow(data.copy))[levels.id < K] # not the highest level
-#   row.ind.neg = seq_len(nrow(data.copy))[levels.id > 1] # not the lowest level
+#   row_ind_plus = seq_len(nrow(data_copy))[levels_id < K] # not the highest level
+#   row_ind_neg = seq_len(nrow(data_copy))[levels_id > 1] # not the lowest level
 #
-#   X.plus = data.table::copy(X)
-#   X.neg = data.table::copy(X)
-#   X.plus[row.ind.plus, feature] = levels.orig[levels.id[row.ind.plus] + 1L]
-#   X.neg[row.ind.neg, feature] = levels.orig[levels.id[row.ind.neg] - 1L]
-#   y.hat.plus = predict.fun(model, X.plus)
-#   y.hat.neg = predict.fun(model, X.neg)
-#   delta = y.hat.plus - y.hat.neg
+#   X_plus = data.table::copy(X)
+#   X_neg = data.table::copy(X)
+#   X_plus[row_ind_plus, feature] = levels_orig[levels_id[row_ind_plus] + 1L]
+#   X_neg[row_ind_neg, feature] = levels_orig[levels_id[row_ind_neg] - 1L]
+#   y_hat_plus = predict_fun(model, X_plus)
+#   y_hat_neg = predict_fun(model, X_neg)
+#   delta = y_hat_plus - y_hat_neg
 #
 #   DT = data.table::data.table(
-#     row.id         = seq_len(n.rows),
-#     feat.val       = data.copy[[feature]],
-#     x.left         = X.neg[[feature]],
-#     x.right        = X.plus[[feature]],
+#     row_id         = seq_len(n_rows),
+#     feat_val       = data_copy[[feature]],
+#     x_left         = X_neg[[feature]],
+#     x_right        = X_plus[[feature]],
 #     dL             = delta,
-#     interval.index = levels.id
+#     interval_index = levels_id
 #   )
 #
 #   # Full-interval statistics (each category treated as an interval)
@@ -214,50 +214,50 @@ ale_categorical_feature = function(model, data, X, feature, target.feature.name,
 #     int_n    = .N, # nolint: object_usage_linter
 #     int_s1   = sum(dL),
 #     int_s2   = sum(dL^2)
-#   ), by = interval.index]
+#   ), by = interval_index]
 #   DT
 # }
 
 
 #### Old calculate_ale ####
-# calculate_ale = function(model, data, feature.set, target.feature.name, h, predict.fun = NULL) {
-#   if (is.null(predict.fun)) {
-#     predict.fun = function(model, data) {
+# calculate_ale = function(model, data, feature_set, target_feature_name, h, predict_fun = NULL) {
+#   if (is.null(predict_fun)) {
+#     predict_fun = function(model, data) {
 #       pred = model$predict_newdata(data)
 #       if (inherits(pred, "Prediction")) pred$response else pred
 #     }
 #   }
-#   X = data[, setdiff(colnames(data), target.feature.name), drop = FALSE]
-#   effect = lapply(feature.set, function(feature) {
+#   X = data[, setdiff(colnames(data), target_feature_name), drop = FALSE]
+#   effect = lapply(feature_set, function(feature) {
 #     if (class(data[, feature]) == "factor") {
 #       # For categorical features, calculate ALE using adjacent category differences
 #       data[, feature] = droplevels(data[, feature])
 #       K = nlevels(data[, feature])
-#       levs.orig = levels(data[, feature])
-#       x.ord = as.numeric(data[, feature])
+#       levs_orig = levels(data[, feature])
+#       x_ord = as.numeric(data[, feature])
 #
 #       # Indices for boundary interpolation
-#       row.ind.plus = (1:nrow(data))[x.ord < K] # not the highest level
-#       row.ind.neg = (1:nrow(data))[x.ord > 1] # not the lowest level
+#       row_ind_plus = (1:nrow(data))[x_ord < K] # not the highest level
+#       row_ind_neg = (1:nrow(data))[x_ord > 1] # not the lowest level
 #
-#       X.plus = X
-#       X.neg = X
-#       X.plus[row.ind.plus, feature] = levs.orig[x.ord[row.ind.plus] + 1]
-#       X.neg[row.ind.neg, feature] = levs.orig[x.ord[row.ind.neg] - 1]
+#       X_plus = X
+#       X_neg = X
+#       X_plus[row_ind_plus, feature] = levs_orig[x_ord[row_ind_plus] + 1]
+#       X_neg[row_ind_neg, feature] = levs_orig[x_ord[row_ind_neg] - 1]
 #
-#       y.hat.plus = predict.fun(model, X.plus)
-#       y.hat.neg = predict.fun(model, X.neg)
+#       y_hat_plus = predict_fun(model, X_plus)
+#       y_hat_neg = predict_fun(model, X_neg)
 #
 #       # Calculate finite differences
-#       Delta = y.hat.plus - y.hat.neg
+#       Delta = y_hat_plus - y_hat_neg
 #
 #       DT = data.table::data.table(
-#         "feat.val" = data[, feature],
-#         "x.left" = X.neg[, feature],
-#         "x.right" = X.plus[, feature],
+#         "feat_val" = data[, feature],
+#         "x_left" = X_neg[, feature],
+#         "x_right" = X_plus[, feature],
 #         "dL" = Delta,
-#         "interval.index" = as.numeric(data[, feature]),
-#         "interval.width" = 1
+#         "interval_index" = as.numeric(data[, feature]),
+#         "interval_width" = 1
 #       )
 #     } else {
 #       # For numeric features, use quantile-based intervals
@@ -265,34 +265,34 @@ ale_categorical_feature = function(model, data, X, feature, target.feature.name,
 #       q = quantile(data[[feature]], 0:h / h)
 #
 #       # Assign data points to intervals
-#       interval.index = findInterval(data[[feature]], q, left.open = TRUE)
+#       interval_index = findInterval(data[[feature]], q, left.open = TRUE)
 #       # Leftmost interval should be 1, not 0
-#       interval.index[interval.index == 0] = 1
+#       interval_index[interval_index == 0] = 1
 #
 #       # Create data with interval boundaries (exclude target for prediction)
-#       data.lower = data.upper = X
-#       data.lower[[feature]] = q[interval.index]
-#       data.upper[[feature]] = q[interval.index + 1]
+#       data_lower = data_upper = X
+#       data_lower[[feature]] = q[interval_index]
+#       data_upper[[feature]] = q[interval_index + 1]
 #
 #       # Get predictions at boundaries
-#       loss.lower = predict.fun(model, data.lower)
-#       loss.upper = predict.fun(model, data.upper)
+#       loss_lower = predict_fun(model, data_lower)
+#       loss_upper = predict_fun(model, data_upper)
 #
 #       # Calculate finite differences
-#       dL = (loss.upper - loss.lower)
-#       interval.width = q[interval.index + 1] - q[interval.index]
+#       dL = (loss_upper - loss_lower)
+#       interval_width = q[interval_index + 1] - q[interval_index]
 #
 #       DT = data.table::data.table(
-#         "feat.val" = data[, feature],
-#         "x.left" = q[interval.index],
-#         "x.right" = q[interval.index + 1],
+#         "feat_val" = data[, feature],
+#         "x_left" = q[interval_index],
+#         "x_right" = q[interval_index + 1],
 #         "dL" = dL,
-#         "interval.index" = interval.index,
-#         "interval.width" = interval.width
+#         "interval_index" = interval_index,
+#         "interval_width" = interval_width
 #       )
 #     }
 #     DT
 #   })
-#   names(effect) = feature.set
+#   names(effect) = feature_set
 #   return(effect)
 # }

@@ -1,66 +1,66 @@
 #' Find best ALE split point for one feature (internal).
-#' @param z,effect,st.table,split.feat,is.categorical,n.quantiles,min.node.size Arguments.
+#' @param z,effect,st_table,split_feat,is_categorical,n_quantiles,min_node_size Arguments.
 #' @keywords internal
 search_best_split_point_ale = function(
-  z, effect, st.table, split.feat,
-  is.categorical,
-  n.quantiles = NULL,
-  min.node.size = 1L
+  z, effect, st_table, split_feat,
+  is_categorical,
+  n_quantiles = NULL,
+  min_node_size = 1L
 ) {
-  feature.names = names(effect)
-  p = length(feature.names)
-  split.feat.j = match(split.feat, feature.names)
-  has.self.ale = !is.na(split.feat.j)
+  feature_names = names(effect)
+  p = length(feature_names)
+  split_feat_j = match(split_feat, feature_names)
+  has_self_ale = !is.na(split_feat_j)
 
   # Helper: Calculate interval-wise SSE
   risk_from_stats = function(n, s1, s2) ifelse(n <= 1L, 0.0, s2 - (s1 * s1) / n)
 
   # Helper: Find split candidates
   build_order_and_candidates = function() {
-    if (!is.categorical) {
-      ord.idx = order(z, na.last = NA)
-      z.sorted = z[ord.idx]
-      n.obs = length(z.sorted)
-      if (n.obs <= 1L) {
+    if (!is_categorical) {
+      ord_idx = order(z, na.last = NA)
+      z_sorted = z[ord_idx]
+      n_obs = length(z_sorted)
+      if (n_obs <= 1L) {
         return(NULL)
       }
-      if (!is.null(n.quantiles) && length(unique(z.sorted)) >= n.quantiles) {
-        probs = seq(0, 1, length.out = n.quantiles + 2L)[-c(1L, n.quantiles + 2L)]
-        splits = unique(as.numeric(quantile(z.sorted, probs, type = 7)))
+      if (!is.null(n_quantiles) && length(unique(z_sorted)) >= n_quantiles) {
+        probs = seq(0, 1, length.out = n_quantiles + 2L)[-c(1L, n_quantiles + 2L)]
+        splits = unique(as.numeric(quantile(z_sorted, probs, type = 7)))
       } else {
-        splits = unique(z.sorted)
+        splits = unique(z_sorted)
       }
-      t.idx = findInterval(splits, z.sorted)
-      if (length(t.idx) == 0L) {
+      t_idx = findInterval(splits, z_sorted)
+      if (length(t_idx) == 0L) {
         return(NULL)
       }
-      is.cand = rep(FALSE, n.obs - 1L)
-      valid.t = t.idx[t.idx >= 1L & t.idx <= (n.obs - 1L)]
-      is.cand[unique(valid.t)] = TRUE
-      list(ord.idx = ord.idx, z.sorted = z.sorted, n.obs = n.obs, is.cand = is.cand)
+      is_cand = rep(FALSE, n_obs - 1L)
+      valid_t = t_idx[t_idx >= 1L & t_idx <= (n_obs - 1L)]
+      is_cand[unique(valid_t)] = TRUE
+      list(ord_idx = ord_idx, z_sorted = z_sorted, n_obs = n_obs, is_cand = is_cand)
     } else {
-      z.fac = droplevels(z)
-      z.nonNA = which(!is.na(z.fac))
-      if (length(z.nonNA) <= 1L) {
+      z_fac = droplevels(z)
+      z_nonNA = which(!is.na(z_fac))
+      if (length(z_nonNA) <= 1L) {
         return(NULL)
       }
-      level.id = as.integer(z.fac[z.nonNA])
-      ord.idx = z.nonNA[order(level.id)]
-      n.obs = length(ord.idx)
-      counts = tabulate(level.id)
-      t.idx = head(cumsum(counts), -1L)
-      if (length(t.idx) == 0L) {
+      level_id = as.integer(z_fac[z_nonNA])
+      ord_idx = z_nonNA[order(level_id)]
+      n_obs = length(ord_idx)
+      counts = tabulate(level_id)
+      t_idx = head(cumsum(counts), -1L)
+      if (length(t_idx) == 0L) {
         return(NULL)
       }
-      is.cand = rep(FALSE, n.obs - 1L)
-      is.cand[t.idx] = TRUE
+      is_cand = rep(FALSE, n_obs - 1L)
+      is_cand[t_idx] = TRUE
       list(
-        ord.idx = ord.idx,
-        z.sorted = z.fac[ord.idx],
-        n.obs = n.obs,
-        is.cand = is.cand,
-        boundary.pos = t.idx,
-        levels.vec = levels(z.fac)
+        ord_idx = ord_idx,
+        z_sorted = z_fac[ord_idx],
+        n_obs = n_obs,
+        is_cand = is_cand,
+        boundary_pos = t_idx,
+        levels_vec = levels(z_fac)
       )
     }
   }
@@ -68,64 +68,64 @@ search_best_split_point_ale = function(
   plan = build_order_and_candidates()
   if (is.null(plan)) {
     return(list(
-      split.point = NA_real_,
-      split.objective = Inf,
-      objective.value.j = rep(NA_real_, p),
-      left.objective.value.j = rep(NA_real_, p),
-      right.objective.value.j = rep(NA_real_, p)
+      split_point = NA_real_,
+      split_objective = Inf,
+      objective_value_j = rep(NA_real_, p),
+      left_objective_value_j = rep(NA_real_, p),
+      right_objective_value_j = rep(NA_real_, p)
     ))
   }
-  ord.idx = plan$ord.idx
-  z.sorted = plan$z.sorted
-  n.obs = plan$n.obs
-  is.cand.t = plan$is.cand
+  ord_idx = plan$ord_idx
+  z_sorted = plan$z_sorted
+  n_obs = plan$n_obs
+  is_cand_t = plan$is_cand
 
-  split_feat_j_arg = if (has.self.ale) split.feat.j else 0L
-  z_sorted_num = if (is.numeric(z.sorted)) as.numeric(z.sorted) else rep(0.0, n.obs)
+  split_feat_j_arg = if (has_self_ale) split_feat_j else 0L
+  z_sorted_num = if (is.numeric(z_sorted)) as.numeric(z_sorted) else rep(0.0, n_obs)
 
   cpp_res = ale_sweep_cpp(
-    ord_idx = ord.idx,
-    dL_mat = st.table$dL.mat,
-    interval_idx_mat = st.table$interval.idx.mat,
-    offsets = st.table$offsets,
-    tot_n = st.table$tot.n,
-    tot_s1 = st.table$tot.s1,
-    tot_s2 = st.table$tot.s2,
-    r_risks = st.table$r.risks,
-    is_cand = is.cand.t,
-    min_node_size = min.node.size,
+    ord_idx = ord_idx,
+    dL_mat = st_table$dL_mat,
+    interval_idx_mat = st_table$interval_idx_mat,
+    offsets = st_table$offsets,
+    tot_n = st_table$tot_n,
+    tot_s1 = st_table$tot_s1,
+    tot_s2 = st_table$tot_s2,
+    r_risks = st_table$r_risks,
+    is_cand = is_cand_t,
+    min_node_size = min_node_size,
     split_feat_j = split_feat_j_arg,
     use_stabilizer = FALSE,
     z_sorted = z_sorted_num,
-    n_obs = n.obs
+    n_obs = n_obs
   )
-  best.t = cpp_res$best_t
-  best.risks.sum = cpp_res$best_risks_sum
-  best.left.risks = cpp_res$best_left_risks
-  best.right.risks = cpp_res$best_right_risks
+  best_t = cpp_res$best_t
+  best_risks_sum = cpp_res$best_risks_sum
+  best_left_risks = cpp_res$best_left_risks
+  best_right_risks = cpp_res$best_right_risks
 
-  if (is.na(best.t) || best.t < 0L) { # in cpp: best_t = -1 means no valid split point found
+  if (is.na(best_t) || best_t < 0L) { # in cpp: best_t = -1 means no valid split point found
     return(list(
-      split.point = NA_real_,
-      split.objective = Inf,
-      objective.value.j = rep(NA_real_, p),
-      left.objective.value.j = rep(NA_real_, p),
-      right.objective.value.j = rep(NA_real_, p)
+      split_point = NA_real_,
+      split_objective = Inf,
+      objective_value_j = rep(NA_real_, p),
+      left_objective_value_j = rep(NA_real_, p),
+      right_objective_value_j = rep(NA_real_, p)
     ))
   }
-  if (!is.categorical) {
-    left.value = max(z.sorted[1:best.t])
-    right.value = min(z.sorted[-(1:best.t)])
-    best.split.point = (left.value + right.value) / 2
+  if (!is_categorical) {
+    left_value = max(z_sorted[1:best_t])
+    right_value = min(z_sorted[-(1:best_t)])
+    best_split_point = (left_value + right_value) / 2
   } else {
-    k = which(plan$boundary.pos == best.t)[1]
-    best.split.point = if (!is.na(k)) plan$levels.vec[k] else NA
+    k = which(plan$boundary_pos == best_t)[1]
+    best_split_point = if (!is.na(k)) plan$levels_vec[k] else NA
   }
   list(
-    split.point = best.split.point,
-    split.objective = best.risks.sum,
-    objective.value.j = best.left.risks + best.right.risks,
-    left.objective.value.j = best.left.risks,
-    right.objective.value.j = best.right.risks
+    split_point = best_split_point,
+    split_objective = best_risks_sum,
+    objective_value_j = best_left_risks + best_right_risks,
+    left_objective_value_j = best_left_risks,
+    right_objective_value_j = best_right_risks
   )
 }

@@ -17,18 +17,18 @@
 #' @keywords internal
 plot_tree_structure = function(tree) {
   data = prepare_layout_data(tree)
-  parent.map = setNames(data$id, data$node.id)
-  data$parent.id = parent.map[as.character(data$id.parent)]
-  edge.list = na.omit(data[, c("parent.id", "id")])
-  colnames(edge.list) = c("from", "to")
+  parent_map = setNames(data$id, data$node_id)
+  data$parent_id = parent_map[as.character(data$id_parent)]
+  edge_list = na.omit(data[, c("parent_id", "id")])
+  colnames(edge_list) = c("from", "to")
 
-  g = igraph::graph_from_data_frame(edge.list, vertices = data, directed = TRUE)
+  g = igraph::graph_from_data_frame(edge_list, vertices = data, directed = TRUE)
 
   gg = ggraph::ggraph(g, layout = "tree") +
     coord_flip(clip = "off")
 
   # Only add edges if there are any
-  if (nrow(edge.list) > 0) {
+  if (nrow(edge_list) > 0) {
     gg = gg + ggraph::geom_edge_elbow(
       arrow = arrow(length = unit(0.05, "cm")),
       end_cap = ggraph::circle(1.5, "mm"),

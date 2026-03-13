@@ -1,23 +1,23 @@
-utils::globalVariables(c("interval.index", "x.left", "x.right", "dL", "x.grid", "level"))
-interval.index = x.left = x.right = dL = x.grid = level = NULL
+utils::globalVariables(c("interval_index", "x_left", "x_right", "dL", "x_grid", "level"))
+interval_index = x_left = x_right = dL = x_grid = level = NULL
 
 #' Prepare ALE Plot Data for One or More Nodes
 #'
 #' Given effect (from \code{calculate_ale}), idx (row indices or list of such), features, 
-#' mean.center: subsets ALE rows by idx; calls \code{mean_center_ale} per feature for cumulative and optional centering. 
+#' mean_center: subsets ALE rows by idx; calls \code{mean_center_ale} per feature for cumulative and optional centering. 
 #' Returns named list of \code{mean_effect} data.tables (or nested list if idx is list).
 #'
 #' @param effect List returned by \code{calculate_ale()}.
 #' @param idx Integer vector of row indices (node subset), list of such vectors,
 #'   or NULL for the root node.
 #' @param features Character vector of features to include (default: all features in effect).
-#' @param mean.center Logical. Whether to mean-center ALE curves (default \code{TRUE}).
+#' @param mean_center Logical. Whether to mean-center ALE curves (default \code{TRUE}).
 #'
 #' @return Named list where each element contains a single \code{mean_effect}
 #'   data.table for the corresponding feature (or a nested list if \code{idx}
 #'   is a list).
 prepare_plot_data_ale = function(effect, idx = NULL, features = names(effect),
-  mean.center = TRUE) {
+  mean_center = TRUE) {
   if (is.null(effect) || !length(effect)) {
     return(list())
   }
@@ -30,7 +30,7 @@ prepare_plot_data_ale = function(effect, idx = NULL, features = names(effect),
           effect,
           idx = one_idx,
           features = features,
-          mean.center = mean.center
+          mean_center = mean_center
         )
       }
     )
@@ -44,9 +44,9 @@ prepare_plot_data_ale = function(effect, idx = NULL, features = names(effect),
   out = lapply(feats, function(feat) {
     dt = data.table::as.data.table(effect[[feat]])
     if (!is.null(idx)) {
-      dt = dt[dt[["row.id"]] %in% idx]
+      dt = dt[dt[["row_id"]] %in% idx]
     }
-    mean_dt = mean_center_ale(dt, mean.center = mean.center)
+    mean_dt = mean_center_ale(dt, mean_center = mean_center)
     mean_dt$feature = feat
     list(mean_effect = mean_dt)
   })
@@ -56,57 +56,57 @@ prepare_plot_data_ale = function(effect, idx = NULL, features = names(effect),
 
 #' Internal ALE curve computation
 #'
-#' Given ALE data.table for one feature and mean.center: cumsums dL by interval; 
-#' optionally subtracts global mean. Returns data.table with x.grid and .value (cumulative ALE).
+#' Given ALE data.table for one feature and mean_center: cumsums dL by interval; 
+#' optionally subtracts global mean. Returns data.table with x_grid and .value (cumulative ALE).
 #'
 #' @param feat data.table with per-interval ALE derivatives and metadata.
-#' @param mean.center Logical. Whether to mean-center the resulting ALE
+#' @param mean_center Logical. Whether to mean-center the resulting ALE
 #'   curve (default \code{TRUE}).
-mean_center_ale = function(feat, mean.center = TRUE) {
+mean_center_ale = function(feat, mean_center = TRUE) {
   feat$dL[feat$dL == 0] = NA
-  data.table::setkeyv(feat, c("interval.index"))
-  delta.aggr = feat[, list(
+  data.table::setkeyv(feat, c("interval_index"))
+  delta_aggr = feat[, list(
     dL = mean(.SD[[1]], na.rm = TRUE),
-    interval.n = .N
-  ), by = c("interval.index", "x.left", "x.right"), .SDcols = "dL"]
+    interval_n = .N
+  ), by = c("interval_index", "x_left", "x_right"), .SDcols = "dL"]
 
-  if (is.numeric(feat$feat.val)) {
-    vals = delta.aggr$dL
+  if (is.numeric(feat$feat_val)) {
+    vals = delta_aggr$dL
     csum = cumsum_na_as_zero(c(0, vals))
-    weights = delta.aggr$interval.n
+    weights = delta_aggr$interval_n
     mid_vals = (csum[-length(csum)] + csum[-1]) / 2
     denom = sum(weights)
     fJ0 = if (denom > 0) sum(mid_vals * weights) / denom else 0
-    if (!isTRUE(mean.center)) {
+    if (!isTRUE(mean_center)) {
       fJ0 = 0
     }
-    x_grid = c(delta.aggr$x.left, tail(delta.aggr$x.right, 1))
+    x_grid = c(delta_aggr$x_left, tail(delta_aggr$x_right, 1))
     mean_dt = data.table::data.table(
       feature = NA_character_,
-      x.grid = x_grid,
+      x_grid = x_grid,
       dL = csum - fJ0
     )
-  } else if (is.factor(feat$feat.val)) {
-    vals = delta.aggr$dL
+  } else if (is.factor(feat$feat_val)) {
+    vals = delta_aggr$dL
     csum = cumsum_na_as_zero(c(0, vals))
-    weights = delta.aggr$interval.n
+    weights = delta_aggr$interval_n
     mid_vals = (csum[-length(csum)] + csum[-1]) / 2
     denom = sum(weights)
     fJ0 = if (denom > 0) sum(mid_vals * weights) / denom else 0
-    if (!isTRUE(mean.center)) {
+    if (!isTRUE(mean_center)) {
       fJ0 = 0
     }
-    levs = levels(feat$feat.val)
-    if (is.null(levs)) levs = unique(as.character(feat$feat.val))
-    level_vals = as.character(delta.aggr$x.left)
+    levs = levels(feat$feat_val)
+    if (is.null(levs)) levs = unique(as.character(feat$feat_val))
+    level_vals = as.character(delta_aggr$x_left)
     mean_dt = data.table::data.table(
       feature = NA_character_,
-      x.grid = level_vals,
+      x_grid = level_vals,
       dL = csum[-1] - fJ0
     )
-    mean_dt$x.grid = factor(mean_dt$x.grid, levels = levs)
+    mean_dt$x_grid = factor(mean_dt$x_grid, levels = levs)
   } else {
-    mean_dt = data.table::data.table(feature = NA_character_, x.grid = numeric(0), dL = numeric(0))
+    mean_dt = data.table::data.table(feature = NA_character_, x_grid = numeric(0), dL = numeric(0))
   }
 
   mean_dt
