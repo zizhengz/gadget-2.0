@@ -81,7 +81,7 @@ test_that("ALE tree fit stores root and effect_root", {
   task = mlr3::TaskRegr$new("t", backend = data, target = "y")
   learner = mlr3::lrn("regr.ranger")
   learner$train(task)
-  tree = gadgetTree$new(strategy = aleStrategy$new(), n_split = 1, min_node_size = 15)
+  tree = GadgetTree$new(strategy = AleStrategy$new(), n_split = 1, min_node_size = 15)
   tree$fit(model = learner, data = data, target_feature_name = "y", n_intervals = 5)
   expect_true(!is.null(tree$root))
   strat = tree$strategy

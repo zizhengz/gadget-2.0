@@ -1,6 +1,6 @@
 #' Plot ALE curves for selected tree nodes
 #'
-#' External helper mirroring \code{plot_tree_pd}, used by \code{aleStrategy$plot}.
+#' External helper mirroring \code{plot_tree_pd}, used by \code{AleStrategy$plot}.
 #' Produces patchwork objects per node with ALE mean curves and optional observation points.
 #' Y-axis limits are auto-computed from effect and target data (like PD strategy).
 #'

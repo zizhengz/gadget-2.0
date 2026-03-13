@@ -1,4 +1,4 @@
-#' gadgetTree: Generalized Additive Decomposition of Global Effects Tree (R6 class)
+#' GadgetTree: Generalized Additive Decomposition of Global Effects Tree (R6 class)
 #'
 #' @description
 #' Wrapper for effect-based trees: given a strategy (pd/ale), fits tree via
@@ -6,7 +6,7 @@
 #' \code{$extract_split_info()}.
 #' Delegates all effect logic to the strategy.
 #'
-#' @field strategy Strategy object (e.g., pdStrategy) that implements effect-specific logic.
+#' @field strategy Strategy object (e.g., PdStrategy) that implements effect-specific logic.
 #' @field root Node object. Root node of the tree.
 #' @field n_split Integer. Maximum number of splits (tree depth minus one).
 #' @field impr_par Numeric. Improvement threshold for splitting.
@@ -21,9 +21,9 @@
 #'
 #' @examples
 #' \dontrun{
-#' # Example: Fit and plot a PD tree using pdStrategy and gadgetTree
-#' pd_strat = pdStrategy$new()
-#' tree = gadgetTree$new(strategy = pd_strat, n_split = 2)
+#' # Example: Fit and plot a PD tree using PdStrategy and GadgetTree
+#' pd_strat = PdStrategy$new()
+#' tree = GadgetTree$new(strategy = pd_strat, n_split = 2)
 #' tree$fit(effect, data, target_feature_name = "target")
 #' tree$plot(effect, data, target_feature_name = "target")
 #' tree$plot_tree_structure()
@@ -31,8 +31,8 @@
 #' }
 #'
 #' @export
-gadgetTree = R6::R6Class(
-  "gadgetTree",
+GadgetTree = R6::R6Class(
+  "GadgetTree",
   public = list(
     strategy = NULL,
     root = NULL,
@@ -45,8 +45,8 @@ gadgetTree = R6::R6Class(
     #' @description
     #' Given strategy and tree params (n_split, impr_par, min_node_size,
     #' n_quantiles): stores them and initializes empty \code{split_benchmark}.
-    #' Returns the gadgetTree instance.
-    #' @param strategy Strategy object (e.g., pdStrategy) that implements effect-specific logic.
+    #' Returns the GadgetTree instance.
+    #' @param strategy Strategy object (e.g., PdStrategy) that implements effect-specific logic.
     #' @param n_split Integer. Maximum number of splits (tree depth minus one).
     #' @param impr_par Numeric. Improvement threshold for splitting.
     #' @param min_node_size Integer. Minimum number of samples required in a node to allow further splitting.
@@ -79,7 +79,7 @@ gadgetTree = R6::R6Class(
     #'   Optional. Features to consider for splitting at each node.
     #'   If NULL, all features are considered.
     #' @param ... Additional arguments passed to the strategy's fit method.
-    #' @return gadgetTree object, invisibly. The fitted tree object.
+    #' @return GadgetTree object, invisibly. The fitted tree object.
     fit = function(data, target_feature_name, feature_set = NULL, split_feature = NULL, ...) {
       checkmate::assert_data_frame(data, .var.name = "data")
       checkmate::assert_character(target_feature_name, len = 1, .var.name = "target_feature_name")

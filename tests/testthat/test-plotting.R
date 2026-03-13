@@ -52,7 +52,7 @@ test_that("ALE tree plot returns list", {
   task = mlr3::TaskRegr$new("t", backend = data, target = "y")
   learner = mlr3::lrn("regr.ranger")
   learner$train(task)
-  tree = gadgetTree$new(strategy = aleStrategy$new(), n_split = 1, min_node_size = 10)
+  tree = GadgetTree$new(strategy = AleStrategy$new(), n_split = 1, min_node_size = 10)
   tree$fit(model = learner, data = data, target_feature_name = "y", n_intervals = 5)
   pl = tree$plot(data = data, target_feature_name = "y", show_plot = FALSE)
   expect_true(is.list(pl))

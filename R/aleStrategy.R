@@ -9,7 +9,7 @@ default_predict_fun = function(model, data) {
   if (inherits(pred, "Prediction")) pred$response else pred
 }
 
-#' @title aleStrategy: Generalized additive decomposition based on ALE effects.
+#' @title AleStrategy: Generalized additive decomposition based on ALE effects.
 #'
 #' @description
 #' ALE-based strategy: given model and data, preprocesses to Z/Y via \code{prepare_split_data_ale};
@@ -17,7 +17,7 @@ default_predict_fun = function(model, data) {
 #' finds best split via \code{search_best_split_ale}; fits tree and plots ALE curves.
 #'
 #' @field name Character. Strategy name (e.g., \code{"ale"}).
-#' @field tree_ref Reference to the associated \code{gadgetTree} instance.
+#' @field tree_ref Reference to the associated \code{GadgetTree} instance.
 #' @field fit_timing Named numeric vector with global/regional fit times (seconds).
 #' @field model Fitted model (persistent after \code{fit}).
 #' @field data Data frame or data.table with features and target (persistent after \code{fit}).
@@ -30,19 +30,19 @@ default_predict_fun = function(model, data) {
 #' @field effect_root Cached ALE effect list at the root node (used by \code{$plot()}).
 #'
 #' @details
-#' Intended for use through \code{gadgetTree$new(strategy = aleStrategy$new())} and
+#' Intended for use through \code{GadgetTree$new(strategy = AleStrategy$new())} and
 #' \code{tree$fit(...)}. Can be instantiated directly for custom pipelines.
 #'
 #' @examples
 #' \dontrun{
-#' ale_strat = aleStrategy$new()
-#' tree = gadgetTree$new(strategy = ale_strat, n_split = 2)
+#' ale_strat = AleStrategy$new()
+#' tree = GadgetTree$new(strategy = ale_strat, n_split = 2)
 #' tree$fit(model = model, data = data, target_feature_name = "y")
 #' }
 #'
 #' @export
-aleStrategy = R6::R6Class(
-  "aleStrategy",
+AleStrategy = R6::R6Class(
+  "AleStrategy",
   public = list(
     name = NULL,
     tree_ref = NULL,
@@ -208,7 +208,7 @@ aleStrategy = R6::R6Class(
     #' creates root Node; recursively splits; stores effect_root and
     #' fit_timing.
     #' Returns tree invisibly.
-    #' @param tree \code{gadgetTree} instance.
+    #' @param tree \code{GadgetTree} instance.
     #' @param model Fitted model.
     #' @param data Data frame or data.table (features and target).
     #' @param target_feature_name Character(1). Target variable name.
@@ -224,8 +224,8 @@ aleStrategy = R6::R6Class(
     fit = function(tree, model, data, target_feature_name,
       n_intervals = 10, feature_set = NULL, split_feature = NULL,
       predict_fun = NULL, order_method = "raw", with_stab = FALSE, ...) {
-      if (missing(model)) stop("aleStrategy requires 'model' to be passed.", call. = FALSE)
-      # if (missing(n_intervals)) stop("aleStrategy requires 'n_intervals' to be passed.", call. = FALSE)
+      if (missing(model)) stop("AleStrategy requires 'model' to be passed.", call. = FALSE)
+      # if (missing(n_intervals)) stop("AleStrategy requires 'n_intervals' to be passed.", call. = FALSE)
       checkmate::assert_integerish(n_intervals, len = 1, lower = 1, .var.name = "n_intervals")
       checkmate::assert_function(predict_fun, null.ok = TRUE, .var.name = "predict_fun")
 
@@ -277,7 +277,7 @@ aleStrategy = R6::R6Class(
       })[["elapsed"]]
 
       self$fit_timing = list(global = t_global, regional = t_regional)
-      message("aleStrategy fit timing: global ", round(t_global, 3), "s, regional ", round(t_regional, 3), "s")
+      message("AleStrategy fit timing: global ", round(t_global, 3), "s, regional ", round(t_regional, 3), "s")
       invisible(tree)
     },
     #' @description

@@ -10,16 +10,16 @@
 #' @details
 #' **Main components (user-facing):**
 #' \itemize{
-#'   \item \code{\link{gadgetTree}}: R6 class to grow and visualize effect-based trees.
-#'   \item \code{\link{aleStrategy}}: Strategy for ALE-based trees (ALE computed internally from a fitted model).
-#'   \item \code{\link{pdStrategy}}: Strategy for PD-based trees (uses
+#'   \item \code{\link{GadgetTree}}: R6 class to grow and visualize effect-based trees.
+#'   \item \code{\link{AleStrategy}}: Strategy for ALE-based trees (ALE computed internally from a fitted model).
+#'   \item \code{\link{PdStrategy}}: Strategy for PD-based trees (uses
 #'     precomputed ICE/PD from \pkg{iml} or similar tools).
 #' }
 #'
 #' **Typical workflow:**
 #' \enumerate{
 #'   \item Train a model (e.g., with \pkg{mlr3}).
-#'   \item Create a tree: \code{tree = gadgetTree$new(strategy = aleStrategy$new(), n_split = 3, min_node_size = 50)}.
+#'   \item Create a tree: \code{tree = GadgetTree$new(strategy = AleStrategy$new(), n_split = 3, min_node_size = 50)}.
 #'   \item Fit: \code{tree$fit(model = learner, data = data, target_feature_name = "y", n_intervals = 20, ...)}\cr
 #'         (more control via \code{feature_set}, \code{split_feature}, \code{order_method}, \code{with_stab},\cr
 #'         and tree hyperparameters such as \code{impr_par}, \code{min_node_size}, \code{n_quantiles}, etc.).
@@ -32,7 +32,7 @@
 #' @name gadget-package
 #' @aliases gadget gadget-package
 #' @seealso
-#' \code{\link{gadgetTree}}, \code{\link{aleStrategy}}, \code{\link{pdStrategy}}
+#' \code{\link{GadgetTree}}, \code{\link{AleStrategy}}, \code{\link{PdStrategy}}
 
 #' @references
 #' Herbinger, J., Wright, M. N., Nagler, T., Bischl, B., and Casalicchio, G. (2024).

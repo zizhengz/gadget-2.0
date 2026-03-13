@@ -1,10 +1,10 @@
-test_that("pdStrategy can be created", {
-  strategy = pdStrategy$new()
-  expect_true(inherits(strategy, "pdStrategy"))
+test_that("PdStrategy can be created", {
+  strategy = PdStrategy$new()
+  expect_true(inherits(strategy, "PdStrategy"))
   expect_equal(strategy$name, "pd")
 })
 
-test_that("pdStrategy find_best_split returns expected structure", {
+test_that("PdStrategy find_best_split returns expected structure", {
   tryCatch({
     search_best_split_cpp(Z = data.frame(x = 1:5), Y = list(matrix(1:10, ncol = 2)), min_node_size = 2)
   }, error = function(e) {
@@ -19,7 +19,7 @@ test_that("pdStrategy find_best_split returns expected structure", {
     matrix(rnorm(n * 2), ncol = 2),
     matrix(rnorm(n * 2), ncol = 2)
   )
-  strategy = pdStrategy$new()
+  strategy = PdStrategy$new()
   res = strategy$find_best_split(Z = Z, Y = Y, min_node_size = 5, n_quantiles = NULL)
   expect_true(is.data.frame(res))
   expect_true(nrow(res) >= 1)
@@ -27,9 +27,9 @@ test_that("pdStrategy find_best_split returns expected structure", {
     "split_objective", "split_runtime", "best_split") %in% names(res)))
 })
 
-test_that("pdStrategy heterogeneity returns numeric vector", {
+test_that("PdStrategy heterogeneity returns numeric vector", {
   Y = list(matrix(rnorm(20), ncol = 2), matrix(rnorm(20), ncol = 2))
-  strategy = pdStrategy$new()
+  strategy = PdStrategy$new()
   h = strategy$heterogeneity(Y)
   expect_true(is.numeric(h))
   expect_length(h, 2)
@@ -37,13 +37,13 @@ test_that("pdStrategy heterogeneity returns numeric vector", {
   expect_true(all(h >= 0))
 })
 
-test_that("aleStrategy can be created", {
-  strategy = aleStrategy$new()
-  expect_true(inherits(strategy, "aleStrategy"))
+test_that("AleStrategy can be created", {
+  strategy = AleStrategy$new()
+  expect_true(inherits(strategy, "AleStrategy"))
   expect_equal(strategy$name, "ale")
 })
 
-test_that("aleStrategy heterogeneity returns numeric for ALE-like list", {
+test_that("AleStrategy heterogeneity returns numeric for ALE-like list", {
   tryCatch({
     dt = data.table::data.table(row_id = 1:5, interval_index = rep(1L, 5), dL = 0, int_n = 5L, int_s1 = 0, int_s2 = 0)
     calculate_ale_heterogeneity_list_cpp(list(x = dt))
@@ -60,7 +60,7 @@ test_that("aleStrategy heterogeneity returns numeric for ALE-like list", {
     int_n = 5L, int_s1 = 0, int_s2 = 1
   )
   Y = list(f1 = dt)
-  strategy = aleStrategy$new()
+  strategy = AleStrategy$new()
   h = strategy$heterogeneity(Y)
   expect_true(is.numeric(h))
   expect_length(h, 1)

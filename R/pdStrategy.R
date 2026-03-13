@@ -1,4 +1,4 @@
-#' @title pdStrategy: Generalized additive decomposition based on PD effects.
+#' @title PdStrategy: Generalized additive decomposition based on PD effects.
 #'
 #' @description
 #' PD-based strategy: given effect and data, preprocesses to Z/Y/grid;
@@ -10,23 +10,23 @@
 #' @field fit_timing Named numeric vector with fit times (seconds), or NULL.
 #'
 #' @details
-#' This class is used internally by the gadgetTree framework to implement partial dependence
+#' This class is used internally by the GadgetTree framework to implement partial dependence
 #' tree growing, splitting, and visualization. It is not intended to be used directly by end users,
 #' but can be instantiated for advanced customization.
 #'
 #' @examples
 #' \dontrun{
-#' # Example: Fit and plot a PD tree using pdStrategy and gadgetTree
+#' # Example: Fit and plot a PD tree using PdStrategy and GadgetTree
 #' # (Assuming effect and data are prepared)
-#' pd_strat = pdStrategy$new()
-#' tree = gadgetTree$new(strategy = pd_strat, n_split = 2)
+#' pd_strat = PdStrategy$new()
+#' tree = GadgetTree$new(strategy = pd_strat, n_split = 2)
 #' tree$fit(effect, data, target_feature_name = "target")
 #' tree$plot(effect, data, target_feature_name = "target")
 #' }
 #'
 #' @export
-pdStrategy = R6::R6Class(
-  "pdStrategy",
+PdStrategy = R6::R6Class(
+  "PdStrategy",
   public = list(
     name = NULL,
     tree_ref = NULL,
@@ -139,17 +139,17 @@ pdStrategy = R6::R6Class(
     #' Given tree, effect, data, target_feature_name: preprocesses Z/Y/grid;
     #' creates root Node; recursively splits; records fit time in
     #' \code{fit_timing}. Returns tree invisibly.
-    #' @param tree gadgetTree object. Tree object instance.
+    #' @param tree GadgetTree object. Tree object instance.
     #' @param effect R6 object or list. Model effect object.
     #' @param data Data frame. Data frame.
     #' @param target_feature_name Character(1). Target feature name.
     #' @param feature_set Character or NULL. Feature subset (optional).
     #' @param split_feature Character or NULL. Split feature (optional).
     #' @param ... Additional arguments (ignored).
-    #' @return gadgetTree object, invisibly. The fitted tree object.
+    #' @return GadgetTree object, invisibly. The fitted tree object.
     fit = function(tree, effect, data, target_feature_name,
       feature_set = NULL, split_feature = NULL, ...) {
-      if (missing(effect)) stop("pdStrategy requires 'effect' to be passed.", call. = FALSE)
+      if (missing(effect)) stop("PdStrategy requires 'effect' to be passed.", call. = FALSE)
       checkmate::assert_true(is.list(effect) || inherits(effect, "R6"), .var.name = "effect")
 
       self$tree_ref = tree

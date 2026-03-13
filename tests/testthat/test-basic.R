@@ -7,8 +7,8 @@ test_that("basic functionality works", {
   library(gadget)
 
   # Test that main classes can be created
-  expect_true(inherits(pdStrategy$new(), "pdStrategy"))
-  expect_true(inherits(gadgetTree$new(strategy = pdStrategy$new()), "gadgetTree"))
+  expect_true(inherits(PdStrategy$new(), "PdStrategy"))
+  expect_true(inherits(GadgetTree$new(strategy = PdStrategy$new()), "GadgetTree"))
 
   # Test that C++ functions are available
   expect_true(exists("search_best_split_cpp"))
@@ -20,7 +20,7 @@ test_that("package exports are available", {
 
   # Check that main functions are exported
   expected_functions = c(
-    "gadgetTree", "pdStrategy", "aleStrategy",
+    "GadgetTree", "PdStrategy", "AleStrategy",
     "search_best_split_cpp", "search_best_split_point_cpp",
     "plot_tree_structure", "plot_regional_pd", "plot_tree_pd",
     "calculate_ale", "convert_tree_to_list", "extract_split_info",

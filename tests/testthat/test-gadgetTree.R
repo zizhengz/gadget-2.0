@@ -1,9 +1,9 @@
-test_that("gadgetTree can be created", {
-  tree = gadgetTree$new(strategy = pdStrategy$new(), n_split = 4)
+test_that("GadgetTree can be created", {
+  tree = GadgetTree$new(strategy = PdStrategy$new(), n_split = 4)
 
-  expect_true(inherits(tree, "gadgetTree"))
+  expect_true(inherits(tree, "GadgetTree"))
   expect_equal(tree$n_split, 4)
-  expect_true(inherits(tree$strategy, "pdStrategy"))
+  expect_true(inherits(tree$strategy, "PdStrategy"))
 })
 
 skip_ale_cpp_if_unavailable = function() {
@@ -18,7 +18,7 @@ skip_ale_cpp_if_unavailable = function() {
   })
 }
 
-test_that("gadgetTree fit with ALE strategy works", {
+test_that("GadgetTree fit with ALE strategy works", {
   skip_if_not_installed("mlr3")
   skip_if_not_installed("mlr3learners")
   skip_ale_cpp_if_unavailable()
@@ -28,13 +28,13 @@ test_that("gadgetTree fit with ALE strategy works", {
   task = mlr3::TaskRegr$new("t", backend = data, target = "y")
   learner = mlr3::lrn("regr.ranger")
   learner$train(task)
-  tree = gadgetTree$new(strategy = aleStrategy$new(), n_split = 2, min_node_size = 20)
+  tree = GadgetTree$new(strategy = AleStrategy$new(), n_split = 2, min_node_size = 20)
   tree$fit(model = learner, data = data, target_feature_name = "y", n_intervals = 5)
   expect_true(!is.null(tree$root))
   expect_true(inherits(tree$root, "R6"))
 })
 
-test_that("gadgetTree plot_tree_structure works after fit", {
+test_that("GadgetTree plot_tree_structure works after fit", {
   skip_if_not_installed("mlr3")
   skip_if_not_installed("mlr3learners")
   skip_ale_cpp_if_unavailable()
@@ -44,13 +44,13 @@ test_that("gadgetTree plot_tree_structure works after fit", {
   task = mlr3::TaskRegr$new("t", backend = data, target = "y")
   learner = mlr3::lrn("regr.ranger")
   learner$train(task)
-  tree = gadgetTree$new(strategy = aleStrategy$new(), n_split = 1, min_node_size = 15)
+  tree = GadgetTree$new(strategy = AleStrategy$new(), n_split = 1, min_node_size = 15)
   tree$fit(model = learner, data = data, target_feature_name = "y", n_intervals = 5)
   p = tree$plot_tree_structure()
   expect_true(inherits(p, "gg"))
 })
 
-test_that("gadgetTree extract_split_info returns data frame", {
+test_that("GadgetTree extract_split_info returns data frame", {
   skip_if_not_installed("mlr3")
   skip_if_not_installed("mlr3learners")
   skip_ale_cpp_if_unavailable()
@@ -60,7 +60,7 @@ test_that("gadgetTree extract_split_info returns data frame", {
   task = mlr3::TaskRegr$new("t", backend = data, target = "y")
   learner = mlr3::lrn("regr.ranger")
   learner$train(task)
-  tree = gadgetTree$new(strategy = aleStrategy$new(), n_split = 2, min_node_size = 15)
+  tree = GadgetTree$new(strategy = AleStrategy$new(), n_split = 2, min_node_size = 15)
   tree$fit(model = learner, data = data, target_feature_name = "y", n_intervals = 5)
   split_info = tree$extract_split_info()
   expect_true(is.data.frame(split_info))
@@ -69,7 +69,7 @@ test_that("gadgetTree extract_split_info returns data frame", {
   expect_true("id" %in% names(split_info))
 })
 
-test_that("gadgetTree plot (ALE) returns list of plots", {
+test_that("GadgetTree plot (ALE) returns list of plots", {
   skip_if_not_installed("mlr3")
   skip_if_not_installed("mlr3learners")
   skip_ale_cpp_if_unavailable()
@@ -79,7 +79,7 @@ test_that("gadgetTree plot (ALE) returns list of plots", {
   task = mlr3::TaskRegr$new("t", backend = data, target = "y")
   learner = mlr3::lrn("regr.ranger")
   learner$train(task)
-  tree = gadgetTree$new(strategy = aleStrategy$new(), n_split = 1, min_node_size = 15)
+  tree = GadgetTree$new(strategy = AleStrategy$new(), n_split = 1, min_node_size = 15)
   tree$fit(model = learner, data = data, target_feature_name = "y", n_intervals = 5)
   plot_result = tree$plot(data = data, target_feature_name = "y", show_plot = FALSE)
   expect_true(is.list(plot_result))

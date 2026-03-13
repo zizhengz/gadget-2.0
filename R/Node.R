@@ -45,7 +45,7 @@
 #'   Used for effect-specific operations.
 #'
 #' @details
-#' This class is used internally by gadgetTree and strategy objects to represent
+#' This class is used internally by GadgetTree and strategy objects to represent
 #' and manage nodes in effect-based decision trees. Each node stores split information,
 #' effect statistics, and references to its children.
 #'
@@ -147,10 +147,10 @@ Node = R6::R6Class("Node", public = list(
     # 2. Find the best split
     # Find best split with strategy-specific logic
     split_info = tryCatch({
-      if (inherits(self$strategy, "aleStrategy")) {
+      if (inherits(self$strategy, "AleStrategy")) {
         Y_curr = self$strategy$node_transform(Y, idx = self$subset_idx, split_feature = self$split_feature_parent)
         self$find_best_split(Z, Y_curr, min_node_size, n_quantiles)
-      } else if (inherits(self$strategy, "pdStrategy")) {
+      } else if (inherits(self$strategy, "PdStrategy")) {
         Y_curr = self$strategy$node_transform(Y = Y, grid = self$grid, idx = self$subset_idx)
         self$find_best_split(Z, Y_curr, min_node_size, n_quantiles)
       }
@@ -211,7 +211,7 @@ Node = R6::R6Class("Node", public = list(
   #' Given Z (subset by node indices), Y_curr, and params: calls
   #' \code{strategy$find_best_split} and returns list with
   #' \code{split_feature}, \code{split_value}, \code{is_categorical}
-  #' (and for aleStrategy: \code{left/right_objective_value_j}).
+  #' (and for AleStrategy: \code{left/right_objective_value_j}).
   #' @param Z Data frame. Split feature set.
   #' @param Y_curr List. Effect list for current node.
   #' @param min_node_size Integer. Minimum node size.
@@ -229,7 +229,7 @@ Node = R6::R6Class("Node", public = list(
     if (is.null(split_res$best_split) || length(split_res$best_split) == 0 || all(!split_res$best_split)) {
       return(NULL)
     }
-    if (inherits(self$strategy, "aleStrategy")) {
+    if (inherits(self$strategy, "AleStrategy")) {
       rows = which(split_res$best_split)
       left_objective_value_j = split_res$left_objective_value_j[rows]
       right_objective_value_j = split_res$right_objective_value_j[rows]
@@ -279,10 +279,10 @@ Node = R6::R6Class("Node", public = list(
     if (length(idx_left) == 0) idx_left = 0
     if (length(idx_right) == 0) idx_right = 0
 
-    # Create grids for children (note: grid_info only effective for pdStrategy)
+    # Create grids for children (note: grid_info only effective for PdStrategy)
     grid_info = self$create_child_grids(split_feature, split_value, is_categorical)
     # Calculate objective values for children
-    if (inherits(self$strategy, "pdStrategy")) {
+    if (inherits(self$strategy, "PdStrategy")) {
       Y_curr_left = self$strategy$node_transform(Y = Y, grid = grid_info$grid_left, idx = idx_left)
       Y_curr_right = self$strategy$node_transform(Y = Y, grid = grid_info$grid_right, idx = idx_right)
       left_objective_value_j = self$strategy$heterogeneity(Y_curr_left)
@@ -292,7 +292,7 @@ Node = R6::R6Class("Node", public = list(
       # Calculate interaction importance
       intImp_j = (self$objective_value_j - left_objective_value_j - right_objective_value_j) / objective_value_root_j
       intImp = (self$objective_value - left_objective_value - right_objective_value) / objective_value_root
-    } else if (inherits(self$strategy, "aleStrategy")) {
+    } else if (inherits(self$strategy, "AleStrategy")) {
       left_objective_value_j = split_info$left_objective_value_j
       right_objective_value_j = split_info$right_objective_value_j
       left_objective_value = split_info$left_objective_value

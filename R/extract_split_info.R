@@ -18,7 +18,7 @@
 #'   split value, statistics, and (if available) split timing.
 #'
 #' @details
-#' This function is used internally by the gadgetTree framework to extract
+#' This function is used internally by the GadgetTree framework to extract
 #' and summarize the structure and statistics of effect-based decision trees.
 #' It is useful for interpretation, reporting, and benchmarking.
 #'
