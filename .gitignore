@@ -180,7 +180,3 @@ renv.lock
 # revdep
 revdep/
 
-# AI
-AGENTS.md
-CLAUDE.md
-.claude
