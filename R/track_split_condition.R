@@ -1,7 +1,7 @@
 #' Build path of split conditions from root to node
 #'
-#' Given node and tree (depth-list): walks parent chain via \code{find_parent_by_id}; 
-#' at each step builds condition string (e.g. "x <= 0.5") via \code{choose_operator}. 
+#' Given node and tree (depth-list): walks parent chain via \code{find_parent_by_id};
+#' at each step builds condition string (e.g. "x <= 0.5") via \code{choose_operator}.
 #' Returns character vector of conditions (root to node).
 #'
 #' @param node Node object (with \code{id_parent}, \code{depth}).

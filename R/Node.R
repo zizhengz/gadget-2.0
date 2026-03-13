@@ -121,7 +121,7 @@ Node = R6::R6Class("Node", public = list(
   },
 
   #' @description
-  #' Given Z, Y, root objectives, and tree params: checks stopping criteria; finds best split; creates and applies children; recurses into child nodes. 
+  #' Given Z, Y, root objectives, and tree params: checks stopping criteria; finds best split; creates and applies children; recurses into child nodes.
   #' Returns NULL if no valid split.
   #' @param Z Data frame. Split feature set.
   #' @param Y List. Effect list.
@@ -205,7 +205,7 @@ Node = R6::R6Class("Node", public = list(
   },
 
   #' @description
-  #' Given Z (subset by node indices), Y_curr, and params: calls \code{strategy$find_best_split} and returns list with 
+  #' Given Z (subset by node indices), Y_curr, and params: calls \code{strategy$find_best_split} and returns list with
   #' \code{split_feature}, \code{split_value}, \code{is_categorical} (and for aleStrategy: \code{left/right_objective_value_j}).
   #' @param Z Data frame. Split feature set.
   #' @param Y_curr List. Effect list for current node.
@@ -246,8 +246,8 @@ Node = R6::R6Class("Node", public = list(
   },
 
   #' @description
-  #' Given Z, Y, split_info, and root objectives: computes idx_left/right, child grids, objective values; checks improvement threshold; 
-  #' creates left/right Node instances and sets parent info. 
+  #' Given Z, Y, split_info, and root objectives: computes idx_left/right, child grids, objective values; checks improvement threshold;
+  #' creates left/right Node instances and sets parent info.
   #' Returns list of \code{left_child}, \code{right_child}, \code{intImp}, \code{intImp_j} or NULL if improvement too small.
   #' @param Z Data frame. Split feature set.
   #' @param Y List. Effect list.
@@ -339,7 +339,7 @@ Node = R6::R6Class("Node", public = list(
   },
 
   #' @description
-  #' Given split_feature, split_value, and is_categorical: partitions \code{self$grid[[split_feature]]} into left (<= or ==) and right (> or !=). 
+  #' Given split_feature, split_value, and is_categorical: partitions \code{self$grid[[split_feature]]} into left (<= or ==) and right (> or !=).
   #' Returns list \code{grid_left}, \code{grid_right}.
   #' @param split_feature Character. Feature used for splitting.
   #' @param split_value Numeric or factor. Value used for splitting.

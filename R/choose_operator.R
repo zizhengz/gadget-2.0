@@ -1,5 +1,5 @@
-#' Return comparison operator for child relative to parent. 
-#' Given parent_node and current_node: if current is left child returns \code{<=} (numeric) or \code{=} (categorical); 
+#' Return comparison operator for child relative to parent.
+#' Given parent_node and current_node: if current is left child returns \code{<=} (numeric) or \code{=} (categorical);
 #' if right returns \code{>} or \code{!=}.
 #'
 #' @param parent_node Node with \code{children} and \code{split_value}.

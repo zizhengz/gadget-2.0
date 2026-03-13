@@ -3,8 +3,8 @@ interval_index = x_left = x_right = dL = x_grid = level = NULL
 
 #' Prepare ALE Plot Data for One or More Nodes
 #'
-#' Given effect (from \code{calculate_ale}), idx (row indices or list of such), features, 
-#' mean_center: subsets ALE rows by idx; calls \code{mean_center_ale} per feature for cumulative and optional centering. 
+#' Given effect (from \code{calculate_ale}), idx (row indices or list of such), features,
+#' mean_center: subsets ALE rows by idx; calls \code{mean_center_ale} per feature for cumulative and optional centering.
 #' Returns named list of \code{mean_effect} data.tables (or nested list if idx is list).
 #'
 #' @param effect List returned by \code{calculate_ale()}.
@@ -56,7 +56,7 @@ prepare_plot_data_ale = function(effect, idx = NULL, features = names(effect),
 
 #' Internal ALE curve computation
 #'
-#' Given ALE data.table for one feature and mean_center: cumsums dL by interval; 
+#' Given ALE data.table for one feature and mean_center: cumsums dL by interval;
 #' optionally subtracts global mean. Returns data.table with x_grid and .value (cumulative ALE).
 #'
 #' @param feat data.table with per-interval ALE derivatives and metadata.

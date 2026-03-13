@@ -1,6 +1,6 @@
 #' Find best split across all columns of Z (R fallback)
 #'
-#' Given Z, Y, min_node_size, n_quantiles: loops over each column, calls \code{search_best_split_point}; rbind results; adds split_feature, is_categorical, best_split, split_runtime. 
+#' Given Z, Y, min_node_size, n_quantiles: loops over each column, calls \code{search_best_split_point}; rbind results; adds split_feature, is_categorical, best_split, split_runtime.
 #' Returns data frame (one row per feature).
 #'
 #' @param Z Data frame of split features.

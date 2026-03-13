@@ -1,6 +1,6 @@
 #' Convert Recursive Tree to Depth-based List
 #'
-#' Given root_node and optional max_depth: traverses children recursively, collects nodes by depth. 
+#' Given root_node and optional max_depth: traverses children recursively, collects nodes by depth.
 #' Returns list of lists (depth 1, 2, ...), each element a list of Node objects at that depth.
 #'
 #' @param root_node A Node object representing the root of the tree

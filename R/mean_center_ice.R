@@ -1,6 +1,6 @@
 #' Extract and optionally mean-center effect matrices
 #'
-#' Given effect (with \code{results}), feature_set (or all), and mean_center: pivots effect results to wide matrices per feature; optionally subtracts row means. 
+#' Given effect (with \code{results}), feature_set (or all), and mean_center: pivots effect results to wide matrices per feature; optionally subtracts row means.
 #' Returns list \code{Y} (named list of matrices), \code{grid} (column names per feature).
 #'
 #' @param effect (`R6` object or list)\cr

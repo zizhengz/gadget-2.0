@@ -1,6 +1,6 @@
 #' Visualize the Tree Structure
 #'
-#' Given tree (depth-list of Node objects): calls \code{prepare_layout_data} to build layout data; 
+#' Given tree (depth-list of Node objects): calls \code{prepare_layout_data} to build layout data;
 #' creates parent map; builds edge list; creates ggraph plot with nodes labeled by split info and edges representing tree hierarchy.
 #' Returns ggplot object.
 #'

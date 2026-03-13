@@ -1,8 +1,8 @@
 #' Order Levels of a Categorical Feature
 #'
-#' Given x_cat (factor), data, feature, target_feature_name, 
-#' order_method: builds KxK distance matrix from other features (ECDF diff for numeric, L1 for categorical); 
-#' embeds in 1D via MDS/PCA/random/raw; reorders levels. 
+#' Given x_cat (factor), data, feature, target_feature_name,
+#' order_method: builds KxK distance matrix from other features (ECDF diff for numeric, L1 for categorical);
+#' embeds in 1D via MDS/PCA/random/raw; reorders levels.
 #' Returns factor with reordered levels (or x_cat unchanged if K<=1 or no other features).
 #'
 #' @param x_cat Factor. Focal feature values; must be \code{droplevels()}-ed so

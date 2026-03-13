@@ -1,8 +1,8 @@
 #' Calculate Accumulated Local Effects (ALE)
 #'
-#' Given model, data, feature_set, target_feature_name, n_intervals, predict_fun: for each feature, 
-#' computes finite differences (dL) and per-interval stats (int_n, int_s1, int_s2). 
-#' Numeric: quantile intervals; categorical: level-by-level prediction differences. 
+#' Given model, data, feature_set, target_feature_name, n_intervals, predict_fun: for each feature,
+#' computes finite differences (dL) and per-interval stats (int_n, int_s1, int_s2).
+#' Numeric: quantile intervals; categorical: level-by-level prediction differences.
 #' Returns named list of data.tables (row_id, feat_val, dL, interval_index, int_n, int_s1, int_s2, etc.).
 #'
 #' @param model Fitted model object with a predict interface.
@@ -55,7 +55,7 @@ calculate_ale = function(model, data, feature_set, target_feature_name, n_interv
 
 #' ALE for a single numeric feature (internal)
 #'
-#' Given model, data, X, feature: builds quantile intervals, assigns rows to intervals, 
+#' Given model, data, X, feature: builds quantile intervals, assigns rows to intervals,
 #' computes dL (finite difference) and int_n/int_s1/int_s2 per interval. Returns data.table.
 #' @param model,data,X,feature,target_feature_name,n_intervals,predict_fun See \code{\link{calculate_ale}}.
 #' @keywords internal

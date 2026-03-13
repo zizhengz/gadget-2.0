@@ -1,6 +1,6 @@
 #' Build layout data frame for tree structure plot
 #'
-#' Given tree (depth-list of Node objects): flattens to one row per node; extracts id, id_parent, 
+#' Given tree (depth-list of Node objects): flattens to one row per node; extracts id, id_parent,
 #' split_feature, split_value, N, depth; builds label. Returns data frame for \code{plot_tree_structure} (ggraph).
 #'
 #' @param tree List of depth levels, each a list of node objects.

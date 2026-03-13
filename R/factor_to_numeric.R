@@ -1,5 +1,5 @@
-#' Convert factor to numeric. Given f: if all level labels parse as numbers, 
-#' uses as.numeric(as.character(f)); otherwise uses as.numeric(f) (level indices). 
+#' Convert factor to numeric. Given f: if all level labels parse as numbers,
+#' uses as.numeric(as.character(f)); otherwise uses as.numeric(f) (level indices).
 #' Returns numeric vector.
 #'
 #' @param f Factor.

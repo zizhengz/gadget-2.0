@@ -1,7 +1,7 @@
 #' Prepare PD plot data per node (internal).
 #'
-#' Given effect, tree, depth, feature_set, mean_center: calls \code{mean_center_ice} for Y and grid; 
-#' assigns each row to a node at that depth; for nodes with subset grids, sets out-of-grid cells to NA and optionally mean-centers. 
+#' Given effect, tree, depth, feature_set, mean_center: calls \code{mean_center_ice} for Y and grid;
+#' assigns each row to a node at that depth; for nodes with subset grids, sets out-of-grid cells to NA and optionally mean-centers.
 #' Returns list of effect matrices (one per feature) with \code{node} column added.
 #' @param effect,tree,depth,feature_set,mean_center See PD plotting helpers.
 #' @keywords internal

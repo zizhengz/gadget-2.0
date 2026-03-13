@@ -1,6 +1,6 @@
 #' Extract Split Information from Tree Structure
 #'
-#' Given tree (depth-list of Node objects) and optional split_benchmark: flattens nodes; builds one row per node (depth, id, n_obs, split_feature, split_value, intImp, intImp_j, etc.); merges timing if split_benchmark has node_id/depth. 
+#' Given tree (depth-list of Node objects) and optional split_benchmark: flattens nodes; builds one row per node (depth, id, n_obs, split_feature, split_value, intImp, intImp_j, etc.); merges timing if split_benchmark has node_id/depth.
 #' Returns data frame.
 #'
 #' @param tree (`list`)

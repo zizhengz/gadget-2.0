@@ -1,7 +1,7 @@
 #' @title pdStrategy: Generalized additive decomposition based on PD effects.
 #'
 #' @description
-#' PD-based strategy: given effect and data, preprocesses to Z/Y/grid; mean-centers effects per node; computes sum-of-variances heterogeneity; 
+#' PD-based strategy: given effect and data, preprocesses to Z/Y/grid; mean-centers effects per node; computes sum-of-variances heterogeneity;
 #' finds best split via C++; fits tree and plots PD/ICE.
 #'
 #' @field name Character. Strategy name (e.g., \code{"pd"}).
@@ -38,7 +38,7 @@ pdStrategy = R6::R6Class(
     },
 
     #' @description
-    #' Given effect, data, target_feature, and optional feature/split sets: validates features; converts character to factor; 
+    #' Given effect, data, target_feature, and optional feature/split sets: validates features; converts character to factor;
     #' builds Z (split features) and mean-centered Y via \code{prepare_split_data_pd}. Returns list \code{Z}, \code{Y}, \code{grid}.
     #' @param effect R6 object or list.\cr
     #'   An object containing feature effect results, typically from FeatureEffect or FeatureEffects.
@@ -59,7 +59,7 @@ pdStrategy = R6::R6Class(
     },
 
     #' @description
-    #' Given Y (list of effect matrices), grid, and idx: subset rows by idx, mean-center each matrix per row, 
+    #' Given Y (list of effect matrices), grid, and idx: subset rows by idx, mean-center each matrix per row,
     #' return list of centered matrices via \code{re_mean_center_ice_cpp}.
     #' @param Y List. Each element is an effect matrix for a feature.
     #' @param grid List. Feature grids.
@@ -78,7 +78,7 @@ pdStrategy = R6::R6Class(
     },
 
     #' @description
-    #' Given Y (list of effect matrices): computes sum of column variances per matrix via \code{node_heterogeneity}. 
+    #' Given Y (list of effect matrices): computes sum of column variances per matrix via \code{node_heterogeneity}.
     #' Returns numeric vector of length \code{length(Y)}.
     #' @param Y List. List of effect matrices.
     #' @return Numeric. Numeric vector, heterogeneity for each feature.
@@ -88,7 +88,7 @@ pdStrategy = R6::R6Class(
     },
 
     #' @description
-    #' Given Z, Y, min_node_size, n_quantiles: calls \code{search_best_split_cpp} to evaluate all features and returns data frame with \code{split_feature}, 
+    #' Given Z, Y, min_node_size, n_quantiles: calls \code{search_best_split_cpp} to evaluate all features and returns data frame with \code{split_feature},
     #' \code{split_point}, \code{split_objective}, \code{best_split}, etc.
     #' @param Z Data frame. Split feature set.
     #' @param Y List. Effect matrices.
@@ -106,7 +106,7 @@ pdStrategy = R6::R6Class(
     },
 
     #' @description
-    #' Given tree, effect, data, target_feature_name, and optional depth/node_id/features: prepares plot data and calls \code{plot_tree_pd}. 
+    #' Given tree, effect, data, target_feature_name, and optional depth/node_id/features: prepares plot data and calls \code{plot_tree_pd}.
     #' Returns list of ggplot2 objects (by depth and node).
     #' @param tree List. Tree structure as a list of Node objects.
     #' @param effect R6 object or list. Model effect object.
@@ -130,7 +130,7 @@ pdStrategy = R6::R6Class(
     },
 
     #' @description
-    #' Given tree, effect, data, target_feature_name: preprocesses Z/Y/grid; creates root Node; recursively splits; records fit time in \code{fit_timing}. 
+    #' Given tree, effect, data, target_feature_name: preprocesses Z/Y/grid; creates root Node; recursively splits; records fit time in \code{fit_timing}.
     #' Returns tree invisibly.
     #' @param tree gadgetTree object. Tree object instance.
     #' @param effect R6 object or list. Model effect object.

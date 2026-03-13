@@ -28,4 +28,3 @@ search_best_split_cpp <- function(Z, Y, min_node_size, n_quantiles = NULL) {
 search_best_split_point_cpp <- function(z, Y, n_quantiles = NULL, is_categorical = FALSE, min_node_size = 1L) {
     .Call(`_gadget_search_best_split_point_cpp`, z, Y, n_quantiles, is_categorical, min_node_size)
 }
-
