@@ -65,5 +65,5 @@ prepare_layout_data = function(tree) {
     layout[layout$node_id == i, ]$label = paste0("depth_", this$depth, "_id_", i, "  #obs: ", this$N, "\n",
       paste(path_conditions, collapse = " \n& "))
   }
-  return(layout)
+  layout
 }

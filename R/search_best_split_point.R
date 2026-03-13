@@ -92,5 +92,5 @@ search_best_split_point = function(z, Y, n_quantiles = NULL, min_node_size, is_c
     best_split_point = (left + right) / 2
   }
 
-  return(data.frame(split_point = best_split_point, split_objective = split_objective[best]))
+  data.frame(split_point = best_split_point, split_objective = split_objective[best])
 }

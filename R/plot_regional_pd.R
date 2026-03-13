@@ -96,7 +96,7 @@ plot_regional_pd = function(prepared_data, origin_data, target_feature_name, nod
         axis.title = element_text(size = 9),
         axis.text = element_text(size = 9)
       )
-    return(p)
+    p
   })
-  return(plot)
+  plot
 }

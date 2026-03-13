@@ -156,7 +156,7 @@ Node = R6::R6Class("Node", public = list(
       }
     }, error = function(e) {
       message("find_best_split error: ", e$message)
-      return(NULL)
+      NULL
     })
     if (is.null(split_info)) {
       self$stop_criterion_met = TRUE
@@ -167,7 +167,7 @@ Node = R6::R6Class("Node", public = list(
       self$create_children(Z, Y, split_info, objective_value_root_j, objective_value_root, impr_par)
     }, error = function(e) {
       message("create_children error: ", e$message)
-      return(NULL)
+      NULL
     })
     if (is.null(children_info)) {
       self$stop_criterion_met = TRUE

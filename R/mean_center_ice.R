@@ -85,5 +85,5 @@ mean_center_ice = function(effect, feature_set = NULL, mean_center = TRUE) {
       colnames(Y_i)
     })
   }
-  return(list(Y = Y, grid = grid))
+  list(Y = Y, grid = grid)
 }

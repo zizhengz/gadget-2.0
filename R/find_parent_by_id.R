@@ -11,5 +11,5 @@ find_parent_by_id = function(node_list, id) {
       return(n)
     }
   }
-  return(NULL)
+  NULL
 }

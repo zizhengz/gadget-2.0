@@ -16,5 +16,5 @@ choose_operator = function(parent_node, current_node) {
       op = if (is.numeric(parent_node$split_value)) ">" else "!="
     }
   }
-  return(op)
+  op
 }

@@ -19,5 +19,5 @@ track_split_condition = function(node, tree) {
     path_conditions = c(cond, path_conditions)
     current_node = parent_node
   }
-  return(path_conditions)
+  path_conditions
 }

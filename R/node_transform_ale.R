@@ -26,7 +26,7 @@ node_transform_ale = function(Y, idx, split_feature = NULL, model = NULL, data =
       int_s1   = sum(dL),
       int_s2   = sum(dL^2)
     ), by = interval_index]
-    return(Y_j)
+    Y_j
   })
   names(Y_subset) = names(Y)
   # Step 2: Apply postprocessing
@@ -62,11 +62,11 @@ node_transform_ale = function(Y, idx, split_feature = NULL, model = NULL, data =
       if (!data.table::is.data.table(Y_j)) {
         Y_j = data.table::as.data.table(Y_j)
       }
-      return(Y_j)
+      Y_j
     })
     names(Y_processed) = names(Y_subset)
-    return(Y_processed)
+    Y_processed
   } else {
-    return(Y_subset)
+    Y_subset
   }
 }

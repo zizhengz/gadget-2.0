@@ -37,11 +37,11 @@ convert_tree_to_list = function(root_node, max_depth = NULL) {
           current_depth + 1, depth_list)
       }
     }
-    return(depth_list)
+    depth_list
   }
   # Start traversal from root
   tree_depths = traverse_and_collect(root_node, 1, list())
   # Clean up empty levels and ensure proper structure
   tree_depths = Filter(function(depth) length(depth) > 0, tree_depths)
-  return(tree_depths)
+  tree_depths
 }

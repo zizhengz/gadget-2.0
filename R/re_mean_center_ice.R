@@ -14,5 +14,5 @@ re_mean_center_ice = function(Y, grid, idx) {
     Y[[i]] - rowMeans(Y[[i]], na.rm = TRUE)
   })
   names(Y_centered) = feature_names
-  return(Y_centered)
+  Y_centered
 }

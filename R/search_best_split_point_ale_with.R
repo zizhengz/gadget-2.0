@@ -206,7 +206,7 @@ search_best_split_point_ale_with = function(
       interval_sse = s2_vec - (s1_vec^2) / n_vec
       return(sum(interval_sse))
     }
-    return(original_risk)
+    original_risk
   }
   #### End new adjust_side_for_feature function ####
 

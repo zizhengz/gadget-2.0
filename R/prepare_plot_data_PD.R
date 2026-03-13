@@ -34,5 +34,5 @@ prepare_plot_data_pd = function(effect, tree, depth, feature_set, mean_center) {
     Y_i
   })
   names(Y) = feature_name
-  return(Y)
+  Y
 }
