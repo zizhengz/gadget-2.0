@@ -67,8 +67,8 @@ mean_center_ice = function(effect, feature_set = NULL, mean_center = TRUE) {
       missing_features = setdiff(feature_set, available_features)
       if (length(missing_features) > 0) {
         stop(sprintf("Features not found in effect results: %s. Available features: %s",
-          paste(missing_features, collapse = ", "),
-          paste(available_features, collapse = ", ")))
+            paste(missing_features, collapse = ", "),
+            paste(available_features, collapse = ", ")))
       }
       features = names(effect_results) %in% feature_set
       effect_results = effect_results[features]

@@ -58,7 +58,7 @@ plot_regional_pd = function(prepared_data, origin_data, target_feature_name, nod
     noline = length(unique(plot_data$grid[!is.na(plot_data$value)])) < 2
 
     p = ggplot(plot_data, aes(x = .data[["grid"]], y = .data[["value"]],
-      group = .data[["id"]], color = .data[["type"]]))
+        group = .data[["id"]], color = .data[["type"]]))
     if (!noline) {
       p = p + geom_line(alpha = 0.9, linewidth = 0.5, linetype = "dotted", na.rm = TRUE)
       p = p + geom_line(data = subset(plot_data, type == "PDP"), linewidth = 0.8)

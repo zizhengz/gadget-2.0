@@ -23,7 +23,7 @@ prepare_split_data_pd = function(effect, data, target_feature_name = NULL, featu
     miss = setdiff(requested, all_features)
     if (length(miss) > 0L) {
       stop(sprintf("%s not found in data: %s. Available: %s",
-        err_label, paste(miss, collapse = ", "), paste(all_features, collapse = ", ")))
+          err_label, paste(miss, collapse = ", "), paste(all_features, collapse = ", ")))
     }
     requested
   }

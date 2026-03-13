@@ -66,7 +66,7 @@ AleStrategy = R6::R6Class(
     #' @description
     #' Given model, data, target_feature_name, n_intervals, and optional feature/split sets: computes ALE per feature;
     #' builds Z (split features) and Y (named list of ALE data.tables) via
-#' \code{prepare_split_data_ale}. Returns list \code{Z}, \code{Y}.
+    #' \code{prepare_split_data_ale}. Returns list \code{Z}, \code{Y}.
     #' @param model Fitted model object.
     #' @param data Data frame or data.table with features and target.
     #' @param target_feature_name Character(1). Name of the target variable.

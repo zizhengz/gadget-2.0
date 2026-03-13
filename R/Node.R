@@ -139,7 +139,7 @@ Node = R6::R6Class("Node", public = list(
     t0 = proc.time()
     # 1. Stopping criteria
     if (objective_value_root < 1e-10 || depth >= max_depth ||
-      length(self$subset_idx) < min_node_size || isTRUE(self$improvement_met)) {
+        length(self$subset_idx) < min_node_size || isTRUE(self$improvement_met)) {
       self$stop_criterion_met = TRUE
       # Recursion exit: stop splitting at this node
       return(NULL)

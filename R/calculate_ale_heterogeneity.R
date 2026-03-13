@@ -24,7 +24,7 @@ calculate_ale_heterogeneity_cpp = function(Y) {
 ss_ale_dt = function(y_list) {
   lapply(y_list, function(feat) {
     delta_aggr = feat[, list(dL = mean(dL, na.rm = TRUE),
-      interval_n = .N), by = c("interval_index", "x_left", "x_right")]
+        interval_n = .N), by = c("interval_index", "x_left", "x_right")]
     df = merge(feat, delta_aggr, by = "interval_index")
     sum((df$dL.x - df$dL.y)^2, na.rm = TRUE)
   })

@@ -142,7 +142,7 @@ search_best_split_ale = function(
   res$best_split = is.finite(min_obj) & (res$split_objective == min_obj)
   res$split_runtime = (t_end - t_start)[[3]]
   res[, c("split_feature", "is_categorical", "split_point",
-    "split_objective", "feature", "objective_value_j",
-    "left_objective_value_j", "right_objective_value_j",
-    "split_runtime", "best_split")]
+      "split_objective", "feature", "objective_value_j",
+      "left_objective_value_j", "right_objective_value_j",
+      "split_runtime", "best_split")]
 }
