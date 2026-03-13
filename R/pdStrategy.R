@@ -68,6 +68,12 @@ pdStrategy = R6::R6Class(
     node_transform = function(Y, grid, idx) {
       checkmate::assert_list(Y)
       checkmate::assert_list(grid)
+      # Ensure Y elements are numeric matrices (avoid tibble -> C++ type mismatch)
+      Y = lapply(Y, function(m) {
+        m = as.matrix(m)
+        storage.mode(m) = "double"
+        m
+      })
       re_mean_center_ice_cpp(Y = Y, grid = grid, idx = idx)
     },
 

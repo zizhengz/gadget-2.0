@@ -70,7 +70,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // re_mean_center_ice_cpp
-/**   * @brief Mean-center ICE matrices for each feature, only on grid columns.   *   * For each feature matrix in Y, this function:   *   - Selects only the rows specified by idx   *   - Sets columns not in grid to NA   *   - For each row, mean-centers only the valid grid and non-NA columns   *   - Returns a list of centered matrices, preserving column names   *   * @param Y   List of NumericMatrix, one per feature with dimnames   * @param grid List of CharacterVector, each specifying valid grid columns for the feature   * @param idx IntegerVector of row indices, 1-based as in R   * @return List of mean-centered NumericMatrix, with column names preserved   */  List re_mean_center_ice_cpp(List Y, List grid, IntegerVector idx);
+List re_mean_center_ice_cpp(List Y, List grid, IntegerVector idx);
 RcppExport SEXP _gadget_re_mean_center_ice_cpp(SEXP YSEXP, SEXP gridSEXP, SEXP idxSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
