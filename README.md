@@ -19,7 +19,7 @@ You can install the development version of **gadget** from GitHub:
 
 ```r
 # install.packages("devtools")
-devtools::install_github("zizhengz/gadget-2.0")
+devtools::install_github("slds-lmu/gadget")
 ```
 
 ## Dependencies
