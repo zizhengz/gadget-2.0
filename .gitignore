@@ -174,9 +174,9 @@ docs/
 renv/
 renv.lock
 
-# vscode
-.vscode
-
 # revdep
 revdep/
 
+# AI
+.claude/settings.local.json
+CLAUDE.md
