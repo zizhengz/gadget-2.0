@@ -45,7 +45,7 @@ test_that("AleStrategy can be created", {
 
 test_that("AleStrategy heterogeneity returns numeric for ALE-like list", {
   tryCatch({
-    dt = data.table::data.table(row_id = 1:5, interval_index = rep(1L, 5), dL = 0, int_n = 5L, int_s1 = 0, int_s2 = 0)
+    dt = data.table::data.table(row_id = 1:5, interval_index = rep(1L, 5), d_l = 0, int_n = 5L, int_s1 = 0, int_s2 = 0)
     calculate_ale_heterogeneity_list_cpp(list(x = dt))
   }, error = function(e) {
     if (grepl("not available for .Call", conditionMessage(e), fixed = TRUE)) {
@@ -56,7 +56,7 @@ test_that("AleStrategy heterogeneity returns numeric for ALE-like list", {
   dt = data.table::data.table(
     row_id = seq_len(n),
     interval_index = rep(1:4, length.out = n),
-    dL = rnorm(n),
+    d_l = rnorm(n),
     int_n = 5L, int_s1 = 0, int_s2 = 1
   )
   Y = list(f1 = dt)

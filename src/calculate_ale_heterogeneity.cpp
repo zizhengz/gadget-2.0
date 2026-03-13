@@ -1,6 +1,6 @@
 /**
  * @file calculate_ale_heterogeneity.cpp
- * @brief ALE heterogeneity (sum of squared dL residuals) per feature - C++ implementation.
+ * @brief ALE heterogeneity (sum of squared d_l residuals) per feature - C++ implementation.
  */
 
 #include <Rcpp.h>
@@ -13,24 +13,24 @@ using namespace Rcpp;
 // calculate_ale_heterogeneity_single_cpp
 // Purpose:
 //   Compute ALE heterogeneity for a single feature as the sum of squared
-//   residuals of dL from its interval-wise mean. Formally:
-//     sum_i ( dL_i - mean_{interval(i)}(dL) )^2
+//   residuals of d_l from its interval-wise mean. Formally:
+//     sum_i ( d_l_i - mean_{interval(i)}(d_l) )^2
 // Inputs:
-//   - dL: numeric vector of local effects (finite differences) per sample
-//   - interval_index: integer vector, same length as dL, giving the interval id
+//   - d_l: numeric vector of local effects (finite differences) per sample
+//   - interval_index: integer vector, same length as d_l, giving the interval id
 //     for each sample (used to group samples and compute per-interval means)
 // Notes:
-//   - NA/NaN values in dL are ignored in both mean and SSE accumulation.
+//   - NA/NaN values in d_l are ignored in both mean and SSE accumulation.
 //   - If input is empty, returns 0.0.
 // Output:
 //   Scalar heterogeneity (sum of squared residuals).
 // -----------------------------------------------------------------------------
 // [[Rcpp::export]]
-double calculate_ale_heterogeneity_single_cpp(NumericVector dL, IntegerVector interval_index) {
-  int n = dL.length();
+double calculate_ale_heterogeneity_single_cpp(NumericVector d_l, IntegerVector interval_index) {
+  int n = d_l.length();
   if (n == 0) return 0.0;
   if (interval_index.length() != static_cast<R_xlen_t>(n)) {
-    stop("dL and interval_index must have the same length");
+    stop("d_l and interval_index must have the same length");
   }
 
   /* Pass 1: accumulate sum and count per interval (skip NA/NaN). */
@@ -39,7 +39,7 @@ double calculate_ale_heterogeneity_single_cpp(NumericVector dL, IntegerVector in
 
   for (int i = 0; i < n; ++i) {
     int interval = interval_index[i];
-    double value = dL[i];
+    double value = d_l[i];
 
     if (NumericVector::is_na(value)) continue;
 
@@ -56,11 +56,11 @@ double calculate_ale_heterogeneity_single_cpp(NumericVector dL, IntegerVector in
     }
   }
   
-  /* Pass 2: sum of squared residuals (dL - interval_mean)^2, skip NA/NaN. */
+  /* Pass 2: sum of squared residuals (d_l - interval_mean)^2, skip NA/NaN. */
   double total_heterogeneity = 0.0;
   for (int i = 0; i < n; ++i) {
     int interval = interval_index[i];
-    double value = dL[i];
+    double value = d_l[i];
 
     if (NumericVector::is_na(value)) continue;
     
@@ -76,10 +76,10 @@ double calculate_ale_heterogeneity_single_cpp(NumericVector dL, IntegerVector in
 // calculate_ale_heterogeneity_list_cpp
 // Purpose:
 //   Vectorized interface over a list of features. For each element in Y (a
-//   DataFrame with columns dL and interval_index), compute the single-feature
+//   DataFrame with columns d_l and interval_index), compute the single-feature
 //   heterogeneity and return a named list of numeric values.
 // Inputs:
-//   - Y: List of DataFrame; each DataFrame must contain columns "dL" (Numeric)
+//   - Y: List of DataFrame; each DataFrame must contain columns "d_l" (Numeric)
 //        and "interval_index" (Integer).
 // Notes:
 //   - Names of Y (feature names) are propagated to the result, if present.
@@ -93,10 +93,10 @@ List calculate_ale_heterogeneity_list_cpp(List Y) {
 
   for (int i = 0; i < n_feat; ++i) {
     DataFrame data = as<DataFrame>(Y[i]);
-    NumericVector dL = data["dL"];
+    NumericVector d_l = data["d_l"];
     IntegerVector interval_index = data["interval_index"];
     
-    double heterogeneity = calculate_ale_heterogeneity_single_cpp(dL, interval_index);
+    double heterogeneity = calculate_ale_heterogeneity_single_cpp(d_l, interval_index);
     result[i] = heterogeneity;
   }
   

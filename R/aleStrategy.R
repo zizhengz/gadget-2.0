@@ -122,7 +122,7 @@ AleStrategy = R6::R6Class(
     },
 
     #' @description
-    #' Given Y (list of ALE effect data.tables): computes sum of squared dL
+    #' Given Y (list of ALE effect data.tables): computes sum of squared d_l
     #' per feature via \code{calculate_ale_heterogeneity_cpp}.
     #' Returns numeric vector of length \code{length(Y)}.
     #' @param Y List. ALE effect list (each element a data.table from \code{calculate_ale}).
@@ -260,8 +260,8 @@ AleStrategy = R6::R6Class(
       # --- regional part (timed) ---
       t_regional = system.time({
         parent = Node$new(id = 1, depth = 1, subset_idx = seq_len(nrow(Z)), grid = grid,
-          objective_value_parent = NA, objective_value = objective_value_root, intImp_j = NULL,
-          objective_value_j = objective_value_root_j, improvement_met = FALSE, intImp = NULL,
+          objective_value_parent = NA, objective_value = objective_value_root, int_imp_j = NULL,
+          objective_value_j = objective_value_root_j, improvement_met = FALSE, int_imp = NULL,
           strategy = self)
         parent$split_node(
           Z = Z, Y = Y,

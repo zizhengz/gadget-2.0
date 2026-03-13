@@ -18,33 +18,33 @@
 node_transform_ale = function(Y, idx, split_feature = NULL, model = NULL, data = NULL,
   target_feature_name = NULL, n_intervals = 10, predict_fun = NULL) {
   # Step 1: Subset Y to current node indices using row_id for alignment
-  Y_subset = lapply(names(Y), function(feat) {
-    Y_j = Y[[feat]]
-    Y_j = Y_j[Y_j$row_id %in% idx, ]
-    Y_j[, `:=`(
+  y_subset = lapply(names(Y), function(feat) {
+    y_j = Y[[feat]]
+    y_j = y_j[y_j$row_id %in% idx, ]
+    y_j[, `:=`(
       int_n    = .N,
-      int_s1   = sum(dL),
-      int_s2   = sum(dL^2)
+      int_s1   = sum(d_l),
+      int_s2   = sum(d_l^2)
     ), by = interval_index]
-    Y_j
+    y_j
   })
-  names(Y_subset) = names(Y)
+  names(y_subset) = names(Y)
   # Step 2: Apply postprocessing
   if (!is.null(split_feature)) {
-    Y_processed = lapply(names(Y_subset), function(feat) {
-      Y_j = Y_subset[[feat]]
+    y_processed = lapply(names(y_subset), function(feat) {
+      y_j = y_subset[[feat]]
       # Handle single unique value case
-      if (length(unique(Y_j$feat_val)) == 1) {
-        Y_j$dL = 0
-        Y_j[, `:=`(
+      if (length(unique(y_j$feat_val)) == 1) {
+        y_j$d_l = 0
+        y_j[, `:=`(
           int_n    = .N,
-          int_s1   = sum(dL),
-          int_s2   = sum(dL^2)
+          int_s1   = sum(d_l),
+          int_s2   = sum(d_l^2)
         ), by = interval_index]
-      } else if (feat == split_feature && is.factor(Y_j$feat_val)) {
+      } else if (feat == split_feature && is.factor(y_j$feat_val)) {
         # # Recalculate ALE for categorical split feature
         # # Use row_id to find corresponding rows in original data
-        # subset_idx = Y_j$row_id
+        # subset_idx = y_j$row_id
         # # Recalculate ALE for the split feature using subset data
         # res = calculate_ale(
         #   model = model,
@@ -54,19 +54,19 @@ node_transform_ale = function(Y, idx, split_feature = NULL, model = NULL, data =
         #   n_intervals = n_intervals,
         #   predict_fun = predict_fun
         # )
-        # Y_j = res[[split_feature]]
+        # y_j = res[[split_feature]]
         # # Update row_id to match original data indices
-        # Y_j$row_id = subset_idx
+        # y_j$row_id = subset_idx
       }
       # Ensure it's a data.table
-      if (!data.table::is.data.table(Y_j)) {
-        Y_j = data.table::as.data.table(Y_j)
+      if (!data.table::is.data.table(y_j)) {
+        y_j = data.table::as.data.table(y_j)
       }
-      Y_j
+      y_j
     })
-    names(Y_processed) = names(Y_subset)
-    Y_processed
+    names(y_processed) = names(y_subset)
+    y_processed
   } else {
-    Y_subset
+    y_subset
   }
 }

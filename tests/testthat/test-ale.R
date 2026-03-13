@@ -1,6 +1,6 @@
 skip_ale_cpp_if_unavailable = function() {
   n = 5
-  dt = data.table::data.table(row_id = seq_len(n), interval_index = rep(1L, n), dL = 0, int_n = n, int_s1 = 0, int_s2 = 0)
+  dt = data.table::data.table(row_id = seq_len(n), interval_index = rep(1L, n), d_l = 0, int_n = n, int_s1 = 0, int_s2 = 0)
   tryCatch({
     calculate_ale_heterogeneity_list_cpp(list(x = dt))
   }, error = function(e) {
@@ -30,7 +30,7 @@ test_that("calculate_ale returns named list of data.tables", {
   expect_equal(sort(names(result)), c("x1", "x2"))
   for (nm in names(result)) {
     expect_true(data.table::is.data.table(result[[nm]]))
-    expect_true(all(c("row_id", "dL", "interval_index") %in% names(result[[nm]])))
+    expect_true(all(c("row_id", "d_l", "interval_index") %in% names(result[[nm]])))
   }
 })
 
@@ -40,10 +40,10 @@ test_that("calculate_ale_heterogeneity_cpp returns numeric", {
   dt = data.table::data.table(
     row_id = seq_len(n),
     interval_index = rep(1:4, length.out = n),
-    dL = rnorm(n),
+    d_l = rnorm(n),
     int_n = 5L, int_s1 = 0, int_s2 = 1
   )
-  result = calculate_ale_heterogeneity_single_cpp(dt$dL, dt$interval_index)
+  result = calculate_ale_heterogeneity_single_cpp(dt$d_l, dt$interval_index)
   expect_true(is.numeric(result))
   expect_length(result, 1)
   expect_true(!is.na(result))
@@ -55,11 +55,11 @@ test_that("calculate_ale_heterogeneity_list_cpp works with list of ALE data", {
   n = 15
   dt1 = data.table::data.table(
     row_id = seq_len(n), interval_index = rep(1:3, length.out = n),
-    dL = rnorm(n), int_n = 5L, int_s1 = 0, int_s2 = 1
+    d_l = rnorm(n), int_n = 5L, int_s1 = 0, int_s2 = 1
   )
   dt2 = data.table::data.table(
     row_id = seq_len(n), interval_index = rep(1:5, length.out = n),
-    dL = rnorm(n), int_n = 3L, int_s1 = 0, int_s2 = 1
+    d_l = rnorm(n), int_n = 3L, int_s1 = 0, int_s2 = 1
   )
   Y = list(f1 = dt1, f2 = dt2)
   result = calculate_ale_heterogeneity_list_cpp(Y)

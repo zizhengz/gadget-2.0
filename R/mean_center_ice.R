@@ -74,15 +74,15 @@ mean_center_ice = function(effect, feature_set = NULL, mean_center = TRUE) {
       effect_results = effect_results[features]
     }
     Y = lapply(effect_results, function(feat) {
-      Y_i = feat
-      if (is.factor(Y_i$.borders)) Y_i$.borders = factor_to_numeric(Y_i$.borders)
-      Y_i = tidyr::pivot_wider(Y_i, names_from = .borders, values_from = .value)
-      Y_i = Y_i[, setdiff(colnames(Y_i), c(".type", ".id", ".feature"))]
-      if (mean_center) Y_i = Y_i - rowMeans(Y_i, na.rm = TRUE)
-      Y_i
+      y_i = feat
+      if (is.factor(y_i$.borders)) y_i$.borders = factor_to_numeric(y_i$.borders)
+      y_i = tidyr::pivot_wider(y_i, names_from = .borders, values_from = .value)
+      y_i = y_i[, setdiff(colnames(y_i), c(".type", ".id", ".feature"))]
+      if (mean_center) y_i = y_i - rowMeans(y_i, na.rm = TRUE)
+      y_i
     })
-    grid = lapply(Y, function(Y_i) {
-      colnames(Y_i)
+    grid = lapply(Y, function(y_i) {
+      colnames(y_i)
     })
   }
   list(Y = Y, grid = grid)

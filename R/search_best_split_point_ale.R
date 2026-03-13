@@ -40,12 +40,12 @@ search_best_split_point_ale = function(
       list(ord_idx = ord_idx, z_sorted = z_sorted, n_obs = n_obs, is_cand = is_cand)
     } else {
       z_fac = droplevels(z)
-      z_nonNA = which(!is.na(z_fac))
-      if (length(z_nonNA) <= 1L) {
+      z_non_na = which(!is.na(z_fac))
+      if (length(z_non_na) <= 1L) {
         return(NULL)
       }
-      level_id = as.integer(z_fac[z_nonNA])
-      ord_idx = z_nonNA[order(level_id)]
+      level_id = as.integer(z_fac[z_non_na])
+      ord_idx = z_non_na[order(level_id)]
       n_obs = length(ord_idx)
       counts = tabulate(level_id)
       t_idx = head(cumsum(counts), -1L)
@@ -85,7 +85,7 @@ search_best_split_point_ale = function(
 
   cpp_res = ale_sweep_cpp(
     ord_idx = ord_idx,
-    dL_mat = st_table$dL_mat,
+    d_l_mat = st_table$d_l_mat,
     interval_idx_mat = st_table$interval_idx_mat,
     offsets = st_table$offsets,
     tot_n = st_table$tot_n,

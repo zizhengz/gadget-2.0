@@ -19,27 +19,27 @@ test_that("extract_split_info works with depth-based tree list", {
   node1 = list(
     id = 1, depth = 1, subset_idx = 1:20,
     split_feature = "x", split_value = 0.5,
-    objective_value = 1.5, intImp = NA, intImp_j = NULL,
+    objective_value = 1.5, int_imp = NA, int_imp_j = NULL,
     split_feature_parent = NA_character_, split_value_parent = NA,
-    objective_value_parent = NA, intImp_parent = NA,
+    objective_value_parent = NA, int_imp_parent = NA,
     improvement_met = FALSE, stop_criterion_met = FALSE,
     children = list(left_child = "dummy", right_child = "dummy")
   )
   node2 = list(
     id = 2, depth = 2, subset_idx = 1:10,
     split_feature = NA_character_, split_value = NA,
-    objective_value = 0.5, intImp = 0.2, intImp_j = c(x = 0.2),
+    objective_value = 0.5, int_imp = 0.2, int_imp_j = c(x = 0.2),
     split_feature_parent = "x", split_value_parent = 0.5,
-    objective_value_parent = 1.5, intImp_parent = NA,
+    objective_value_parent = 1.5, int_imp_parent = NA,
     improvement_met = FALSE, stop_criterion_met = TRUE,
     children = NULL
   )
   node3 = list(
     id = 3, depth = 2, subset_idx = 11:20,
     split_feature = NA_character_, split_value = NA,
-    objective_value = 0.6, intImp = 0.3, intImp_j = c(x = 0.3),
+    objective_value = 0.6, int_imp = 0.3, int_imp_j = c(x = 0.3),
     split_feature_parent = "x", split_value_parent = 0.5,
-    objective_value_parent = 1.5, intImp_parent = NA,
+    objective_value_parent = 1.5, int_imp_parent = NA,
     improvement_met = FALSE, stop_criterion_met = TRUE,
     children = NULL
   )

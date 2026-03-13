@@ -38,20 +38,20 @@ inline double risk_from_stats(double n, double s1, double s2) {
 //   Boundary stabilizer for numeric split feature. Near the split boundary,
 //   few samples in edge intervals can inflate heterogeneity. This function
 //   identifies a "near" window (last w rows for left child, first w for right),
-//   compares dL variance of near vs "far" intervals. If near is much larger,
-//   replaces near dL with draws from N(mean_far, sd_far) and recomputes SSE.
+//   compares d_l variance of near vs "far" intervals. If near is much larger,
+//   replaces near d_l with draws from N(mean_far, sd_far) and recomputes SSE.
 //   Replicates adjust_side_for_feature logic from R (aleStrategy).
 // Inputs:
-//   node_dL: dL values for the split feature, ordered as in sweep
+//   node_d_l: d_l values for the split feature, ordered as in sweep
 //   node_int: interval index per row
 //   original_risk: raw SSE for this side; returned if stabilizer does not apply
 //   is_left, t, n_obs: describe side (left=t rows, right=n_obs-t rows)
 // Notes:
-//   NA/NaN in node_dL are skipped. Uses R::rnorm for stochastic replacement;
+//   NA/NaN in node_d_l are skipped. Uses R::rnorm for stochastic replacement;
 //   reproducibility depends on R's RNG state.
 // -----------------------------------------------------------------------------
 double adjust_side_cpp(
-    const NumericVector& node_dL,
+    const NumericVector& node_d_l,
     const IntegerVector& node_int,
     double original_risk,
     bool is_left,
@@ -81,10 +81,10 @@ double adjust_side_cpp(
     target_intervals.insert(node_int[window_indices[i]]);
   }
 
-  /* Near/Far split; skip NA/NaN in node_dL. */
+  /* Near/Far split; skip NA/NaN in node_d_l. */
   std::vector<double> vals_near, vals_far;
   for (int i = 0; i < n_side; ++i) {
-    double v = node_dL[i];
+    double v = node_d_l[i];
     if (NumericVector::is_na(v)) continue;
     if (target_intervals.count(node_int[i]))
       vals_near.push_back(v);
@@ -118,10 +118,10 @@ double adjust_side_cpp(
   if (R_IsNA(sd_near) || R_IsNA(sd_far) || sd_far <= 0 || sd_near <= 2.0 * sd_far)
     return original_risk;
 
-  /* Replace near dL with draws from N(mean_far, sd_far); recompute SSE per interval. */
+  /* Replace near d_l with draws from N(mean_far, sd_far); recompute SSE per interval. */
   std::map<int, double> s1_map, s2_map, n_map;
   for (int i = 0; i < n_side; ++i) {
-    double v = node_dL[i];
+    double v = node_d_l[i];
     if (NumericVector::is_na(v)) continue;
     int k = node_int[i];
     if (target_intervals.count(k))
@@ -151,7 +151,7 @@ double adjust_side_cpp(
 //   boundary stabilizer to reduce boundary noise.
 // Inputs:
 //   ord_idx: 1-based row indices in sorted order (by z); length n_obs
-//   dL_mat: p x N, dL_mat(j,i) = local effect for feature j, sample i
+//   d_l_mat: p x N, d_l_mat(j,i) = local effect for feature j, sample i
 //   interval_idx_mat: p x N, interval index per feature per sample (1-based)
 //   offsets: length p, start offset per feature in flattened tot_n/s1/s2 arrays
 //   tot_n, tot_s1, tot_s2: full-node totals; r_n = right-node copy, l = tot - r
@@ -169,7 +169,7 @@ double adjust_side_cpp(
 // [[Rcpp::export]]
 List ale_sweep_cpp(
     IntegerVector ord_idx,
-    NumericMatrix dL_mat,
+    NumericMatrix d_l_mat,
     IntegerMatrix interval_idx_mat,
     IntegerVector offsets,
     NumericVector tot_n,
@@ -183,7 +183,7 @@ List ale_sweep_cpp(
     NumericVector z_sorted,
     int n_obs
 ) {
-  const int p = dL_mat.nrow();
+  const int p = d_l_mat.nrow();
   const int M = tot_n.size();
   const int j0 = split_feat_j - 1;  /* 0-based index of split feature. */
 
@@ -203,15 +203,15 @@ List ale_sweep_cpp(
 
   bool has_self_ale = (split_feat_j >= 1 && split_feat_j <= p);
 
-  /* Precompute dL and interval_idx in sweep order for stabilizer. */
-  NumericVector dL_j_sorted(n_obs);
+  /* Precompute d_l and interval_idx in sweep order for stabilizer. */
+  NumericVector d_l_j_sorted(n_obs);
   IntegerVector interval_idx_sorted(n_obs);
-  const int N = dL_mat.ncol();
+  const int N = d_l_mat.ncol();
   if (use_stabilizer && has_self_ale && z_sorted.size() >= (size_t)n_obs) {
     for (int i = 0; i < n_obs; ++i) {
       int row = ord_idx[i] - 1;
       if (row < 0 || row >= N) stop("ord_idx contains invalid row index");
-      dL_j_sorted[i] = dL_mat(j0, row);
+      d_l_j_sorted[i] = d_l_mat(j0, row);
       interval_idx_sorted[i] = interval_idx_mat(j0, row);
     }
   }
@@ -222,7 +222,7 @@ List ale_sweep_cpp(
 
     /* Update sufficient stats and risks for each feature. */
     for (int j = 0; j < p; ++j) {
-      double d = dL_mat(j, row);
+      double d = d_l_mat(j, row);
       int interval_idx_val = interval_idx_mat(j, row);
       int m = offsets[j] + interval_idx_val - 1;  /* Flattened interval index. */
       if (m < 0 || m >= M) continue;
@@ -285,21 +285,21 @@ List ale_sweep_cpp(
         if (r_const) drop += right_risks[j0];
         total = risks_sum - drop;
       } else {
-        NumericVector node_dL_left(t);
+        NumericVector node_d_l_left(t);
         IntegerVector node_int_left(t);
         for (int i = 0; i < t; ++i) {
-          node_dL_left[i] = dL_j_sorted[i];
+          node_d_l_left[i] = d_l_j_sorted[i];
           node_int_left[i] = interval_idx_sorted[i];
         }
-        NumericVector node_dL_right(n_obs - t);
+        NumericVector node_d_l_right(n_obs - t);
         IntegerVector node_int_right(n_obs - t);
         for (int i = 0; i < n_obs - t; ++i) {
-          node_dL_right[i] = dL_j_sorted[t + i];
+          node_d_l_right[i] = d_l_j_sorted[t + i];
           node_int_right[i] = interval_idx_sorted[t + i];
         }
-        adj_left = adjust_side_cpp(node_dL_left, node_int_left,
+        adj_left = adjust_side_cpp(node_d_l_left, node_int_left,
             left_risks[j0], true, t, t);
-        adj_right = adjust_side_cpp(node_dL_right, node_int_right,
+        adj_right = adjust_side_cpp(node_d_l_right, node_int_right,
             right_risks[j0], false, 0, n_obs - t);
         total = risks_sum - self_risk + adj_left + adj_right;
       }

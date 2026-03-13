@@ -145,7 +145,7 @@ plot_tree_ale = function(tree, effect, data, target_feature_name,
 #' Compute y-axis range for ALE plots (effect + optional target data, with padding)
 #' @keywords internal
 calculate_y_range_ale = function(curves, data, target_feature_name, show_point) {
-  effect_values = unlist(lapply(curves, function(x) x$mean_effect$dL), use.names = FALSE)
+  effect_values = unlist(lapply(curves, function(x) x$mean_effect$d_l), use.names = FALSE)
   effect_values = effect_values[!is.na(effect_values)]
   if (!length(effect_values)) {
     return(list(ymin = 0, ymax = 1))

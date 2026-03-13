@@ -22,7 +22,7 @@ prepare_layout_data = function(tree) {
           child_type    = if (!is.null(node$child_type)) node$child_type else NA,
           split_feature = if (!is.null(node$split_feature)) node$split_feature else NA,
           split_value   = if (!is.null(node$split_value)) node$split_value else NA,
-          intImp        = if (!is.null(node$intImp)) node$intImp else NA,
+          int_imp        = if (!is.null(node$int_imp)) node$int_imp else NA,
           N             = if (!is.null(node$subset_idx)) length(node$subset_idx) else NA,
           depth         = depth
         )
@@ -58,7 +58,7 @@ prepare_layout_data = function(tree) {
       cond_self = paste0(this$split_feature, " ",
         ifelse(child_type == "<=", "<=", "="), " ",
         format_val(this$split_value))
-      path_conditions = paste0(cond_self, "\nheter_reduction: ", round(this$intImp, 3))
+      path_conditions = paste0(cond_self, "\nheter_reduction: ", round(this$int_imp, 3))
     } else {
       path_conditions = path_conditions
     }

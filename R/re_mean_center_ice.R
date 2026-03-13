@@ -8,11 +8,11 @@
 #' @return List of mean-centered matrices
 re_mean_center_ice = function(Y, grid, idx) {
   feature_names = names(Y)
-  Y_centered = lapply(seq_along(Y), function(i) {
+  y_centered = lapply(seq_along(Y), function(i) {
     Y[[i]] = Y[[i]][idx, ]
     Y[[i]][, which(!(colnames(Y[[i]]) %in% grid[[i]]))] = NA
     Y[[i]] - rowMeans(Y[[i]], na.rm = TRUE)
   })
-  names(Y_centered) = feature_names
-  Y_centered
+  names(y_centered) = feature_names
+  y_centered
 }

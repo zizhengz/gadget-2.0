@@ -163,8 +163,8 @@ PdStrategy = R6::R6Class(
       objective_value_root_j = self$heterogeneity(Y)
       objective_value_root = sum(objective_value_root_j, na.rm = TRUE)
       parent = Node$new(id = 1, depth = 1, subset_idx = seq_len(nrow(Z)), grid = grid,
-        objective_value_parent = NA, objective_value = objective_value_root, intImp_j = NULL,
-        objective_value_j = objective_value_root_j, improvement_met = FALSE, intImp = NULL,
+        objective_value_parent = NA, objective_value = objective_value_root, int_imp_j = NULL,
+        objective_value_j = objective_value_root_j, improvement_met = FALSE, int_imp = NULL,
         strategy = self)
       # Recursively build the tree from the root node (regional part, timed)
       t_regional = system.time({

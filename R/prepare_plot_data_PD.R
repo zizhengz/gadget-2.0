@@ -15,23 +15,23 @@ prepare_plot_data_pd = function(effect, tree, depth, feature_set, mean_center) {
   nodes = tree[[depth]]
 
   Y = lapply(seq_along(Y), function(i) {
-    Y_i = Y[[i]]
-    Y_i$node = NA_integer_
+    y_i = Y[[i]]
+    y_i$node = NA_integer_
     grid_i_total = grid_total[[i]]
     for (node_idx in seq_along(nodes)) {
       node = nodes[[node_idx]]
       subset_idx = node$subset_idx
       grid_i_curr = node$grid[[i]]
-      Y_i$node[subset_idx] = node_idx
+      y_i$node[subset_idx] = node_idx
       if (length(grid_i_curr) < length(grid_i_total)) {
-        Y_i[subset_idx, which(!(grid_i_total %in% grid_i_curr))] = NA
+        y_i[subset_idx, which(!(grid_i_total %in% grid_i_curr))] = NA
         if (mean_center && length(grid_i_curr) > 1) {
-          Y_i[subset_idx, grid_i_total] = Y_i[subset_idx, grid_i_total] -
-            rowMeans(Y_i[subset_idx, grid_i_total], na.rm = TRUE)
+          y_i[subset_idx, grid_i_total] = y_i[subset_idx, grid_i_total] -
+            rowMeans(y_i[subset_idx, grid_i_total], na.rm = TRUE)
         }
       }
     }
-    Y_i
+    y_i
   })
   names(Y) = feature_name
   Y

@@ -138,7 +138,7 @@ GadgetTree = R6::R6Class(
 
     #' @description
     #' Converts root to depth-list and calls \code{extract_split_info()} with \code{split_benchmark}.
-    #' Returns data frame (depth, id, split_feature, split_value, intImp, etc.).
+    #' Returns data frame (depth, id, split_feature, split_value, int_imp, etc.).
     #' @return Data frame. Split information for all nodes.
     extract_split_info = function() {
       tree_for_info = convert_tree_to_list(self$root, self$n_split + 1)

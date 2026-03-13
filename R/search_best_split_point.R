@@ -2,7 +2,7 @@
 #'
 #' Given z, Y, n_quantiles, min_node_size, is_categorical: for numeric,
 #' sorts z, builds quantile cutpoints, evaluates objective
-#' (sum of -S_l^2/N_l - S_r^2/N_r) per cutpoint; for categorical,
+#' (sum of -s_l^2/n_l - s_r^2/n_r) per cutpoint; for categorical,
 #' evaluates one-level vs rest. Returns data frame with
 #' \code{split_point}, \code{split_objective}.
 #'
@@ -36,7 +36,7 @@ search_best_split_point = function(z, Y, n_quantiles = NULL, min_node_size, is_c
       return(data.frame(split_point = NA, split_objective = Inf))
     }
     splits = levels(z)[seq_along(levels(z)) - 1]
-    Y = lapply(Y, function(Y_i) as.matrix(Y_i))
+    Y = lapply(Y, function(y_i) as.matrix(y_i))
   } else {
     # sort z in increasing order
     ord = order(z)
@@ -51,35 +51,35 @@ search_best_split_point = function(z, Y, n_quantiles = NULL, min_node_size, is_c
     } else {
       splits = unique(z)
     }
-    Y_cumsum = lapply(Y, function(Y_i) {
-      Y_i = as.matrix(Y_i[ord, ])
-      Y_i_cumsum = apply(Y_i, 2, cumsum)
-      Y_i_cumsum
+    y_cumsum = lapply(Y, function(y_i) {
+      y_i = as.matrix(y_i[ord, ])
+      y_i_cumsum = apply(y_i, 2, cumsum)
+      y_i_cumsum
     })
   }
   # calculate split objective: sum_j(R_j_l + R_j_r)
   split_objective = vapply(splits, function(split) {
     idx = if (is_categorical) which(z %in% split) else which(z <= split)
-    N_l = length(idx)
-    N_r = N - N_l
-    if (N_l < min_node_size || N_r < min_node_size) {
+    n_l = length(idx)
+    n_r = N - n_l
+    if (n_l < min_node_size || n_r < min_node_size) {
       return(Inf)
     }
     if (is_categorical) {
       sum(vapply(seq_along(Y), function(i) {
-        Y_i = Y[[i]]
-        Y_i_l = Y_i[idx, , drop = FALSE]
-        Y_i_r = Y_i[-idx, , drop = FALSE]
-        S_l = colSums(Y_i_l, na.rm = TRUE)
-        S_r = colSums(Y_i_r, na.rm = TRUE)
-        sum(-S_l^2 / N_l - S_r^2 / N_r, na.rm = TRUE)
+        y_i = Y[[i]]
+        y_i_l = y_i[idx, , drop = FALSE]
+        y_i_r = y_i[-idx, , drop = FALSE]
+        s_l = colSums(y_i_l, na.rm = TRUE)
+        s_r = colSums(y_i_r, na.rm = TRUE)
+        sum(-s_l^2 / n_l - s_r^2 / n_r, na.rm = TRUE)
       }, NA_real_), na.rm = TRUE)
     } else {
-      sum(vapply(seq_along(Y_cumsum), function(i) {
-        Y_i_cumsum = Y_cumsum[[i]]
-        S_l = Y_i_cumsum[N_l, ]
-        S_r = Y_i_cumsum[N, ] - S_l
-        sum(-S_l^2 / N_l - S_r^2 / N_r, na.rm = TRUE)
+      sum(vapply(seq_along(y_cumsum), function(i) {
+        y_i_cumsum = y_cumsum[[i]]
+        s_l = y_i_cumsum[n_l, ]
+        s_r = y_i_cumsum[N, ] - s_l
+        sum(-s_l^2 / n_l - s_r^2 / n_r, na.rm = TRUE)
       }, NA_real_), na.rm = TRUE)
     }
   }, FUN.VALUE = NA_real_)

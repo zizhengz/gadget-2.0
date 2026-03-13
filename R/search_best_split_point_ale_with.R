@@ -40,12 +40,12 @@ search_best_split_point_ale_with = function(
       list(ord_idx = ord_idx, z_sorted = z_sorted, n_obs = n_obs, is_cand = is_cand)
     } else {
       z_fac = droplevels(z)
-      z_nonNA = which(!is.na(z_fac))
-      if (length(z_nonNA) <= 1L) {
+      z_non_na = which(!is.na(z_fac))
+      if (length(z_non_na) <= 1L) {
         return(NULL)
       }
-      level_id = as.integer(z_fac[z_nonNA])
-      ord_idx = z_nonNA[order(level_id)]
+      level_id = as.integer(z_fac[z_non_na])
+      ord_idx = z_non_na[order(level_id)]
       n_obs = length(ord_idx)
       counts = tabulate(level_id)
       t_idx = head(cumsum(counts), -1L)
@@ -67,7 +67,7 @@ search_best_split_point_ale_with = function(
 
   # Helper: Move one row across all features (updates flattened vectors and per-feature risks)
   move_row_all = function(row_id) {
-    d = st_table$dL_mat[, row_id] # length p, dL of each feature
+    d = st_table$d_l_mat[, row_id] # length p, d_l of each feature
     interval_idx = st_table$interval_idx_mat[, row_id] # length p, interval number of each feature
     m = offsets + interval_idx # length p, subscript of each feature in flattened vector
 
@@ -173,9 +173,9 @@ search_best_split_point_ale_with = function(
     }
     # 3. window size w: max(10% of side samples, 10)
     w = max(round(0.1 * n_side), 10L)
-    # 4. Get interval indices and dL for current side
+    # 4. Get interval indices and d_l for current side
     node_int = interval_idx_sorted[idx_start:idx_end]
-    node_dL = dL_j_sorted[idx_start:idx_end]
+    node_d_l = d_l_j_sorted[idx_start:idx_end]
     # 5. Get unique set of interval indices within the window
     if (is_left) {
       window_indices = (n_side - w + 1L):n_side # Left window: last w elements
@@ -192,17 +192,17 @@ search_best_split_point_ale_with = function(
     if (n_near < 2 || n_far < 2) {
       return(original_risk)
     }
-    # 8. Get dL and calculate SD
-    vals_near = node_dL[is_near]
-    vals_far = node_dL[!is_near]
+    # 8. Get d_l and calculate SD
+    vals_near = node_d_l[is_near]
+    vals_far = node_d_l[!is_near]
     sd_near = sd(vals_near)
     sd_far = sd(vals_far)
     # 9. Condition and replacement
     if (!is.na(sd_near) && !is.na(sd_far) && sd_near > 2.0 * sd_far) {
-      node_dL[is_near] = rnorm(n = n_near, mean = mean(vals_far), sd = sd_far)
-      s1_vec = rowsum(node_dL, group = node_int, reorder = FALSE)
-      s2_vec = rowsum(node_dL^2, group = node_int, reorder = FALSE)
-      n_vec = rowsum(rep(1L, length(node_dL)), group = node_int, reorder = FALSE)
+      node_d_l[is_near] = rnorm(n = n_near, mean = mean(vals_far), sd = sd_far)
+      s1_vec = rowsum(node_d_l, group = node_int, reorder = FALSE)
+      s2_vec = rowsum(node_d_l^2, group = node_int, reorder = FALSE)
+      n_vec = rowsum(rep(1L, length(node_d_l)), group = node_int, reorder = FALSE)
       interval_sse = s2_vec - (s1_vec^2) / n_vec
       return(sum(interval_sse))
     }
@@ -231,11 +231,11 @@ search_best_split_point_ale_with = function(
 
   #### Code with adjust_side_for_feature ####
   if (!is_categorical && has_self_ale) {
-    dL_j_sorted = st_table$dL_mat[split_feat_j, ord_idx] # N x 1
+    d_l_j_sorted = st_table$d_l_mat[split_feat_j, ord_idx] # N x 1
     interval_idx_sorted = st_table$interval_idx_mat[split_feat_j, ord_idx]
     #### Code for old adjust_side_for_feature ####
-    # S1 = cumsum(dL_j_sorted)
-    # S2 = cumsum(dL_j_sorted * dL_j_sorted)
+    # S1 = cumsum(d_l_j_sorted)
+    # S2 = cumsum(d_l_j_sorted * d_l_j_sorted)
     # S1_tot = S1[n_obs]
     # S2_tot = S2[n_obs]
     #### ####
@@ -370,12 +370,12 @@ search_best_split_point_ale_with_cpp = function(
       list(ord_idx = ord_idx, z_sorted = z_sorted, n_obs = n_obs, is_cand = is_cand)
     } else {
       z_fac = droplevels(z)
-      z_nonNA = which(!is.na(z_fac))
-      if (length(z_nonNA) <= 1L) {
+      z_non_na = which(!is.na(z_fac))
+      if (length(z_non_na) <= 1L) {
         return(NULL)
       }
-      level_id = as.integer(z_fac[z_nonNA])
-      ord_idx = z_nonNA[order(level_id)]
+      level_id = as.integer(z_fac[z_non_na])
+      ord_idx = z_non_na[order(level_id)]
       n_obs = length(ord_idx)
       counts = tabulate(level_id)
       t_idx = head(cumsum(counts), -1L)
@@ -416,7 +416,7 @@ search_best_split_point_ale_with_cpp = function(
 
   cpp_res = ale_sweep_cpp(
     ord_idx = ord_idx,
-    dL_mat = st_table$dL_mat,
+    d_l_mat = st_table$d_l_mat,
     interval_idx_mat = st_table$interval_idx_mat,
     offsets = st_table$offsets,
     tot_n = st_table$tot_n,

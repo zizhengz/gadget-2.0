@@ -13,8 +13,8 @@ search_best_split_ale = function(
     stats_list = vector("list", p)
     # row_pos_list: p x n, interval index per sample
     row_pos_list = vector("list", p)
-    # dL_list: p x n, dL per sample
-    dL_list = vector("list", p)
+    # d_l_list: p x n, d_l per sample
+    d_l_list = vector("list", p)
     # K: p x 1, number of intervals per feature
     K = integer(p)
     risk_from_stats = function(n, s1, s2) ifelse(n <= 1L, 0.0, s2 - (s1 * s1) / n)
@@ -30,8 +30,8 @@ search_best_split_ale = function(
       stats_list[[j]] = S
       # map the sample-level interval_index to row numbers in S
       row_pos_list[[j]] = match(DT$interval_index, S$interval_index)
-      # dL for n samples of feature j (order matches original data rows via row_id)
-      dL_list[[j]] = DT$dL
+      # d_l for n samples of feature j (order matches original data rows via row_id)
+      d_l_list[[j]] = DT$d_l
       # number of intervals of feature j
       K[j] = nrow(S)
     }
@@ -67,19 +67,19 @@ search_best_split_ale = function(
       r_risks[j] = sum(risk_from_stats(S$n, S$s1, S$s2))
       pos = pos + m
     }
-    N = length(effect[[1]]$dL)
-    # dL of the j-th feature on the i-th sample
-    dL_mat = matrix(0.0, nrow = p, ncol = N)
+    N = length(effect[[1]]$d_l)
+    # d_l of the j-th feature on the i-th sample
+    d_l_mat = matrix(0.0, nrow = p, ncol = N)
     # interval that the i-th sample of the j-th feature belongs to
     interval_idx_mat = matrix(0L, nrow = p, ncol = N)
     for (j in seq_len(p)) {
-      dL_mat[j, ] = dL_list[[j]]
+      d_l_mat[j, ] = d_l_list[[j]]
       interval_idx_mat[j, ] = row_pos_list[[j]]
     }
     list(K = K, offsets = offsets,
       tot_n = tot_n, tot_s1 = tot_s1, tot_s2 = tot_s2,
       r_n = r_n, r_s1 = r_s1, r_s2 = r_s2, r_risks = r_risks,
-      dL_mat = dL_mat, interval_idx_mat = interval_idx_mat)
+      d_l_mat = d_l_mat, interval_idx_mat = interval_idx_mat)
   }
   #####
   split_feature_names = colnames(Z)

@@ -1,5 +1,5 @@
-utils::globalVariables(c("x_grid", "dL", "level", "x", "y"))
-x_grid = dL = level = x = y = NULL
+utils::globalVariables(c("x_grid", "d_l", "level", "x", "y"))
+x_grid = d_l = level = x = y = NULL
 
 #' Build per-feature ALE panels (mean curve only)
 #'
@@ -38,11 +38,11 @@ plot_regional_ale = function(curves, color_ale = "lightcoral",
     obs_df = if (has_points) point_values[[feat]] else NULL
 
     if (is_numeric) {
-      valid = !is.na(mean_dt$dL) & !is.na(mean_dt$x_grid)
+      valid = !is.na(mean_dt$d_l) & !is.na(mean_dt$x_grid)
       n_x = length(unique(mean_dt$x_grid[valid]))
       has_line = n_x >= 2L
 
-      p_ale = ggplot2::ggplot(mean_dt, ggplot2::aes(x = x_grid, y = dL)) +
+      p_ale = ggplot2::ggplot(mean_dt, ggplot2::aes(x = x_grid, y = d_l)) +
         ggplot2::theme_bw() +
         ggplot2::xlab(feat) +
         ggplot2::ylab(expression(hat(f)[j]))
@@ -71,11 +71,11 @@ plot_regional_ale = function(curves, color_ale = "lightcoral",
       }
       mean_dt$level = factor(mean_dt$x_grid, levels = level_order)
 
-      valid = !is.na(mean_dt$dL) & !is.na(mean_dt$level)
+      valid = !is.na(mean_dt$d_l) & !is.na(mean_dt$level)
       n_x = length(unique(mean_dt$level[valid]))
       has_line = n_x >= 2L
 
-      p_ale = ggplot2::ggplot(mean_dt, ggplot2::aes(x = level, y = dL, group = 1)) +
+      p_ale = ggplot2::ggplot(mean_dt, ggplot2::aes(x = level, y = d_l, group = 1)) +
         ggplot2::theme_bw() +
         ggplot2::xlab(feat) +
         ggplot2::ylab(expression(hat(f)[j]))

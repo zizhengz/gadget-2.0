@@ -8,6 +8,6 @@
 #' @return Numeric vector of length \code{length(Y)}.
 #' @keywords internal
 node_heterogeneity = function(Y) {
-  Y_mat = lapply(Y, function(x) as.matrix(x))
-  node_heterogeneity_cpp(Y_mat)
+  y_mat = lapply(Y, function(x) as.matrix(x))
+  node_heterogeneity_cpp(y_mat)
 }
