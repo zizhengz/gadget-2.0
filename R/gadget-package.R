@@ -12,7 +12,8 @@
 #' \itemize{
 #'   \item \code{\link{gadgetTree}}: R6 class to grow and visualize effect-based trees.
 #'   \item \code{\link{aleStrategy}}: Strategy for ALE-based trees (ALE computed internally from a fitted model).
-#'   \item \code{\link{pdStrategy}}: Strategy for PD-based trees (uses precomputed ICE/PD from \pkg{iml} or similar tools).
+#'   \item \code{\link{pdStrategy}}: Strategy for PD-based trees (uses
+#'     precomputed ICE/PD from \pkg{iml} or similar tools).
 #' }
 #'
 #' **Typical workflow:**

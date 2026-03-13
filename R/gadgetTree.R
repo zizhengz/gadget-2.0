@@ -1,7 +1,9 @@
 #' gadgetTree: Generalized Additive Decomposition of Global Effects Tree (R6 class)
 #'
 #' @description
-#' Wrapper for effect-based trees: given a strategy (pd/ale), fits tree via \code{$fit()}, plots effects via \code{$plot()}, extracts splits via \code{$extract_split_info()}.
+#' Wrapper for effect-based trees: given a strategy (pd/ale), fits tree via
+#' \code{$fit()}, plots effects via \code{$plot()}, extracts splits via
+#' \code{$extract_split_info()}.
 #' Delegates all effect logic to the strategy.
 #'
 #' @field strategy Strategy object (e.g., pdStrategy) that implements effect-specific logic.
@@ -41,7 +43,8 @@ gadgetTree = R6::R6Class(
     split_benchmark = NULL,
 
     #' @description
-    #' Given strategy and tree params (n_split, impr_par, min_node_size, n_quantiles): stores them and initializes empty \code{split_benchmark}.
+    #' Given strategy and tree params (n_split, impr_par, min_node_size,
+    #' n_quantiles): stores them and initializes empty \code{split_benchmark}.
     #' Returns the gadgetTree instance.
     #' @param strategy Strategy object (e.g., pdStrategy) that implements effect-specific logic.
     #' @param n_split Integer. Maximum number of splits (tree depth minus one).
@@ -62,7 +65,10 @@ gadgetTree = R6::R6Class(
     },
 
     #' @description
-    #' Given data, target_feature_name, and optional feature/split sets: calls \code{strategy$fit()} with ... (effect/model as required by strategy); clears \code{split_benchmark}; optionally runs \code{strategy$clean()}.
+    #' Given data, target_feature_name, and optional feature/split sets:
+    #' calls \code{strategy$fit()} with ... (effect/model as required by
+    #' strategy); clears \code{split_benchmark}; optionally runs
+    #' \code{strategy$clean()}.
     #' Returns tree invisibly.
     #' @param data Data frame. Data frame containing features and the target variable.
     #' @param target_feature_name Character(1). Name of the target feature to explain.
@@ -99,7 +105,9 @@ gadgetTree = R6::R6Class(
     },
 
     #' @description
-    #' Given effect (or NULL for ale cached effect), data, target_feature_name, and optional depth/node_id/features: converts root to depth-list; calls \code{strategy$plot()}.
+    #' Given effect (or NULL for ale cached effect), data,
+    #' target_feature_name, and optional depth/node_id/features: converts
+    #' root to depth-list; calls \code{strategy$plot()}.
     #' Returns list of ggplot2 objects.
     #' @param effect R6 object or list. Object containing feature effect results.
     #' @param data Data frame. Data frame.

@@ -10,7 +10,8 @@
 #' @param feature_set Character. Names of features to compute ALE for; must exist in \code{data}.
 #' @param target_feature_name Character. Name of the target variable in \code{data}.
 #' @param n_intervals Integer. Number of equal-frequency intervals for numeric features (default: 10).
-#' @param predict_fun Function or NULL. \code{function(model, data)} returning a numeric vector of predictions; NULL uses an mlr3-style default.
+#' @param predict_fun Function or NULL. \code{function(model, data)} returning
+#'   a numeric vector of predictions; NULL uses an mlr3-style default.
 #'
 #' @return Named list of data.tables, one per element of \code{feature_set}. Each data.table has columns:
 #'   \item{row_id}{Row index in \code{data}.}
@@ -21,11 +22,17 @@
 #'   \item{int_n, int_s1, int_s2}{Per-interval count and sum(dL), sum(dL^2) for heterogeneity.}
 #'
 #' @details
-#' Numeric features: builds \code{n_intervals} quantile-based intervals, assigns each row to an interval, and computes finite differences between interval boundaries via \code{predict_fun}.
+#' Numeric features: builds \code{n_intervals} quantile-based intervals,
+#' assigns each row to an interval, and computes finite differences between
+#' interval boundaries via \code{predict_fun}.
 #'
-#' Categorical features: use factor levels as given (typically pre-ordered by \code{order_categorical_levels} in \code{prepare_split_data_ale}). For each row, \code{dL} is the difference in predictions when the focal feature is set to the next vs. previous level; single-level factors get \code{dL = 0}.
+#' Categorical features: use factor levels as given (typically pre-ordered by
+#' \code{order_categorical_levels} in \code{prepare_split_data_ale}). For each
+#' row, \code{dL} is the difference in predictions when the focal feature is
+#' set to the next vs. previous level; single-level factors get \code{dL = 0}.
 #'
-#' Sample-level columns (\code{row_id}, \code{feat_val}, \code{dL}, etc.) support subsetting by node and downstream heterogeneity calculation.
+#' Sample-level columns (\code{row_id}, \code{feat_val}, \code{dL}, etc.)
+#' support subsetting by node and downstream heterogeneity calculation.
 #'
 #' @export
 calculate_ale = function(model, data, feature_set, target_feature_name, n_intervals = 10, predict_fun = NULL) {

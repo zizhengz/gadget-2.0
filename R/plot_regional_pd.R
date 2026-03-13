@@ -1,5 +1,6 @@
 #' Plot regional PD/ICE for one node (internal).
-#' @param prepared_data,origin_data,target_feature_name,node_idx,color_ice,color_pd,ymin,ymax,split_condition,show_point,mean_center Plot arguments.
+#' @param prepared_data,origin_data,target_feature_name,node_idx,color_ice,
+#'   color_pd,ymin,ymax,split_condition,show_point,mean_center Plot arguments.
 #' @keywords internal
 plot_regional_pd = function(prepared_data, origin_data, target_feature_name, node_idx,
   color_ice, color_pd, ymin, ymax, split_condition = NULL,
@@ -56,7 +57,8 @@ plot_regional_pd = function(prepared_data, origin_data, target_feature_name, nod
     # check if we can draw lines
     noline = length(unique(plot_data$grid[!is.na(plot_data$value)])) < 2
 
-    p = ggplot(plot_data, aes(x = .data[["grid"]], y = .data[["value"]], group = .data[["id"]], color = .data[["type"]]))
+    p = ggplot(plot_data, aes(x = .data[["grid"]], y = .data[["value"]],
+      group = .data[["id"]], color = .data[["type"]]))
     if (!noline) {
       p = p + geom_line(alpha = 0.9, linewidth = 0.5, linetype = "dotted", na.rm = TRUE)
       p = p + geom_line(data = subset(plot_data, type == "PDP"), linewidth = 0.8)

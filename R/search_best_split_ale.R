@@ -36,7 +36,8 @@ search_best_split_ale = function(
       K[j] = nrow(S)
     }
 
-    # |feature1 interval1 | feature1 interval2 | feature2 interval1 | feature2 interval2 | feature2 interval3 | feature3 interval1 | feature3 interval2 | feature3 interval3 |
+    # |feat1 int1 | feat1 int2 | feat2 int1 | feat2 int2 | feat2 int3 |
+    # |feat3 int1 | feat3 int2 | feat3 int3 |
     # |----- offsets[1]=0 -----|---- offsets[2]=2 -----|---- offsets[3]=5 ----|
     # offsets[j]: number of intervals for the first (j−1) features
     offsets = c(0L, cumsum(K))

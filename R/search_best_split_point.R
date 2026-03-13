@@ -1,6 +1,10 @@
 #' Find best split point for a single feature z
 #'
-#' Given z, Y, n_quantiles, min_node_size, is_categorical: for numeric, sorts z, builds quantile cutpoints, evaluates objective (sum of -S_l^2/N_l - S_r^2/N_r) per cutpoint; for categorical, evaluates one-level vs rest. Returns data frame with \code{split_point}, \code{split_objective}.
+#' Given z, Y, n_quantiles, min_node_size, is_categorical: for numeric,
+#' sorts z, builds quantile cutpoints, evaluates objective
+#' (sum of -S_l^2/N_l - S_r^2/N_r) per cutpoint; for categorical,
+#' evaluates one-level vs rest. Returns data frame with
+#' \code{split_point}, \code{split_objective}.
 #'
 #' @param z Vector of split feature values.
 #' @param Y List of effect matrices.

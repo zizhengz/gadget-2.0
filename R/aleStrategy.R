@@ -1,5 +1,6 @@
 #' Default prediction function for mlr3-style models.
-#' Given model and data: calls model$predict_newdata(data); if result is Prediction returns response else returns as-is.
+#' Given model and data: calls model$predict_newdata(data); if result is
+#' Prediction returns response else returns as-is.
 #' @param model Fitted model.
 #' @param data New data.
 #' @keywords internal
@@ -12,7 +13,8 @@ default_predict_fun = function(model, data) {
 #'
 #' @description
 #' ALE-based strategy: given model and data, preprocesses to Z/Y via \code{prepare_split_data_ale};
-#' transforms ALE effects per node; computes ALE-derivative heterogeneity; finds best split via \code{search_best_split_ale}; fits tree and plots ALE curves.
+#' transforms ALE effects per node; computes ALE-derivative heterogeneity;
+#' finds best split via \code{search_best_split_ale}; fits tree and plots ALE curves.
 #'
 #' @field name Character. Strategy name (e.g., \code{"ale"}).
 #' @field tree_ref Reference to the associated \code{gadgetTree} instance.
@@ -63,7 +65,8 @@ aleStrategy = R6::R6Class(
 
     #' @description
     #' Given model, data, target_feature_name, n_intervals, and optional feature/split sets: computes ALE per feature;
-    #' builds Z (split features) and Y (named list of ALE data.tables) via \code{prepare_split_data_ale}. Returns list \code{Z}, \code{Y}.
+    #' builds Z (split features) and Y (named list of ALE data.tables) via
+#' \code{prepare_split_data_ale}. Returns list \code{Z}, \code{Y}.
     #' @param model Fitted model object.
     #' @param data Data frame or data.table with features and target.
     #' @param target_feature_name Character(1). Name of the target variable.
@@ -73,8 +76,11 @@ aleStrategy = R6::R6Class(
     #' @param predict_fun Function or NULL. Prediction function; NULL uses mlr3-style default.
     #' @param order_method Character. Categorical level order: \code{"mds"}, \code{"pca"},
     #'   \code{"random"}, or \code{"raw"} (keep existing factor level order; default \code{"mds"}).
-    #' @return List with \code{Z} (data.table of split features) and \code{Y} (named list of ALE effect data.tables).
-    preprocess = function(model, data, target_feature_name, n_intervals, feature_set = NULL, split_feature = NULL, predict_fun = NULL, order_method = "mds") {
+    #' @return List with \code{Z} (data.table of split features) and
+    #'   \code{Y} (named list of ALE effect data.tables).
+    preprocess = function(model, data, target_feature_name, n_intervals,
+      feature_set = NULL, split_feature = NULL, predict_fun = NULL,
+      order_method = "mds") {
       checkmate::assert_data_frame(data, .var.name = "data")
       checkmate::assert_character(target_feature_name, len = 1, .var.name = "target_feature_name")
       checkmate::assert_integerish(n_intervals, len = 1, lower = 1, .var.name = "n_intervals")
@@ -89,7 +95,9 @@ aleStrategy = R6::R6Class(
     },
 
     #' @description
-    #' Given Y (ALE effect list), idx, and split_feature: subsets ALE rows by idx; handles single-interval numeric and recalculates categorical if split_feature changes.
+    #' Given Y (ALE effect list), idx, and split_feature: subsets ALE rows by idx;
+    #' handles single-interval numeric and recalculates categorical if
+    #' split_feature changes.
     #' Returns list of ALE data.tables.
     #' @param Y List. ALE effect list (each element a data.frame/data.table from \code{calculate_ale}).
     #' @param idx Integer. Row indices of samples in the node.
@@ -114,7 +122,8 @@ aleStrategy = R6::R6Class(
     },
 
     #' @description
-    #' Given Y (list of ALE effect data.tables): computes sum of squared dL per feature via \code{calculate_ale_heterogeneity_cpp}.
+    #' Given Y (list of ALE effect data.tables): computes sum of squared dL
+    #' per feature via \code{calculate_ale_heterogeneity_cpp}.
     #' Returns numeric vector of length \code{length(Y)}.
     #' @param Y List. ALE effect list (each element a data.table from \code{calculate_ale}).
     #' @return Numeric vector of heterogeneity, one per feature.
@@ -127,8 +136,10 @@ aleStrategy = R6::R6Class(
     },
 
     #' @description
-    #' Given Z, Y (ALE effect list), min_node_size, n_quantiles: calls \code{search_best_split_ale} to evaluate all features.
-    #' Returns list with \code{split_feature}, \code{split_point}, \code{best_split}, \code{left/right_objective_value_j}, etc.
+    #' Given Z, Y (ALE effect list), min_node_size, n_quantiles: calls
+    #' \code{search_best_split_ale} to evaluate all features.
+    #' Returns list with \code{split_feature}, \code{split_point},
+    #' \code{best_split}, \code{left/right_objective_value_j}, etc.
     #' @param Z Data frame or data.table. Split-feature matrix (columns = \code{split_feature}).
     #' @param Y List. ALE effect list from \code{calculate_ale}.
     #' @param min_node_size Integer(1). Minimum node size.
@@ -151,7 +162,9 @@ aleStrategy = R6::R6Class(
     },
 
     #' @description
-    #' Given tree, effect (or cached \code{effect_root}), data, target_feature_name, and optional depth/node_id/features: calls \code{plot_tree_ale}.
+    #' Given tree, effect (or cached \code{effect_root}), data,
+    #' target_feature_name, and optional depth/node_id/features: calls
+    #' \code{plot_tree_ale}.
     #' Returns nested list of patchwork/ggplot objects (depth -> node).
     #' @param tree Depth-based list of Node objects (typically from \code{convert_tree_to_list}).
     #' @param effect Optional ALE effect list (from \code{calculate_ale}); if \code{NULL},
@@ -191,7 +204,9 @@ aleStrategy = R6::R6Class(
     },
 
     #' @description
-    #' Given tree, model, data, target_feature_name: preprocesses Z/Y; creates root Node; recursively splits; stores effect_root and fit_timing.
+    #' Given tree, model, data, target_feature_name: preprocesses Z/Y;
+    #' creates root Node; recursively splits; stores effect_root and
+    #' fit_timing.
     #' Returns tree invisibly.
     #' @param tree \code{gadgetTree} instance.
     #' @param model Fitted model.
@@ -231,7 +246,8 @@ aleStrategy = R6::R6Class(
         self$tree_ref = tree
         prepared_data = self$preprocess(model = model, data = data,
           target_feature_name = target_feature_name, n_intervals = n_intervals,
-          feature_set = feature_set, split_feature = split_feature, predict_fun = predict_fun, order_method = order_method)
+          feature_set = feature_set, split_feature = split_feature,
+          predict_fun = predict_fun, order_method = order_method)
         Z = prepared_data$Z
         Y = prepared_data$Y
         self$effect_root = Y

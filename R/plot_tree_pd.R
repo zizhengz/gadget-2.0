@@ -1,5 +1,6 @@
 #' Plot PD tree by depth and node (internal).
-#' @param tree,effect,data,target_feature_name,color_ice,color_pd,show_plot,show_point,mean_center,depth,node_id,features Plot arguments.
+#' @param tree,effect,data,target_feature_name,color_ice,color_pd,show_plot,
+#'   show_point,mean_center,depth,node_id,features Plot arguments.
 #' @keywords internal
 plot_tree_pd = function(tree, effect, data, target_feature_name,
   color_ice = "lightblue", color_pd = "lightcoral",

@@ -55,7 +55,9 @@ prepare_layout_data = function(tree) {
     child_row = which(layout$node_id == 2 * i)
     child_type = if (length(child_row) > 0) layout$child_type[child_row] else NA_character_
     if (!is.na(this$split_feature)) {
-      cond_self = paste0(this$split_feature, " ", ifelse(child_type == "<=", "<=", "="), " ", format_val(this$split_value))
+      cond_self = paste0(this$split_feature, " ",
+        ifelse(child_type == "<=", "<=", "="), " ",
+        format_val(this$split_value))
       path_conditions = paste0(cond_self, "\nheter_reduction: ", round(this$intImp, 3))
     } else {
       path_conditions = path_conditions

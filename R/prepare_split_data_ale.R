@@ -25,7 +25,9 @@
 #' Steps performed:
 #' \enumerate{
 #'   \item Resolve and validate \code{feature_set} and \code{split_feature} against \code{colnames(data)}.
-#'   \item For \code{union(feature_set, split_feature)}, convert character columns to factor and order levels via \code{order_categorical_levels} (using \code{droplevels} internally).
+#'   \item For \code{union(feature_set, split_feature)}, convert character
+#'     columns to factor and order levels via
+#'     \code{order_categorical_levels} (using \code{droplevels} internally).
 #'   \item Build \code{Z} as \code{data[split_feature]} (data.table).
 #'   \item Call \code{calculate_ale(model, data, feature_set, ...)} to get \code{Y}.
 #' }

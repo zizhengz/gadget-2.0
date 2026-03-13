@@ -1,18 +1,26 @@
 #' Extract Split Information from Tree Structure
 #'
-#' Given tree (depth-list of Node objects) and optional split_benchmark: flattens nodes; builds one row per node (depth, id, n_obs, split_feature, split_value, intImp, intImp_j, etc.); merges timing if split_benchmark has node_id/depth.
+#' Given tree (depth-list of Node objects) and optional split_benchmark:
+#' flattens nodes; builds one row per node (depth, id, n_obs, split_feature,
+#' split_value, intImp, intImp_j, etc.); merges timing if split_benchmark has
+#' node_id/depth.
 #' Returns data frame.
 #'
 #' @param tree (`list`)
 #'   A depth-based list of Node objects, typically produced by `convert_tree_to_list`.
 #' @param split_benchmark (`data.frame` or `list`, optional)
-#'   Optional. A data frame or list containing split timing information, with columns `node_id` and `depth` (or similar). If provided, timing info will be merged into the output.
+#'   Optional. A data frame or list containing split timing information,
+#'   with columns `node_id` and `depth` (or similar). If provided, timing
+#'   info will be merged into the output.
 #'
 #' @return (`data.frame`)
-#'   A data frame where each row summarizes a node, including split feature, split value, statistics, and (if available) split timing.
+#'   A data frame where each row summarizes a node, including split feature,
+#'   split value, statistics, and (if available) split timing.
 #'
 #' @details
-#' This function is used internally by the gadgetTree framework to extract and summarize the structure and statistics of effect-based decision trees. It is useful for interpretation, reporting, and benchmarking.
+#' This function is used internally by the gadgetTree framework to extract
+#' and summarize the structure and statistics of effect-based decision trees.
+#' It is useful for interpretation, reporting, and benchmarking.
 #'
 #' @keywords internal
 extract_split_info = function(tree, split_benchmark = NULL) {
@@ -35,12 +43,14 @@ extract_split_info = function(tree, split_benchmark = NULL) {
       depth = as.integer(node$depth),
       id = as.integer(node$id),
       n_obs = as.integer(n_obs),
-      node_type = if (is.null(node$id)) NA_character_ else if (node$id == 1) "root" else if (node$id %% 2 == 0) "left" else "right",
+      node_type = if (is.null(node$id)) NA_character_ else
+        if (node$id == 1) "root" else if (node$id %% 2 == 0) "left" else "right",
       split_feature = if (is.null(node$split_feature)) NA_character_ else as.character(node$split_feature),
       split_value = if (is.null(node$split_value)) NA else node$split_value,
       node_objective = if (is.null(node$objective_value)) NA else node$objective_value,
       intImp = if (is.null(node$intImp)) NA else round(node$intImp, 2),
-      split_feature_parent = if (is.null(node$split_feature_parent)) NA_character_ else as.character(node$split_feature_parent),
+      split_feature_parent = if (is.null(node$split_feature_parent))
+        NA_character_ else as.character(node$split_feature_parent),
       split_value_parent = if (is.null(node$split_value_parent)) NA else node$split_value_parent,
       objective_value_parent = if (is.null(node$objective_value_parent)) NA else node$objective_value_parent,
       intImp_parent = if (is.null(node$intImp_parent)) NA else round(node$intImp_parent, 2),
@@ -49,7 +59,9 @@ extract_split_info = function(tree, split_benchmark = NULL) {
     )
     # Ensure all intImp.* fields exist
     for (nm in all_intimp_names) {
-      row[[paste0("intImp_", nm)]] = if (!is.null(node$intImp_j) && nm %in% names(node$intImp_j)) round(node$intImp_j[[nm]], 2) else NA
+      row[[paste0("intImp_", nm)]] =
+        if (!is.null(node$intImp_j) && nm %in% names(node$intImp_j))
+          round(node$intImp_j[[nm]], 2) else NA
     }
     row
   })
@@ -72,7 +84,9 @@ extract_split_info = function(tree, split_benchmark = NULL) {
     }
     # Check if split_benchmark is valid data frame with rows
     if (is.data.frame(split_benchmark) && nrow(split_benchmark) > 0) {
-      df_split = merge(df_split, split_benchmark, by.x = c("id", "depth"), by.y = c("node_id", "depth"), all.x = TRUE, sort = TRUE)
+      df_split = merge(df_split, split_benchmark,
+        by.x = c("id", "depth"), by.y = c("node_id", "depth"),
+        all.x = TRUE, sort = TRUE)
     }
   }
   df_split

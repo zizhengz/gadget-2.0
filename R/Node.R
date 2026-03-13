@@ -121,7 +121,8 @@ Node = R6::R6Class("Node", public = list(
   },
 
   #' @description
-  #' Given Z, Y, root objectives, and tree params: checks stopping criteria; finds best split; creates and applies children; recurses into child nodes.
+  #' Given Z, Y, root objectives, and tree params: checks stopping criteria;
+  #' finds best split; creates and applies children; recurses into child nodes.
   #' Returns NULL if no valid split.
   #' @param Z Data frame. Split feature set.
   #' @param Y List. Effect list.
@@ -133,10 +134,12 @@ Node = R6::R6Class("Node", public = list(
   #' @param depth Integer. Current node depth.
   #' @param max_depth Integer. Maximum allowed tree depth.
   #' @return NULL
-  split_node = function(Z, Y, objective_value_root_j, objective_value_root, min_node_size, n_quantiles, impr_par, depth, max_depth) {
+  split_node = function(Z, Y, objective_value_root_j, objective_value_root,
+    min_node_size, n_quantiles, impr_par, depth, max_depth) {
     t0 = proc.time()
     # 1. Stopping criteria
-    if (objective_value_root < 1e-10 || depth >= max_depth || length(self$subset_idx) < min_node_size || isTRUE(self$improvement_met)) {
+    if (objective_value_root < 1e-10 || depth >= max_depth ||
+      length(self$subset_idx) < min_node_size || isTRUE(self$improvement_met)) {
       self$stop_criterion_met = TRUE
       # Recursion exit: stop splitting at this node
       return(NULL)
@@ -205,8 +208,10 @@ Node = R6::R6Class("Node", public = list(
   },
 
   #' @description
-  #' Given Z (subset by node indices), Y_curr, and params: calls \code{strategy$find_best_split} and returns list with
-  #' \code{split_feature}, \code{split_value}, \code{is_categorical} (and for aleStrategy: \code{left/right_objective_value_j}).
+  #' Given Z (subset by node indices), Y_curr, and params: calls
+  #' \code{strategy$find_best_split} and returns list with
+  #' \code{split_feature}, \code{split_value}, \code{is_categorical}
+  #' (and for aleStrategy: \code{left/right_objective_value_j}).
   #' @param Z Data frame. Split feature set.
   #' @param Y_curr List. Effect list for current node.
   #' @param min_node_size Integer. Minimum node size.
@@ -246,9 +251,11 @@ Node = R6::R6Class("Node", public = list(
   },
 
   #' @description
-  #' Given Z, Y, split_info, and root objectives: computes idx_left/right, child grids, objective values; checks improvement threshold;
+  #' Given Z, Y, split_info, and root objectives: computes idx_left/right,
+  #' child grids, objective values; checks improvement threshold;
   #' creates left/right Node instances and sets parent info.
-  #' Returns list of \code{left_child}, \code{right_child}, \code{intImp}, \code{intImp_j} or NULL if improvement too small.
+  #' Returns list of \code{left_child}, \code{right_child}, \code{intImp},
+  #' \code{intImp_j} or NULL if improvement too small.
   #' @param Z Data frame. Split feature set.
   #' @param Y List. Effect list.
   #' @param split_info List. Information about the split.
@@ -339,8 +346,9 @@ Node = R6::R6Class("Node", public = list(
   },
 
   #' @description
-  #' Given split_feature, split_value, and is_categorical: partitions \code{self$grid[[split_feature]]} into left (<= or ==) and right (> or !=).
-  #' Returns list \code{grid_left}, \code{grid_right}.
+  #' Given split_feature, split_value, and is_categorical: partitions
+  #' \code{self$grid[[split_feature]]} into left (<= or ==) and
+  #' right (> or !=). Returns list \code{grid_left}, \code{grid_right}.
   #' @param split_feature Character. Feature used for splitting.
   #' @param split_value Numeric or factor. Value used for splitting.
   #' @param is_categorical Logical. Whether the split feature is categorical.
@@ -363,7 +371,8 @@ Node = R6::R6Class("Node", public = list(
   },
 
   #' @description
-  #' Given split_info and children_info: sets \code{split_feature}, \code{split_value}, \code{intImp}, \code{intImp_j}, \code{children}.
+  #' Given split_info and children_info: sets \code{split_feature},
+  #' \code{split_value}, \code{intImp}, \code{intImp_j}, \code{children}.
   #' @param split_info List. Information about the split.
   #' @param children_info List. Information about the children.
   #' @return NULL
