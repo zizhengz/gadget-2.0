@@ -1,4 +1,4 @@
-#' GadgetTree: Generalized Additive Decomposition of Global Effects Tree (R6 class)
+#' GadgetTree: Generalized Additive Decomposition of Global Effects Tree
 #'
 #' @description
 #' Wrapper for effect-based trees: given a strategy (pd/ale), fits tree via
@@ -6,13 +6,40 @@
 #' \code{$extract_split_info()}.
 #' Delegates all effect logic to the strategy.
 #'
-#' @field strategy Strategy object (e.g., PdStrategy) that implements effect-specific logic.
-#' @field root Node object. Root node of the tree.
-#' @field n_split Integer. Maximum number of splits (tree depth minus one).
-#' @field impr_par Numeric. Improvement threshold for splitting.
-#' @field min_node_size Integer. Minimum number of samples required in a node to allow further splitting.
-#' @field n_quantiles Integer or NULL. Number of quantiles for candidate split points (numeric features).
-#' @field split_benchmark List. Timing information for each split (for benchmarking).
+#' @usage NULL
+#' @format [R6::R6Class] object.
+#'
+#' @section Construction:
+#' ```
+#' t = GadgetTree$new(strategy, n_split = 2, impr_par = 0.1, min_node_size = 10, n_quantiles = NULL)
+#' ```
+#' * `strategy` :: ([AleStrategy] | [PdStrategy])\cr
+#'   Effect strategy object.
+#' * `n_split` :: `integer(1)`\cr
+#'   Maximum number of splits.
+#' * `impr_par` :: `numeric(1)`\cr
+#'   Improvement threshold.
+#' * `min_node_size` :: `integer(1)`\cr
+#'   Minimum samples per node.
+#' * `n_quantiles` :: `integer(1)` or `NULL`\cr
+#'   Quantiles for numeric splits; `NULL` = use all unique values.
+#'
+#' @field strategy (PdStrategy | AleStrategy) \cr
+#'   Effect-specific logic.
+#' @field root (`Node`) \cr
+#'   Root node.
+#' @field n_split (`integer(1)`) \cr
+#'   Maximum number of splits.
+#' @field impr_par (`numeric(1)`) \cr
+#'   Improvement threshold.
+#' @field min_node_size (`integer(1)`) \cr
+#'   Minimum samples per node.
+#' @field n_quantiles (`integer(1)` or `NULL`) \cr
+#'   Quantiles for numeric split candidates.
+#' @field split_benchmark (`list()`) \cr
+#'   Split timing (benchmarking).
+#' @field tree_list_cache (`list()` or `NULL`) \cr
+#'   Cached depth-based tree list; invalidated on \code{$fit()}.
 #'
 #' @details
 #' This class manages the overall tree structure and delegates effect-specific operations
@@ -41,20 +68,25 @@ GadgetTree = R6::R6Class(
     min_node_size = NULL,
     n_quantiles = NULL,
     split_benchmark = NULL,
+    tree_list_cache = NULL,
 
     #' @description
-    #' Given strategy and tree params (n_split, impr_par, min_node_size,
-    #' n_quantiles): stores them and initializes empty \code{split_benchmark}.
-    #' Returns the GadgetTree instance.
-    #' @param strategy Strategy object (e.g., PdStrategy) that implements effect-specific logic.
-    #' @param n_split Integer. Maximum number of splits (tree depth minus one).
-    #' @param impr_par Numeric. Improvement threshold for splitting.
-    #' @param min_node_size Integer. Minimum number of samples required in a node to allow further splitting.
-    #' @param n_quantiles Integer or NULL. Number of quantiles for candidate split points (numeric features).
+    #' Initialize tree parameters.
+    #' @param strategy (PdStrategy | AleStrategy) \cr
+    #'   Strategy object.
+    #' @param n_split (`integer(1)`) \cr
+    #'   Maximum number of splits.
+    #' @param impr_par (`numeric(1)`) \cr
+    #'   Improvement threshold.
+    #' @param min_node_size (`integer(1)`) \cr
+    #'   Minimum node size.
+    #' @param n_quantiles (`integer(1)` or `NULL`) \cr
+    #'   Quantiles for numeric splits.
     initialize = function(strategy, n_split = 2, impr_par = 0.1, min_node_size = 10, n_quantiles = NULL) {
-      checkmate::assert_integerish(n_split, len = 1, any.missing = FALSE, .var.name = "n_split")
+      checkmate::assert_r6(strategy, .var.name = "strategy")
+      checkmate::assert_integerish(n_split, len = 1, lower = 0, any.missing = FALSE, .var.name = "n_split")
       checkmate::assert_numeric(impr_par, lower = 0, len = 1, any.missing = FALSE, .var.name = "impr_par")
-      checkmate::assert_integerish(min_node_size, len = 1, any.missing = FALSE, .var.name = "min_node_size")
+      checkmate::assert_integerish(min_node_size, len = 1, lower = 1, any.missing = FALSE, .var.name = "min_node_size")
       checkmate::assert_integerish(n_quantiles, len = 1, null.ok = TRUE, .var.name = "n_quantiles")
       self$strategy = strategy
       self$n_split = n_split
@@ -65,27 +97,29 @@ GadgetTree = R6::R6Class(
     },
 
     #' @description
-    #' Given data, target_feature_name, and optional feature/split sets:
-    #' calls \code{strategy$fit()} with ... (effect/model as required by
-    #' strategy); clears \code{split_benchmark}; optionally runs
-    #' \code{strategy$clean()}.
-    #' Returns tree invisibly.
-    #' @param data Data frame. Data frame containing features and the target variable.
-    #' @param target_feature_name Character(1). Name of the target feature to explain.
-    #' @param feature_set Character or NULL. \cr
-    #'   Optional. Subset of features to use for effect calculation.
-    #'   If NULL, all features are used.
-    #' @param split_feature Character or NULL. \cr
-    #'   Optional. Features to consider for splitting at each node.
-    #'   If NULL, all features are considered.
-    #' @param ... Additional arguments passed to the strategy's fit method.
-    #' @return GadgetTree object, invisibly. The fitted tree object.
+    #' Fit tree via \code{strategy$fit()}.
+    #' @param data (`data.frame()`) \cr
+    #'   Data with features and target.
+    #' @param target_feature_name (`character(1)`) \cr
+    #'   Target name.
+    #' @param feature_set (`character()` or `NULL`) \cr
+    #'   Features for effect; \code{NULL} = all.
+    #' @param split_feature (`character()` or `NULL`) \cr
+    #'   Features for splitting; \code{NULL} = all.
+    #' @param ... \cr
+    #'   Strategy-specific arguments passed to \code{$fit()}.
+    #'   For [AleStrategy]: \code{model}, \code{n_intervals}, \code{predict_fun}, \code{order_method}, \code{with_stab}.
+    #'   For [PdStrategy]: \code{effect}.
+    #' @return (`GadgetTree`) \cr
+    #'   The tree, invisibly.
     fit = function(data, target_feature_name, feature_set = NULL, split_feature = NULL, ...) {
       checkmate::assert_data_frame(data, .var.name = "data")
       checkmate::assert_character(target_feature_name, len = 1, .var.name = "target_feature_name")
+      checkmate::assert_subset(target_feature_name, colnames(data), .var.name = "target_feature_name")
       checkmate::assert_character(feature_set, null.ok = TRUE, .var.name = "feature_set")
       checkmate::assert_character(split_feature, null.ok = TRUE, .var.name = "split_feature")
       self$split_benchmark = list()
+      self$tree_list_cache = NULL
 
       # The strategy is responsible for validating and handling its own arguments (via ...)
       result = self$strategy$fit(
@@ -97,34 +131,36 @@ GadgetTree = R6::R6Class(
         ...
       )
 
-      # Cleanup hook
-      if (exists("clean", envir = self$strategy) && is.function(self$strategy$clean)) {
-        self$strategy$clean()
-      }
+      self$strategy$clean()
       invisible(result)
     },
 
     #' @description
-    #' Given effect (or NULL for ale cached effect), data,
-    #' target_feature_name, and optional depth/node_id/features: converts
-    #' root to depth-list; calls \code{strategy$plot()}.
-    #' Returns list of ggplot2 objects.
-    #' @param effect R6 object or list. Object containing feature effect results.
-    #' @param data Data frame. Data frame.
-    #' @param target_feature_name Character(1). Name of the target feature to explain.
-    #' @param depth Integer or NULL. Depth(s) to visualize (optional).
-    #' @param node_id Integer or NULL. Node id(s) to visualize (optional).
-    #' @param features Character or NULL. Features to visualize (optional).
-    #' @param ... Additional plotting arguments.
-    #' @return List. List of ggplot2 objects for different depths and nodes.
+    #' Plot tree via \code{strategy$plot()}.
+    #' @param effect (R6 or `list()` or `NULL`) \cr
+    #'   Effect object; \code{NULL} for ALE cached effect.
+    #' @param data (`data.frame()`) \cr
+    #'   Data.
+    #' @param target_feature_name (`character(1)`) \cr
+    #'   Target name.
+    #' @param depth (`integer()` or `NULL`) \cr
+    #'   Depths to plot.
+    #' @param node_id (`integer()` or `NULL`) \cr
+    #'   Node IDs to plot.
+    #' @param features (`character()` or `NULL`) \cr
+    #'   Features to plot.
+    #' @param ... Plot arguments.
+    #' @return (`list()`) \cr
+    #'   Nested list (depth -> node -> patchwork).
     plot = function(effect = NULL, data, target_feature_name, depth = NULL, node_id = NULL, features = NULL, ...) {
+      checkmate::assert_true(is.null(effect) || is.list(effect) || inherits(effect, "R6"), .var.name = "effect")
       checkmate::assert_character(target_feature_name, len = 1, .var.name = "target_feature_name")
       checkmate::assert_data_frame(data, .var.name = "data")
       checkmate::assert_integerish(depth, lower = 1, null.ok = TRUE, .var.name = "depth")
       checkmate::assert_integerish(node_id, lower = 1, null.ok = TRUE, .var.name = "node_id")
       checkmate::assert_character(features, null.ok = TRUE, .var.name = "features")
-      tree_for_plot = convert_tree_to_list(self$root, self$n_split + 1)
-      self$strategy$plot(tree = tree_for_plot, effect = effect, data = data,
+      tree_list = self$get_tree_list()
+      self$strategy$plot(tree = tree_list, effect = effect, data = data,
         target_feature_name = target_feature_name,
         depth = depth, node_id = node_id, features = features, ...)
     },
@@ -132,17 +168,27 @@ GadgetTree = R6::R6Class(
     #' @description
     #' Converts root to depth-list and calls \code{plot_tree_structure()}. Prints graph.
     plot_tree_structure = function() {
-      tree_for_structure = convert_tree_to_list(self$root, self$n_split + 1)
-      plot_tree_structure(tree_for_structure)
+      plot_tree_structure(self$get_tree_list())
     },
 
     #' @description
-    #' Converts root to depth-list and calls \code{extract_split_info()} with \code{split_benchmark}.
-    #' Returns data frame (depth, id, split_feature, split_value, int_imp, etc.).
-    #' @return Data frame. Split information for all nodes.
+    #' Extract split info from tree.
+    #' @return (`data.frame()`) \cr
+    #'   Split info: depth, id, split_feature, split_value, int_imp, etc.
     extract_split_info = function() {
-      tree_for_info = convert_tree_to_list(self$root, self$n_split + 1)
-      extract_split_info(tree_for_info, split_benchmark = self$split_benchmark)
+      extract_split_info(self$get_tree_list(), split_benchmark = self$split_benchmark)
+    },
+
+    #' @description
+    #' Get depth-based tree list (cached). Invalidated on \code{$fit()}.
+    #' @return (`list()`) \cr
+    #'   Depth-based list of nodes.
+    #' @keywords internal
+    get_tree_list = function() {
+      if (is.null(self$tree_list_cache)) {
+        self$tree_list_cache = convert_tree_to_list(self$root, self$n_split + 1)
+      }
+      self$tree_list_cache
     }
   )
 )
