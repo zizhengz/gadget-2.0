@@ -1,1 +1,2 @@
-../.cursor/skills/r-package-setup/package/.cspell/project-words.txt
+# Project-specific words — commit and share with the team.
+# Add words here (or via "Add to project dictionary" in VS Code / Cursor).
