@@ -4,15 +4,21 @@
 \alias{mean_center_ale}
 \title{Internal ALE curve computation}
 \usage{
-mean_center_ale(feat, mean.center = TRUE)
+mean_center_ale(feat, mean_center = TRUE)
 }
 \arguments{
-\item{feat}{data.table with per-interval ALE derivatives and metadata.}
+\item{feat}{(`data.table()`) \cr
+Per-interval ALE derivatives and metadata.}
 
-\item{mean.center}{Logical. Whether to mean-center the resulting ALE
-curve (default \code{TRUE}).}
+\item{mean_center}{(`logical(1)`) \cr
+Whether to mean-center the ALE curve.}
+}
+\value{
+(`data.table()`) \cr
+  Cumulative ALE with \code{x_grid} and \code{.value}.
 }
 \description{
-Given ALE data.table for one feature and mean.center: cumsums dL by interval; 
-optionally subtracts global mean. Returns data.table with x.grid and .value (cumulative ALE).
+Given ALE data.table for one feature and mean_center: cumsums d_l by interval;
+optionally subtracts global mean. Returns data.table with x_grid and .value (cumulative ALE).
 }
+\keyword{internal}

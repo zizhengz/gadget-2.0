@@ -2,23 +2,26 @@
 % Please edit documentation in R/choose_operator.R
 \name{choose_operator}
 \alias{choose_operator}
-\title{Return comparison operator for child relative to parent. 
-Given parent.node and current.node: if current is left child returns \code{<=} (numeric) or \code{=} (categorical); 
+\title{Return comparison operator for child relative to parent.
+Given parent_node and current_node: if current is left child returns \code{<=} (numeric) or \code{=} (categorical);
 if right returns \code{>} or \code{!=}.}
 \usage{
-choose_operator(parent.node, current.node)
+choose_operator(parent_node, current_node)
 }
 \arguments{
-\item{parent.node}{Node with \code{children} and \code{split.value}.}
+\item{parent_node}{(`Node`) \cr
+Node with \code{children} and \code{split$value}.}
 
-\item{current.node}{One of the children.}
+\item{current_node}{(`Node`) \cr
+One of the children.}
 }
 \value{
-Character \code{"<="}, \code{">"}, \code{"="}, or \code{"!="}.
+(`character(1)`) \cr
+  \code{"<="}, \code{">"}, \code{"="}, or \code{"!="}.
 }
 \description{
-Return comparison operator for child relative to parent. 
-Given parent.node and current.node: if current is left child returns \code{<=} (numeric) or \code{=} (categorical); 
+Return comparison operator for child relative to parent.
+Given parent_node and current_node: if current is left child returns \code{<=} (numeric) or \code{=} (categorical);
 if right returns \code{>} or \code{!=}.
 }
 \keyword{internal}

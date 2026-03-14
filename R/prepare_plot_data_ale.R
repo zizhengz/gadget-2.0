@@ -7,15 +7,17 @@ interval_index = x_left = x_right = d_l = x_grid = level = NULL
 #' mean_center: subsets ALE rows by idx; calls \code{mean_center_ale} per feature for cumulative and optional centering.
 #' Returns named list of \code{mean_effect} data.tables (or nested list if idx is list).
 #'
-#' @param effect List returned by \code{calculate_ale()}.
-#' @param idx Integer vector of row indices (node subset), list of such vectors,
-#'   or NULL for the root node.
-#' @param features Character vector of features to include (default: all features in effect).
-#' @param mean_center Logical. Whether to mean-center ALE curves (default \code{TRUE}).
+#' @param effect (`list()`) \cr
+#'   List returned by \code{calculate_ale()}.
+#' @param idx (`integer()` or `list()` or `NULL`) \cr
+#'   Row indices (node subset); list of such vectors; or \code{NULL} for root.
+#' @param features (`character()`) \cr
+#'   Features to include (default: all in effect).
+#' @param mean_center (`logical(1)`) \cr
+#'   Whether to mean-center ALE curves.
 #'
-#' @return Named list where each element contains a single \code{mean_effect}
-#'   data.table for the corresponding feature (or a nested list if \code{idx}
-#'   is a list).
+#' @return (`list()`) \cr
+#'   Named list of \code{mean_effect} data.tables per feature; nested if \code{idx} is list.
 prepare_plot_data_ale = function(effect, idx = NULL, features = names(effect),
   mean_center = TRUE) {
   if (is.null(effect) || !length(effect)) {
@@ -59,9 +61,14 @@ prepare_plot_data_ale = function(effect, idx = NULL, features = names(effect),
 #' Given ALE data.table for one feature and mean_center: cumsums d_l by interval;
 #' optionally subtracts global mean. Returns data.table with x_grid and .value (cumulative ALE).
 #'
-#' @param feat data.table with per-interval ALE derivatives and metadata.
-#' @param mean_center Logical. Whether to mean-center the resulting ALE
-#'   curve (default \code{TRUE}).
+#' @param feat (`data.table()`) \cr
+#'   Per-interval ALE derivatives and metadata.
+#' @param mean_center (`logical(1)`) \cr
+#'   Whether to mean-center the ALE curve.
+#'
+#' @return (`data.table()`) \cr
+#'   Cumulative ALE with \code{x_grid} and \code{.value}.
+#' @keywords internal
 mean_center_ale = function(feat, mean_center = TRUE) {
   feat$d_l[feat$d_l == 0] = NA
   data.table::setkeyv(feat, c("interval_index"))
@@ -112,10 +119,13 @@ mean_center_ale = function(feat, mean_center = TRUE) {
   mean_dt
 }
 
-#' Cumulative Sum with NA Handling
+#' Cumulative sum with NA as zero.
 #'
-#' @param values Numeric vector. Values to be cumulatively summed;
-#'   any \code{NA} values are treated as \code{0}.
+#' @param values (`numeric()`) \cr
+#'   Values to cumulatively sum; \code{NA} treated as 0.
+#' @return (`numeric()`) \cr
+#'   Cumulative sum.
+#' @keywords internal
 cumsum_na_as_zero = function(values) {
   values[is.na(values)] = 0
   cumsum(values)

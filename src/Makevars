@@ -1,0 +1,2 @@
+# Suppress RcppArmadillo fallback warning (Armadillo 14.x)
+PKG_CPPFLAGS = -DARMA_USE_CURRENT

@@ -5,19 +5,20 @@
 #' embeds in 1D via MDS/PCA/random/raw; reorders levels.
 #' Returns factor with reordered levels (or x_cat unchanged if K<=1 or no other features).
 #'
-#' @param x_cat Factor. Focal feature values; must be \code{droplevels()}-ed so
-#'   unused levels are dropped.
-#' @param data Data frame or data.table. Full dataset including the target column.
-#' @param feature Character. Name of the focal categorical feature (column in \code{data}).
-#' @param target_feature_name Character. Name of the target column; excluded from
-#'   \dQuote{other features} when building the distance matrix.
-#' @param order_method Character. How to turn the level-distance matrix into an order:
-#'   \code{"mds"} (default, 1D classic MDS), \code{"pca"} (first PC),
-#'   \code{"random"} (random permutation), or \code{"raw"} (keep existing level order).
+#' @param x_cat (`factor()`) \cr
+#'   Focal feature values; use \code{droplevels()} first.
+#' @param data (`data.frame()` or `data.table()`) \cr
+#'   Full dataset including target.
+#' @param feature (`character(1)`) \cr
+#'   Name of the categorical feature in \code{data}.
+#' @param target_feature_name (`character(1)`) \cr
+#'   Target column name; excluded from distance computation.
+#' @param order_method (`character(1)`) \cr
+#'   \code{"mds"}, \code{"pca"}, \code{"random"}, or \code{"raw"}.
 #'
-#' @return Factor with the same length and values as \code{x_cat}, with
-#'   \code{levels} reordered and \code{ordered = TRUE}. If \code{nlevels(x_cat) <= 1}
-#'   or there are no other features, returns \code{x_cat} unchanged.
+#' @return (`factor()`) \cr
+#'   Same as \code{x_cat} with reordered \code{levels} and \code{ordered = TRUE};
+#'   unchanged if \code{nlevels(x_cat) <= 1} or no other features.
 #'
 #' @details
 #' For each pair of levels, a distance is computed from all other features
@@ -31,6 +32,13 @@
 #' features yield \code{x_cat} unchanged.
 #'
 order_categorical_levels = function(x_cat, data, feature, target_feature_name, order_method = "mds") {
+  checkmate::assert_factor(x_cat, .var.name = "x_cat")
+  checkmate::assert_data_frame(data, .var.name = "data")
+  checkmate::assert_character(feature, len = 1, .var.name = "feature")
+  checkmate::assert_character(target_feature_name, len = 1, .var.name = "target_feature_name")
+  checkmate::assert_subset(c(feature, target_feature_name), colnames(data),
+    .var.name = "feature and target_feature_name")
+  checkmate::assert_choice(order_method, c("mds", "pca", "random", "raw"), .var.name = "order_method")
   levels_orig = levels(x_cat)
   K = nlevels(x_cat)
   if (order_method == "raw") {

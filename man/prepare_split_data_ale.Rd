@@ -7,40 +7,45 @@
 prepare_split_data_ale(
   model,
   data,
-  target.feature.name,
-  n.intervals,
-  feature.set = NULL,
-  split.feature = NULL,
-  predict.fun = NULL,
-  order.method = "mds"
+  target_feature_name,
+  n_intervals,
+  feature_set = NULL,
+  split_feature = NULL,
+  predict_fun = NULL,
+  order_method = "mds"
 )
 }
 \arguments{
-\item{model}{Fitted model object with a predict interface.}
+\item{model}{(`any`) \cr
+Fitted model with predict interface.}
 
-\item{data}{Data frame or data.table. Training data (features and target).}
+\item{data}{(`data.frame()` or `data.table()`) \cr
+Training data (features and target).}
 
-\item{target.feature.name}{Character. Name of the target variable.}
+\item{target_feature_name}{(`character(1)`) \cr
+Name of the target variable.}
 
-\item{n.intervals}{Integer. Number of intervals for numeric ALE (default 10).}
+\item{n_intervals}{(`integer(1)`) \cr
+Number of intervals for numeric ALE.}
 
-\item{feature.set}{Character or NULL. Features to compute ALE for; NULL = all.}
+\item{feature_set}{(`character()` or `NULL`) \cr
+Features to compute ALE for; \code{NULL} = all.}
 
-\item{split.feature}{Character or NULL. Features to consider for splitting; NULL = all.}
+\item{split_feature}{(`character()` or `NULL`) \cr
+Features for splitting; \code{NULL} = all.}
 
-\item{predict.fun}{Function or NULL. \code{function(model, data)} returning predictions; NULL uses mlr3-style default.}
+\item{predict_fun}{(`function()` or `NULL`) \cr
+\code{function(model, data)} returning predictions; \code{NULL} = default.}
 
-\item{order.method}{Character. How to order categorical levels: \code{"mds"},
-\code{"pca"}, \code{"random"}, or \code{"raw"} (keep existing factor level order;
-default \code{"mds"}).}
+\item{order_method}{(`character(1)`) \cr
+Categorical level order: \code{"mds"}, \code{"pca"}, \code{"random"}, or \code{"raw"}.}
 }
 \value{
-List with:
-  \item{Z}{data.table of split features (columns in \code{split.feature}).}
-  \item{Y}{List of ALE effect data per feature (from \code{calculate_ale}).}
+(`list()`) \cr
+  \code{Z}: data.table of split features; \code{Y}: list of ALE effect data per feature.
 }
 \description{
-Given model, data, target.feature.name, n.intervals, and optional feature/split sets:
+Given model, data, target_feature_name, n_intervals, and optional feature/split sets:
 validates features; converts character to factor and orders levels via
 \code{order_categorical_levels}; builds Z (data.table of split columns);
 calls \code{calculate_ale} for Y. Returns list \code{Z}, \code{Y}.
@@ -48,18 +53,21 @@ calls \code{calculate_ale} for Y. Returns list \code{Z}, \code{Y}.
 \details{
 Steps performed:
 \enumerate{
-  \item Resolve and validate \code{feature.set} and \code{split.feature} against \code{colnames(data)}.
-  \item For \code{union(feature.set, split.feature)}, convert character columns to factor and order levels via \code{order_categorical_levels} (using \code{droplevels} internally).
-  \item Build \code{Z} as \code{data[split.feature]} (data.table).
-  \item Call \code{calculate_ale(model, data, feature.set, ...)} to get \code{Y}.
+  \item Resolve and validate \code{feature_set} and \code{split_feature} against \code{colnames(data)}.
+  \item For \code{union(feature_set, split_feature)}, convert character
+    columns to factor and order levels via
+    \code{order_categorical_levels} (using \code{droplevels} internally).
+  \item Build \code{Z} as \code{data[split_feature]} (data.table).
+  \item Call \code{calculate_ale(model, data, feature_set, ...)} to get \code{Y}.
 }
 Stops with an error if any requested feature is missing from \code{data}.
 }
 \examples{
 \dontrun{
-result = prepare_split_data_ale(model, data, "y", n.intervals = 10)
-result = prepare_split_data_ale(model, data, "y", n.intervals = 10,
-  feature.set = c("x1", "x2"), split.feature = c("x1", "x2", "x3"))
+result = prepare_split_data_ale(model, data, "y", n_intervals = 10)
+result = prepare_split_data_ale(model, data, "y", n_intervals = 10,
+  feature_set = c("x1", "x2"), split_feature = c("x1", "x2", "x3"))
 }
 
 }
+\keyword{internal}

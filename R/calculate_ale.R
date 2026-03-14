@@ -5,15 +5,21 @@
 #' Numeric: quantile intervals; categorical: level-by-level prediction differences.
 #' Returns named list of data.tables (row_id, feat_val, d_l, interval_index, int_n, int_s1, int_s2, etc.).
 #'
-#' @param model Fitted model object with a predict interface.
-#' @param data Data frame or data.table. Training data (features and target).
-#' @param feature_set Character. Names of features to compute ALE for; must exist in \code{data}.
-#' @param target_feature_name Character. Name of the target variable in \code{data}.
-#' @param n_intervals Integer. Number of equal-frequency intervals for numeric features (default: 10).
-#' @param predict_fun Function or NULL. \code{function(model, data)} returning
-#'   a numeric vector of predictions; NULL uses an mlr3-style default.
+#' @param model (`any`) \cr
+#'   Fitted model with predict interface.
+#' @param data (`data.frame()` or `data.table()`) \cr
+#'   Training data.
+#' @param feature_set (`character()`) \cr
+#'   Features to compute ALE for.
+#' @param target_feature_name (`character(1)`) \cr
+#'   Target variable name.
+#' @param n_intervals (`integer(1)`) \cr
+#'   Equal-frequency intervals for numeric features.
+#' @param predict_fun (`function()` or `NULL`) \cr
+#'   \code{function(model, data)} returning predictions; \code{NULL} = default.
 #'
-#' @return Named list of data.tables, one per element of \code{feature_set}. Each data.table has columns:
+#' @return (`list()`) \cr
+#'   Named list of data.tables per \code{feature_set}. Each has columns:
 #'   \item{row_id}{Row index in \code{data}.}
 #'   \item{feat_val}{Feature value at that row.}
 #'   \item{x_left, x_right}{Interval/category boundaries (numeric) or left/right category (factor).}
@@ -34,14 +40,16 @@
 #' Sample-level columns (\code{row_id}, \code{feat_val}, \code{d_l}, etc.)
 #' support subsetting by node and downstream heterogeneity calculation.
 #'
-#' @export
+#' @keywords internal
 calculate_ale = function(model, data, feature_set, target_feature_name, n_intervals = 10, predict_fun = NULL) {
-  if (is.null(predict_fun)) {
-    predict_fun = function(model, data) {
-      pred = model$predict_newdata(data)
-      if (inherits(pred, "Prediction")) pred$response else pred
-    }
-  }
+  checkmate::assert_data_frame(data, .var.name = "data")
+  checkmate::assert_character(feature_set, min.len = 1, .var.name = "feature_set")
+  checkmate::assert_character(target_feature_name, len = 1, .var.name = "target_feature_name")
+  checkmate::assert_subset(target_feature_name, colnames(data), .var.name = "target_feature_name")
+  checkmate::assert_subset(feature_set, colnames(data), .var.name = "feature_set")
+  checkmate::assert_integerish(n_intervals, len = 1, lower = 1, any.missing = FALSE, .var.name = "n_intervals")
+  checkmate::assert_function(predict_fun, null.ok = TRUE, .var.name = "predict_fun")
+  if (is.null(predict_fun)) predict_fun = default_predict_fun
   if (data.table::is.data.table(data)) {
     X = data[, setdiff(colnames(data), target_feature_name), with = FALSE]
   } else {
@@ -60,11 +68,25 @@ calculate_ale = function(model, data, feature_set, target_feature_name, n_interv
   eff_list
 }
 
-#' ALE for a single numeric feature (internal)
+#' ALE for a single numeric feature.
 #'
-#' Given model, data, X, feature: builds quantile intervals, assigns rows to intervals,
-#' computes d_l (finite difference) and int_n/int_s1/int_s2 per interval. Returns data.table.
-#' @param model,data,X,feature,target_feature_name,n_intervals,predict_fun See \code{\link{calculate_ale}}.
+#' @param model (`any`) \cr
+#'   Fitted model. See \code{\link{calculate_ale}}.
+#' @param data (`data.frame()` or `data.table()`) \cr
+#'   Training data.
+#' @param X (`data.frame()` or `data.table()`) \cr
+#'   Features (excl. target).
+#' @param feature (`character(1)`) \cr
+#'   Feature name.
+#' @param target_feature_name (`character(1)`) \cr
+#'   Target name.
+#' @param n_intervals (`integer(1)`) \cr
+#'   Number of intervals.
+#' @param predict_fun (`function()` or `NULL`) \cr
+#'   Prediction function.
+#'
+#' @return (`data.table()`) \cr
+#'   ALE data with \code{row_id}, \code{feat_val}, \code{d_l}, \code{interval_index}, etc.
 #' @keywords internal
 ale_numeric_feature = function(model, data, X, feature, target_feature_name, n_intervals = 10, predict_fun = NULL) {
   x_num = data[[feature]]
@@ -117,8 +139,23 @@ ale_numeric_feature = function(model, data, X, feature, target_feature_name, n_i
   DT
 }
 
-#' ALE for a single categorical feature (internal)
-#' @param model,data,X,feature,target_feature_name,predict_fun See \code{\link{calculate_ale}}.
+#' ALE for a single categorical feature.
+#'
+#' @param model (`any`) \cr
+#'   Fitted model. See \code{\link{calculate_ale}}.
+#' @param data (`data.frame()` or `data.table()`) \cr
+#'   Training data.
+#' @param X (`data.frame()` or `data.table()`) \cr
+#'   Features (excl. target).
+#' @param feature (`character(1)`) \cr
+#'   Feature name.
+#' @param target_feature_name (`character(1)`) \cr
+#'   Target name.
+#' @param predict_fun (`function()` or `NULL`) \cr
+#'   Prediction function.
+#'
+#' @return (`data.table()`) \cr
+#'   ALE data with \code{row_id}, \code{feat_val}, \code{d_l}, \code{interval_index}, etc.
 #' @keywords internal
 ale_categorical_feature = function(model, data, X, feature, target_feature_name, predict_fun = NULL) {
   data_copy = data

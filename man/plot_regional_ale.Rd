@@ -6,36 +6,36 @@
 \usage{
 plot_regional_ale(
   curves,
-  color.ale = "lightcoral",
+  color_ale = "lightcoral",
   ymin = NULL,
   ymax = NULL,
-  show.point = FALSE,
-  point.values = NULL,
-  x.limits = NULL
+  show_point = FALSE,
+  point_values = NULL,
+  x_limits = NULL
 )
 }
 \arguments{
-\item{curves}{Output of \code{prepare_plot_data_ale()} for a single node.}
+\item{curves}{(`list()`) \cr
+Output of \code{prepare_plot_data_ale} for a node.}
 
-\item{color.ale}{Character. Color for ALE mean curves.}
+\item{color_ale}{(`character(1)`) \cr
+Color for ALE curves.}
 
-\item{ymin}{Numeric. Lower y-axis limit (auto-computed by \code{plot_tree_ale}).}
+\item{ymin, ymax}{(`numeric(1)` or `NULL`) \cr
+Y-axis limits.}
 
-\item{ymax}{Numeric. Upper y-axis limit (auto-computed by \code{plot_tree_ale}).}
+\item{show_point}{(`logical(1)`) \cr
+Whether to add observation points.}
 
-\item{show.point}{Logical. Whether to add observation points to ALE plots.}
+\item{point_values}{(`list()` or `NULL`) \cr
+Per-feature data.frames with \code{x}, \code{y}; used when \code{show_point = TRUE}.}
 
-\item{point.values}{Named list where each element is a data.frame with columns
-\code{x} (feature values) and \code{y} (target/response), only needed when
-\code{show.point = TRUE}.}
-
-\item{x.limits}{Named list providing per-feature x-axis info. For numeric
-features: numeric length-2 vector \code{c(xmin, xmax)}. For categorical
-features: character vector with the full level order.}
+\item{x_limits}{(`list()` or `NULL`) \cr
+Per-feature x-axis: numeric \code{c(xmin, xmax)} or character (level order).}
 }
 \value{
-List named by feature, each element a single ggplot object for the
-  ALE mean curve (with optional observation points).
+(`list()`) \cr
+  Named list of ggplot objects per feature.
 }
 \description{
 Helper used by \code{plot_tree_ale()} to generate per-feature ALE mean

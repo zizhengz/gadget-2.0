@@ -96,21 +96,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// search_best_split_point_cpp
-List search_best_split_point_cpp(SEXP z, List Y, Nullable<int> n_quantiles, bool is_categorical, int min_node_size);
-RcppExport SEXP _gadget_search_best_split_point_cpp(SEXP zSEXP, SEXP YSEXP, SEXP n_quantilesSEXP, SEXP is_categoricalSEXP, SEXP min_node_sizeSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type z(zSEXP);
-    Rcpp::traits::input_parameter< List >::type Y(YSEXP);
-    Rcpp::traits::input_parameter< Nullable<int> >::type n_quantiles(n_quantilesSEXP);
-    Rcpp::traits::input_parameter< bool >::type is_categorical(is_categoricalSEXP);
-    Rcpp::traits::input_parameter< int >::type min_node_size(min_node_sizeSEXP);
-    rcpp_result_gen = Rcpp::wrap(search_best_split_point_cpp(z, Y, n_quantiles, is_categorical, min_node_size));
-    return rcpp_result_gen;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_gadget_ale_sweep_cpp", (DL_FUNC) &_gadget_ale_sweep_cpp, 14},
@@ -119,7 +104,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gadget_node_heterogeneity_cpp", (DL_FUNC) &_gadget_node_heterogeneity_cpp, 1},
     {"_gadget_re_mean_center_ice_cpp", (DL_FUNC) &_gadget_re_mean_center_ice_cpp, 3},
     {"_gadget_search_best_split_cpp", (DL_FUNC) &_gadget_search_best_split_cpp, 4},
-    {"_gadget_search_best_split_point_cpp", (DL_FUNC) &_gadget_search_best_split_point_cpp, 5},
     {NULL, NULL, 0}
 };
 

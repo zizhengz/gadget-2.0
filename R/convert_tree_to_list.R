@@ -3,10 +3,13 @@
 #' Given root_node and optional max_depth: traverses children recursively, collects nodes by depth.
 #' Returns list of lists (depth 1, 2, ...), each element a list of Node objects at that depth.
 #'
-#' @param root_node A Node object representing the root of the tree
-#' @param max_depth Maximum depth to traverse (optional)
+#' @param root_node (`Node` or `NULL`) \cr
+#'   Root node of the tree.
+#' @param max_depth (`integer(1)` or `NULL`) \cr
+#'   Maximum depth to traverse; \code{NULL} = no limit.
 #'
-#' @return A list where each element represents a depth level and contains a list of Node objects
+#' @return (`list()`) \cr
+#'   List where each element is a depth level containing Node objects.
 #' @keywords internal
 convert_tree_to_list = function(root_node, max_depth = NULL) {
   if (is.null(root_node)) {

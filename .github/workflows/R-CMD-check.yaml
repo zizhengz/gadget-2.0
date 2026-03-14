@@ -5,7 +5,7 @@ on:
     branches: [main, master]
   pull_request:
 
-name: R-CMD-check.yaml
+name: R-CMD-check
 
 permissions: read-all
 
@@ -19,10 +19,10 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: macos-latest,   r: 'release'}
+          - {os: macos-latest, r: 'release'}
           - {os: windows-latest, r: 'release'}
-          - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
-          - {os: ubuntu-latest,   r: 'release'}
+          - {os: ubuntu-latest, r: 'devel', http-user-agent: 'release'}
+          - {os: ubuntu-latest, r: 'release'}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -30,6 +30,21 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Ensure .Rbuildignore exists (fix broken symlinks when .cursor not in repo)
+        shell: bash
+        run: |
+          if ! test -r .Rbuildignore 2>/dev/null; then
+            printf '%s\n' \
+              '^\.ccache$' '^\.clangd$' '^\.claude$' '^\.cspell$' '^\.cursor$' \
+              '^\.editorconfig$' '^\.git$' '^\.github$' '^\.gitignore$' '^\.ignore$' \
+              '^\.lintr$' '^\.Rproj\.user$' '^\.vscode$' '^.*\.Rproj$' '^AGENTS.md$' \
+              '^air.toml$' '^attic$' '^attic_local$' '^CITATION.cff$' '^CLAUDE.md$' \
+              '^cspell.json$' '^CONTRIBUTING.md$' '^cran-comments\.md$' '^CRAN-SUBMISSION$' \
+              '^docs$' '^inst/extdata/.+\.R$' '^LICENSE$' '^local_attic$' '^man-roxygen$' \
+              '^paper$' '^pkgdown$' '^README\.Rmd$' '^README.html$' '^revdep$' \
+              '^tests/testthat/_object_snapshots$' > .Rbuildignore
+          fi
 
       - uses: r-lib/actions/setup-pandoc@v2
 

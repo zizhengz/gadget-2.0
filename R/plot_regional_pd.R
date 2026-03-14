@@ -1,11 +1,29 @@
-#' Plot regional PD/ICE for one node (internal).
-#' @param prepared_data,origin_data,target_feature_name,node_idx,color_ice,
-#'   color_pd,ymin,ymax,split_condition,show_point,mean_center Plot arguments.
+#' Plot regional PD/ICE for one node.
+#'
+#' @param prepared_data (`list()`) \cr
+#'   Prepared effect matrices per feature.
+#' @param origin_data (`data.frame()`) \cr
+#'   Original data.
+#' @param target_feature_name (`character(1)`) \cr
+#'   Target column.
+#' @param node_idx (`integer(1)`) \cr
+#'   Node index.
+#' @param color_ice,color_pd (`character(1)`) \cr
+#'   Colors.
+#' @param ymin,ymax (`numeric(1)`) \cr
+#'   Y-axis limits.
+#' @param split_condition (`character(1)` or `NULL`) \cr
+#'   Split condition label.
+#' @param show_point,mean_center (`logical(1)`) \cr
+#'   Plot options.
+#'
+#' @return (`list()`) \cr
+#'   List of ggplot objects per feature.
 #' @keywords internal
 plot_regional_pd = function(prepared_data, origin_data, target_feature_name, node_idx,
   color_ice, color_pd, ymin, ymax, split_condition = NULL,
   show_point, mean_center) {
-  plot = lapply(names(prepared_data), function(feat) {
+  plot = mlr3misc::map(names(prepared_data), function(feat) {
     data = prepared_data[[feat]]
     subset_idx = which(data$node == node_idx)
     data_subset = data[subset_idx, ]
@@ -57,6 +75,7 @@ plot_regional_pd = function(prepared_data, origin_data, target_feature_name, nod
     # check if we can draw lines
     noline = length(unique(plot_data$grid[!is.na(plot_data$value)])) < 2
 
+    # nolint start: object_usage_linter. (.data, type from ggplot2/rlang NSE)
     p = ggplot(plot_data, aes(x = .data[["grid"]], y = .data[["value"]],
         group = .data[["id"]], color = .data[["type"]]))
     if (!noline) {
@@ -71,6 +90,7 @@ plot_regional_pd = function(prepared_data, origin_data, target_feature_name, nod
         aes(x = .data[[feat]], y = .data[[target_feature_name]]),
         alpha = if (show_point) 0.3 else 0, size = 0.8, inherit.aes = FALSE)
     }
+    # nolint end
     p = p +
       scale_color_manual(values = c("ICE" = color_ice, "PDP" = color_pd),
         labels = c("ICE" = if (mean_center) "Mean centered ICE" else "ICE",
@@ -85,7 +105,8 @@ plot_regional_pd = function(prepared_data, origin_data, target_feature_name, nod
         color = NULL
       ) +
       theme(
-        legend.position = c(0.95, 0.95),
+        legend.position = "inside",
+        legend.position.inside = c(0.95, 0.95),
         legend.justification = c("right", "top"),
         legend.background = element_rect(fill = NA, color = NA),
         legend.box.background = element_rect(fill = NA, color = "grey", linewidth = 0.1),

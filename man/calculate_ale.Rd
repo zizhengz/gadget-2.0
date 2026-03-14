@@ -7,44 +7,58 @@
 calculate_ale(
   model,
   data,
-  feature.set,
-  target.feature.name,
-  n.intervals = 10,
-  predict.fun = NULL
+  feature_set,
+  target_feature_name,
+  n_intervals = 10,
+  predict_fun = NULL
 )
 }
 \arguments{
-\item{model}{Fitted model object with a predict interface.}
+\item{model}{(`any`) \cr
+Fitted model with predict interface.}
 
-\item{data}{Data frame or data.table. Training data (features and target).}
+\item{data}{(`data.frame()` or `data.table()`) \cr
+Training data.}
 
-\item{feature.set}{Character. Names of features to compute ALE for; must exist in \code{data}.}
+\item{feature_set}{(`character()`) \cr
+Features to compute ALE for.}
 
-\item{target.feature.name}{Character. Name of the target variable in \code{data}.}
+\item{target_feature_name}{(`character(1)`) \cr
+Target variable name.}
 
-\item{n.intervals}{Integer. Number of equal-frequency intervals for numeric features (default: 10).}
+\item{n_intervals}{(`integer(1)`) \cr
+Equal-frequency intervals for numeric features.}
 
-\item{predict.fun}{Function or NULL. \code{function(model, data)} returning a numeric vector of predictions; NULL uses an mlr3-style default.}
+\item{predict_fun}{(`function()` or `NULL`) \cr
+\code{function(model, data)} returning predictions; \code{NULL} = default.}
 }
 \value{
-Named list of data.tables, one per element of \code{feature.set}. Each data.table has columns:
-  \item{row.id}{Row index in \code{data}.}
-  \item{feat.val}{Feature value at that row.}
-  \item{x.left, x.right}{Interval/category boundaries (numeric) or left/right category (factor).}
-  \item{dL}{Local effect (finite difference).}
-  \item{interval.index}{Interval or category index.}
-  \item{int_n, int_s1, int_s2}{Per-interval count and sum(dL), sum(dL^2) for heterogeneity.}
+(`list()`) \cr
+  Named list of data.tables per \code{feature_set}. Each has columns:
+  \item{row_id}{Row index in \code{data}.}
+  \item{feat_val}{Feature value at that row.}
+  \item{x_left, x_right}{Interval/category boundaries (numeric) or left/right category (factor).}
+  \item{d_l}{Local effect (finite difference).}
+  \item{interval_index}{Interval or category index.}
+  \item{int_n, int_s1, int_s2}{Per-interval count and sum(d_l), sum(d_l^2) for heterogeneity.}
 }
 \description{
-Given model, data, feature.set, target.feature.name, n.intervals, predict.fun: for each feature, 
-computes finite differences (dL) and per-interval stats (int_n, int_s1, int_s2). 
-Numeric: quantile intervals; categorical: level-by-level prediction differences. 
-Returns named list of data.tables (row.id, feat.val, dL, interval.index, int_n, int_s1, int_s2, etc.).
+Given model, data, feature_set, target_feature_name, n_intervals, predict_fun: for each feature,
+computes finite differences (d_l) and per-interval stats (int_n, int_s1, int_s2).
+Numeric: quantile intervals; categorical: level-by-level prediction differences.
+Returns named list of data.tables (row_id, feat_val, d_l, interval_index, int_n, int_s1, int_s2, etc.).
 }
 \details{
-Numeric features: builds \code{n.intervals} quantile-based intervals, assigns each row to an interval, and computes finite differences between interval boundaries via \code{predict.fun}.
+Numeric features: builds \code{n_intervals} quantile-based intervals,
+assigns each row to an interval, and computes finite differences between
+interval boundaries via \code{predict_fun}.
 
-Categorical features: use factor levels as given (typically pre-ordered by \code{order_categorical_levels} in \code{prepare_split_data_ale}). For each row, \code{dL} is the difference in predictions when the focal feature is set to the next vs. previous level; single-level factors get \code{dL = 0}.
+Categorical features: use factor levels as given (typically pre-ordered by
+\code{order_categorical_levels} in \code{prepare_split_data_ale}). For each
+row, \code{d_l} is the difference in predictions when the focal feature is
+set to the next vs. previous level; single-level factors get \code{d_l = 0}.
 
-Sample-level columns (\code{row.id}, \code{feat.val}, \code{dL}, etc.) support subsetting by node and downstream heterogeneity calculation.
+Sample-level columns (\code{row_id}, \code{feat_val}, \code{d_l}, etc.)
+support subsetting by node and downstream heterogeneity calculation.
 }
+\keyword{internal}

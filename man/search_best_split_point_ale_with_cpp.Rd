@@ -2,22 +2,45 @@
 % Please edit documentation in R/search_best_split_point_ale_with.R
 \name{search_best_split_point_ale_with_cpp}
 \alias{search_best_split_point_ale_with_cpp}
-\title{Find best ALE split point via C++ sweep (internal).}
+\title{Find best ALE split point via C++ sweep (with optional stabilizer).}
 \usage{
 search_best_split_point_ale_with_cpp(
   z,
   effect,
-  st.table,
-  split.feat,
-  is.categorical,
-  n.quantiles = NULL,
-  min.node.size = 1L
+  st_table,
+  split_feat,
+  is_categorical,
+  n_quantiles = NULL,
+  min_node_size = 1L
 )
 }
 \arguments{
-\item{z, effect, st.table, split.feat, is.categorical, n.quantiles, min.node.size}{Arguments.}
+\item{z}{(`numeric()` or `factor()`) \cr
+Split feature values.}
+
+\item{effect}{(`list()`) \cr
+ALE effect data.}
+
+\item{st_table}{(`list()`) \cr
+Precomputed interval statistics.}
+
+\item{split_feat}{(`character(1)`) \cr
+Name of split feature.}
+
+\item{is_categorical}{(`logical(1)`) \cr
+Whether \code{z} is categorical.}
+
+\item{n_quantiles}{(`integer(1)` or `NULL`) \cr
+Quantiles for numeric features.}
+
+\item{min_node_size}{(`integer(1)`) \cr
+Minimum observations per child.}
+}
+\value{
+(`list()`) \cr
+  Same as \code{search_best_split_point_ale}.
 }
 \description{
-Find best ALE split point via C++ sweep (internal).
+Same params and return as \code{search_best_split_point_ale}.
 }
 \keyword{internal}

@@ -1,15 +1,3 @@
-skip_ale_cpp_if_unavailable = function() {
-  n = 5
-  dt = data.table::data.table(row_id = seq_len(n), interval_index = rep(1L, n), d_l = 0, int_n = n, int_s1 = 0, int_s2 = 0)
-  tryCatch({
-    calculate_ale_heterogeneity_list_cpp(list(x = dt))
-  }, error = function(e) {
-    if (grepl("not available for .Call", conditionMessage(e), fixed = TRUE)) {
-      skip("ALE C++ symbols not loaded (install package with compile)")
-    }
-  })
-}
-
 test_that("calculate_ale returns named list of data.tables", {
   skip_if_not_installed("mlr3")
   skip_if_not_installed("mlr3learners")
@@ -19,7 +7,7 @@ test_that("calculate_ale returns named list of data.tables", {
   task = mlr3::TaskRegr$new("t", backend = data, target = "y")
   learner = mlr3::lrn("regr.ranger")
   learner$train(task)
-  result = calculate_ale(
+  result = gadget:::calculate_ale(
     model = learner,
     data = data,
     feature_set = c("x1", "x2"),
@@ -43,7 +31,7 @@ test_that("calculate_ale_heterogeneity_cpp returns numeric", {
     d_l = rnorm(n),
     int_n = 5L, int_s1 = 0, int_s2 = 1
   )
-  result = calculate_ale_heterogeneity_single_cpp(dt$d_l, dt$interval_index)
+  result = gadget:::calculate_ale_heterogeneity_single_cpp(dt$d_l, dt$interval_index)
   expect_true(is.numeric(result))
   expect_length(result, 1)
   expect_true(!is.na(result))
@@ -62,7 +50,7 @@ test_that("calculate_ale_heterogeneity_list_cpp works with list of ALE data", {
     d_l = rnorm(n), int_n = 3L, int_s1 = 0, int_s2 = 1
   )
   Y = list(f1 = dt1, f2 = dt2)
-  result = calculate_ale_heterogeneity_list_cpp(Y)
+  result = gadget:::calculate_ale_heterogeneity_list_cpp(Y)
   # C++ returns a named list of scalars, not a numeric vector
   expect_true(is.list(result))
   expect_length(result, 2)
@@ -98,7 +86,7 @@ test_that("prepare_split_data_ale returns Z and Y", {
   task = mlr3::TaskRegr$new("t", backend = data, target = "y")
   learner = mlr3::lrn("regr.ranger")
   learner$train(task)
-  result = prepare_split_data_ale(
+  result = gadget:::prepare_split_data_ale(
     model = learner,
     data = data,
     target_feature_name = "y",

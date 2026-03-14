@@ -2,27 +2,56 @@
 % Please edit documentation in R/plot_tree_pd.R
 \name{plot_tree_pd}
 \alias{plot_tree_pd}
-\title{Plot PD tree by depth and node (internal).}
+\title{Plot PD/ICE tree by depth and node.}
 \usage{
 plot_tree_pd(
   tree,
   effect,
   data,
-  target.feature.name,
-  color.ice = "lightblue",
-  color.pd = "lightcoral",
-  show.plot = TRUE,
-  show.point = FALSE,
-  mean.center = TRUE,
+  target_feature_name,
+  color_ice = "lightblue",
+  color_pd = "lightcoral",
+  show_plot = TRUE,
+  show_point = FALSE,
+  mean_center = TRUE,
   depth = NULL,
-  node.id = NULL,
+  node_id = NULL,
   features = NULL
 )
 }
 \arguments{
-\item{tree, effect, data, target.feature.name, color.ice, color.pd, show.plot, show.point, mean.center, depth, node.id, features}{Plot arguments.}
+\item{tree}{(`list()`) \cr
+Depth-based list of Node objects.}
+
+\item{effect}{(R6 or `list()`) \cr
+Effect object (e.g. FeatureEffect).}
+
+\item{data}{(`data.frame()` or `data.table()`) \cr
+Data with features and target.}
+
+\item{target_feature_name}{(`character(1)`) \cr
+Target column name.}
+
+\item{color_ice, color_pd}{(`character(1)`) \cr
+Colors for ICE and PDP curves.}
+
+\item{show_plot, show_point, mean_center}{(`logical(1)`) \cr
+Plot options.}
+
+\item{depth}{(`integer()` or `NULL`) \cr
+Depth levels to render.}
+
+\item{node_id}{(`integer()` or `NULL`) \cr
+Node IDs to render.}
+
+\item{features}{(`character()` or `NULL`) \cr
+Feature subset.}
+}
+\value{
+(`list()`) \cr
+  Nested list (depth -> node -> patchwork).
 }
 \description{
-Plot PD tree by depth and node (internal).
+Plot PD/ICE tree by depth and node.
 }
 \keyword{internal}

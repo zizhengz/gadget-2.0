@@ -16,10 +16,11 @@ using namespace Rcpp;
 // Helper functions (internal)
 // -----------------------------------------------------------------------------
 
-/* Remove consecutive duplicates; assumes x is sorted. O(n). */
-inline NumericVector unique_cpp(NumericVector x) {
-  x.erase(std::unique(x.begin(), x.end()), x.end());
-  return x;
+/* Remove consecutive duplicates; assumes x is sorted. O(n). Copies input so caller's x is unchanged. */
+inline NumericVector unique_cpp(const NumericVector& x) {
+  NumericVector out = Rcpp::clone(x);
+  out.erase(std::unique(out.begin(), out.end()), out.end());
+  return out;
 }
 
 /* R type-7 quantile for sorted vector (R default). */
@@ -181,19 +182,17 @@ List search_best_split_point_cpp_internal(
     return List::create(_["split_point"]     = NA_REAL,
       _["split_objective"] = R_PosInf);
 
-  // Stream through split candidates and accumulate left sums
+  // Stream through split candidates and accumulate left sums (incremental; splits are sorted)
   std::vector<arma::rowvec> SL(Ly);
   for (int l = 0; l < Ly; ++l)
     SL[l] = arma::rowvec(Ym[l].n_cols, arma::fill::zeros);
 
   int idx = 0;
-  for (double sp : splits) {  // Range-based for loop, sp is a copy of each split value
-    // Move observations to left node until split point
+  for (double sp : splits) {
     while (idx < N && z_sorted[idx] <= sp) {
       int r = ord[idx++];
-      for (int l = 0; l < Ly; ++l) {
-        SL[l] += Ym[l].row(r);  // Direct accumulation, NaN already processed in preprocessing
-      }
+      for (int l = 0; l < Ly; ++l)
+        SL[l] += Ym[l].row(r);
     }
     int NL = idx, NR = N - NL;
 
@@ -209,13 +208,17 @@ List search_best_split_point_cpp_internal(
     if (obj < best_obj) { best_obj = obj; best_split = sp; }
   }
 
+  if (best_obj == R_PosInf || R_IsNA(best_split))
+    return List::create(_["split_point"]     = NA_REAL,
+      _["split_objective"] = R_PosInf);
+
   // Refine split point to midpoint between adjacent values
   double Lft = -std::numeric_limits<double>::infinity(),
     Rgt =  std::numeric_limits<double>::infinity();
   for (int i = 0; i < N; ++i) {
     double v = z_num[i];
-    if (v <= best_split && v > Lft) Lft = v;
-    if (v >  best_split && v < Rgt) Rgt = v;
+    if (!R_IsNA(v) && v <= best_split && v > Lft) Lft = v;
+    if (!R_IsNA(v) && v >  best_split && v < Rgt) Rgt = v;
   }
   double mid = std::isinf(Rgt) ? Lft : (Lft + Rgt) / 2.0;
 
@@ -309,36 +312,4 @@ DataFrame search_best_split_cpp(
     _["split_runtime"]   = split_runtime,
     _["best_split"]      = best_split
   );
-}
-
-// -----------------------------------------------------------------------------
-// search_best_split_point_cpp
-// Purpose:
-//   Wrapper: preprocess Y, call internal split function for a single feature.
-// Inputs:
-//   z: Feature vector; Y: List of effect matrices
-//   n_quantiles, is_categorical, min_node_size
-// Output:
-//   List: split_point, split_objective
-// -----------------------------------------------------------------------------
-// [[Rcpp::export]]
-List search_best_split_point_cpp(
-    SEXP              z,
-    List              Y,
-    Nullable<int>     n_quantiles   = R_NilValue,
-    bool              is_categorical = false,
-    int               min_node_size  = 1)
-{
-  // Preprocess Y matrices
-  const int Ly = Y.size();
-  std::vector<arma::mat> Ym(Ly);
-  std::vector<arma::rowvec> S_tot(Ly);
-
-  for (int l = 0; l < Ly; ++l) {
-    Ym[l] = arma_view(Y[l]);
-    Ym[l].replace(arma::datum::nan, 0.0);  // Handle NaN values
-    S_tot[l] = arma::sum(Ym[l], 0);        // Precompute column sums
-  }
-
-  return search_best_split_point_cpp_internal(z, Ym, S_tot, n_quantiles, is_categorical, min_node_size);
 }

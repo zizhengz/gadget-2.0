@@ -2,20 +2,37 @@
 % Please edit documentation in R/search_best_split_ale.R
 \name{search_best_split_ale}
 \alias{search_best_split_ale}
-\title{Find best ALE split (internal).}
+\title{Find best ALE split across features.}
 \usage{
 search_best_split_ale(
   Z,
   effect,
-  min.node.size = 1L,
-  n.quantiles = NULL,
+  min_node_size = 1L,
+  n_quantiles = NULL,
   with_stab = FALSE
 )
 }
 \arguments{
-\item{Z, effect, min.node.size, n.quantiles, with_stab}{Split/search arguments.}
+\item{Z}{(`data.frame()` or `data.table()`) \cr
+Split features.}
+
+\item{effect}{(`list()`) \cr
+ALE effect data per feature (from \code{calculate_ale}).}
+
+\item{min_node_size}{(`integer(1)`) \cr
+Minimum observations per node.}
+
+\item{n_quantiles}{(`integer(1)` or `NULL`) \cr
+Quantiles for numeric split candidates.}
+
+\item{with_stab}{(`logical(1)`) \cr
+Use boundary stabilizer.}
+}
+\value{
+(`data.frame()`) \cr
+  Best split info with per-feature objective values.
 }
 \description{
-Find best ALE split (internal).
+Find best ALE split across features.
 }
 \keyword{internal}

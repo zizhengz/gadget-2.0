@@ -5,9 +5,11 @@
 #' builds edge list; creates ggraph plot with nodes labeled by split info
 #' and edges representing tree hierarchy. Returns ggplot object.
 #'
-#' @param tree List. A list containing the tree structure, typically converted from the internal Node object format.
+#' @param tree (`list()`) \cr
+#'   Depth-based list of Node objects.
 #'
-#' @return A `ggplot` object representing the tree structure.
+#' @return (ggplot) \cr
+#'   Tree structure visualization.
 #'
 #' @importFrom igraph graph_from_data_frame
 #' @importFrom ggraph ggraph geom_edge_elbow geom_node_label circle

@@ -1,57 +1,48 @@
-# GADGET: General Additive Decomposition based on Global Effect Tree
+# GADGET: General Additive Decomposition based on Global Effects
+
 <!-- badges: start -->
-[![R-CMD-check](https://github.com/zizhengz/gadget-2.0/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/zizhengz/gadget-2.0/actions/workflows/R-CMD-check.yaml)
+
+[![R-CMD-check](https://github.com/mlr-org/gadget/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/mlr-org/gadget/actions/workflows/R-CMD-check.yaml)
+
 <!-- badges: end -->
 
-The **gadget** R package implements the GADGET algorithm to interpret machine learning models by detecting and visualizing feature interactions. It decomposes the global effect of features into a tree structure using Accumulated Local Effects (ALE) or Partial Dependence (PD), allowing for a hierarchical understanding of how features interact to influence model predictions.
+The **gadget** R package implements the GADGET algorithm for interpretable machine learning. It recursively partitions the feature space to minimize the heterogeneity of feature effects (e.g., Accumulated Local Effects or Partial Dependence), producing a tree of regions where effects are more stable and easier to interpret. The package integrates with the [mlr3](https://mlr3.mlr-org.com/) ecosystem and [iml](https://cran.r-project.org/package=iml).
 
 ## Features
 
-- **Interaction Detection**: Automatically identifies feature interactions by recursively splitting data to minimize effect heterogeneity.
-- **ALE & PD Support**: Supports both Accumulated Local Effects (ALE) and Partial Dependence (PD) based strategies.
-- **Visualization**: Provides tools to visualize the interaction tree structure and regional effects.
-- **Extensible Architecture**: Built on R6 classes, making it easy to extend with custom strategies.
-- **High Performance**: Core computations are optimized with C++ (Rcpp) for speed.
+- **Interaction detection**: Identifies feature interactions by recursively splitting on heterogeneity of effects.
+- **ALE and PD support**: `AleStrategy` for ALE (computed internally), `PdStrategy` for PD/ICE (via precomputed effects from iml or similar).
+- **Visualization**: Tree structure plots and regional effect curves (ALE, PD, ICE).
+- **Extensible design**: R6-based strategy pattern; plug in custom effect strategies.
+- **Performance**: Core sweep and heterogeneity calculations in C++ (Rcpp/RcppArmadillo).
 
 ## Installation
 
-You can install the development version of **gadget** from GitHub:
+Install the development version from GitHub:
 
 ```r
 # install.packages("devtools")
 devtools::install_github("mlr-org/gadget")
 ```
 
-## Dependencies
-
-- **Core**: `R6`, `ggplot2`, `ggraph`, `igraph`, `patchwork`, `data.table`, `Rcpp` (installed automatically via DESCRIPTION)
-- **Recommended for examples**: `mlr3`, `mlr3learners`, `iml`, `ranger`
-- **Tip**: Avoid loading the legacy `mlr` package together with `mlr3` in the same R session, as they (and their dependencies) can conflict. When using **gadget**, just load the `mlr3` ecosystem.
-
-## Documentation
-
-- In R: `?gadget` for the package overview; `?gadgetTree`, `?aleStrategy`, `?pdStrategy` for the main API.
-- The draft manuscript for the R Journal is in the [`paper/`](paper/) directory (see `paper/README.md` for building).
+Requires R6, ggplot2, data.table, Rcpp; see [DESCRIPTION](DESCRIPTION) for details.
 
 ## Quick Start
 
-Here is a basic example of how to use GADGET with ALE-based trees on the `Bikeshare` data from the `ISLR2` package:
+Below are four complete examples for **PD** and **ALE** strategies on **Bikeshare** and **synthetic** data, each with `extract_split_info()` tables and sample plots.
+
+### 1. ALE + Bikeshare
 
 ```r
 library(gadget)
 library(mlr3)
 library(mlr3learners)
-library(ranger)
-library(ISLR2)  # contains the Bikeshare dataset
+library(ISLR2)
 
 data("Bikeshare", package = "ISLR2")
 set.seed(123)
-
-# Subsample for a lightweight example
-bike = Bikeshare[sample(1:nrow(Bikeshare), 1000), ]
+bike = Bikeshare[sample(seq_len(nrow(Bikeshare)), 1000), ]
 bike$workingday = as.factor(bike$workingday)
-
-# Select a small set of features and define the target
 bike_data = bike[, c("hr", "temp", "workingday", "bikers")]
 names(bike_data)[names(bike_data) == "bikers"] = "target"
 
@@ -59,129 +50,200 @@ task = TaskRegr$new(id = "bike", backend = bike_data, target = "target")
 learner = lrn("regr.ranger")
 learner$train(task)
 
-# Initialize the GADGET tree with ALE strategy
-ale_tree = gadgetTree$new(
-  strategy      = aleStrategy$new(),
-  n.split       = 2,     # Maximum depth
-  impr.par      = 0.01,  # Stopping criterion
-  min.node.size = 50     # Minimum samples per node
-)
+tree = GadgetTree$new(strategy = AleStrategy$new(), n_split = 2, impr_par = 0.01, min_node_size = 50)
+tree$fit(data = bike_data, target_feature_name = "target", model = learner, n_intervals = 10)
 
-# Fit the tree (ALE effects are computed internally)
-ale_tree$fit(
-  model = learner,
-  data  = bike_data,
-  target.feature.name = "target",
-  n.intervals = 10
-)
-
-# Visualize the tree structure and extract split information
-ale_tree$plot_tree_structure()
-print(ale_tree$extract_split_info())
-
-# Plot regional ALE effects
-ale_tree$plot(
-  data              = bike_data,
-  target.feature.name = "target",
-  mean.center       = FALSE,
-  show.point        = TRUE,
-  show.plot         = TRUE
-)
+tree$plot_tree_structure()
+tree$extract_split_info()
+tree$plot(data = bike_data, target_feature_name = "target", mean_center = TRUE)
 ```
 
-### Partial Dependence (PD) example and plot return value
+**Sample split info:**
 
-For PD-based trees we typically use the [`iml`](https://cran.r-project.org/package=iml) package to compute ICE/PD effects, and then let `pdStrategy` use them. The following example is adapted from the synthetic data section in `example.Rmd`:
+| id | depth | n_obs | node_type | split_feature | split_value | int_imp |
+|----|-------|-------|-----------|---------------|-------------|---------|
+| 1  | 1     | 1000  | root      | workingday    | 0           | 0.90    |
+| 2  | 2     | 316   | left      | temp          | 0.47        | 0.02    |
+| 3  | 2     | 684   | right     | temp          | 0.47        | 0.07    |
+| 4–7| 3     | …     | leaf      | &lt;NA&gt;        | &lt;NA&gt;        | NA      |
+
+![ALE Bike effects](figures/ale_bike_effects.png)
+
+### 2. ALE + Synthetic data
 
 ```r
 library(gadget)
-library(iml)
 library(mlr3)
 library(mlr3learners)
-library(ranger)
 
 set.seed(1234)
 n = 500
 x1 = runif(n, -1, 1)
 x2 = runif(n, -1, 1)
 x3 = runif(n, -1, 1)
-y  = ifelse(x3 > 0, 3 * x1, -3 * x1) + x3 + rnorm(n, sd = 0.3)
-syn.data = data.frame(x1, x2, x3, y)
+y = ifelse(x3 > 0, 3 * x1, -3 * x1) + x3 + rnorm(n, sd = 0.3)
+syn_data = data.frame(x1, x2, x3, y)
 
-syn.task    = TaskRegr$new("syn", backend = syn.data, target = "y")
-syn.learner = lrn("regr.ranger")
-syn.learner$train(syn.task)
+task = TaskRegr$new("syn", backend = syn_data, target = "y")
+learner = lrn("regr.ranger")
+learner$train(task)
 
-syn.predictor = iml::Predictor$new(
-  model = syn.learner,
-  data  = syn.data[, c("x1", "x2", "x3")],
-  y     = syn.data$y
-)
+tree = GadgetTree$new(strategy = AleStrategy$new(), n_split = 2, min_node_size = 10)
+tree$fit(model = learner, data = syn_data, target_feature_name = "y", n_intervals = 10)
 
-# 1. Compute ICE/PD effects for all features
-syn.effect = iml::FeatureEffects$new(
-  syn.predictor,
-  method    = "ice",  # PD is computed as the mean over ICE
-  grid.size = 20
-)
-
-# 2. Fit a PD-based GADGET tree
-syn.tree.pd = gadgetTree$new(
-  strategy      = pdStrategy$new(),
-  n.split       = 2,
-  impr.par      = 0.1,
-  min.node.size = 1
-)
-
-syn.tree.pd$fit(
-  effect = syn.effect,
-  data   = syn.data,
-  target.feature.name = "y"
-)
-
-# 3. Plot tree structure
-syn.tree.pd$plot_tree_structure()
-
-# 4. Plot regional PD / ICE and inspect the returned object
-plots = syn.tree.pd$plot(
-  effect = syn.effect,
-  data   = syn.data,
-  target.feature.name = "y",
-  show.plot   = TRUE,   
-  show.point  = TRUE,
-  mean.center = TRUE
-)
-
-# `plots` is a nested list: depth -> nodes -> ggplot objects
-str(plots, max.level = 2)
-# For example, first depth, first node:
-plots[[1]][[1]]
+tree$plot_tree_structure()
+tree$extract_split_info()
+tree$plot(data = syn_data, target_feature_name = "y")
 ```
+
+**Sample split info:** Root splits at `x3 ≈ -0.003` (interaction: `y` depends on `x1` in opposite directions when `x3 > 0` vs `x3 ≤ 0`).
+
+| id | depth | n_obs | split_feature | split_value  | int_imp |
+|----|-------|-------|---------------|--------------|---------|
+| 1  | 1     | 500   | x3            | -0.00287     | 0.85    |
+| 2  | 2     | 259   | &lt;NA&gt;        | &lt;NA&gt;         | NA      |
+| 3  | 2     | 241   | &lt;NA&gt;        | &lt;NA&gt;         | NA      |
+
+![ALE Syn effects](figures/ale_syn_effects.png)
+
+### 3. PD + Bikeshare (requires iml)
+
+For PD/ICE, compute effects with [iml](https://cran.r-project.org/package=iml) first, then pass them to `PdStrategy`:
+
+```r
+library(gadget)
+library(iml)
+library(mlr3)
+library(mlr3learners)
+library(ISLR2)
+
+data("Bikeshare", package = "ISLR2")
+set.seed(123)
+bike = Bikeshare[sample(seq_len(nrow(Bikeshare)), 1000), ]
+bike$workingday = as.factor(bike$workingday)
+bike_data = bike[, c("hr", "temp", "workingday", "bikers")]
+names(bike_data)[names(bike_data) == "bikers"] = "target"
+
+task = TaskRegr$new(id = "bike", backend = bike_data, target = "target")
+learner = lrn("regr.ranger")
+learner$train(task)
+predictor = iml::Predictor$new(learner, data = bike_data[, c("hr", "temp", "workingday")], y = bike_data$target)
+effect = iml::FeatureEffects$new(predictor, method = "ice", grid.size = 20)
+
+tree = GadgetTree$new(strategy = PdStrategy$new(), n_split = 2, min_node_size = 50)
+tree$fit(data = bike_data, target_feature_name = "target", effect = effect)
+
+tree$plot_tree_structure()
+tree$extract_split_info()
+tree$plot(effect = effect, data = bike_data, target_feature_name = "target", features = c("hr", "temp"))
+```
+
+**Sample split info:**
+
+| id | depth | n_obs | split_feature | split_value | int_imp |
+|----|-------|-------|---------------|-------------|---------|
+| 1  | 1     | 1000  | workingday    | 0           | 0.36    |
+| 2  | 2     | 316   | temp          | 0.45        | 0.21    |
+| 3  | 2     | 684   | temp          | 0.51        | 0.33    |
+| 4–7| 3     | …     | leaf          | &lt;NA&gt;       | NA       |
+
+![PD Bike effects](figures/pd_bike_effects.png)
+
+### 4. PD + Synthetic data
+
+```r
+library(gadget)
+library(iml)
+library(mlr3)
+library(mlr3learners)
+
+set.seed(1234)
+n = 500
+x1 = runif(n, -1, 1)
+x2 = runif(n, -1, 1)
+x3 = runif(n, -1, 1)
+y = ifelse(x3 > 0, 3 * x1, -3 * x1) + x3 + rnorm(n, sd = 0.3)
+syn_data = data.frame(x1, x2, x3, y)
+
+task = TaskRegr$new("syn", backend = syn_data, target = "y")
+learner = lrn("regr.ranger")
+learner$train(task)
+predictor = iml::Predictor$new(learner, data = syn_data[, c("x1", "x2", "x3")], y = syn_data$y)
+effect = iml::FeatureEffects$new(predictor, method = "ice", grid.size = 20)
+
+tree = GadgetTree$new(strategy = PdStrategy$new(), n_split = 2, min_node_size = 10)
+tree$fit(data = syn_data, target_feature_name = "y", effect = effect)
+
+tree$plot_tree_structure()
+tree$extract_split_info()
+tree$plot(effect = effect, data = syn_data, target_feature_name = "y", mean_center = TRUE)
+```
+
+**Sample split info:**
+
+| id | depth | n_obs | split_feature | split_value | int_imp |
+|----|-------|-------|---------------|-------------|---------|
+| 1  | 1     | 500   | x3            | -0.00287    | 0.95    |
+| 2  | 2     | 259   | &lt;NA&gt;        | &lt;NA&gt;        | NA      |
+| 3  | 2     | 241   | &lt;NA&gt;        | &lt;NA&gt;        | NA      |
+
+![PD Syn effects](figures/pd_syn_effects.png)
+
+## API overview
+
+| Component    | Description                                                                 |
+|-------------|-----------------------------------------------------------------------------|
+| `GadgetTree`| Main entry: `$new()`, `$fit()`, `$plot()`, `$plot_tree_structure()`, `$extract_split_info()` |
+| `AleStrategy` | ALE-based trees; pass `model` to `$fit()`. ALE computed internally.      |
+| `PdStrategy`  | PD/ICE trees; pass `effect` (e.g. from `iml::FeatureEffects`) to `$fit()`. |
+
+**Fit arguments**
+
+- **AleStrategy**: `model` (required), `n_intervals = 10`, `predict_fun = NULL`, `order_method = "raw"`, `with_stab = FALSE`
+- **PdStrategy**: `effect` (required)
+- **Both**: `feature_set`, `split_feature` (optional); tree params: `impr_par`, `min_node_size`, `n_quantiles`
 
 ## Methodology
 
-GADGET works by recursively partitioning the feature space. At each step, it seeks a split that maximizes the reduction in "heterogeneity" of the feature effects.
-- **Heterogeneity**: A measure of how much a feature's effect varies across different data samples. High heterogeneity suggests the presence of interactions.
-- By splitting the data (e.g., `hr < 12` vs `hr >= 12`), GADGET isolates regions where feature effects are more stable, thereby revealing the interaction structure.
+GADGET recursively partitions the feature space. At each node it:
 
-## Advanced Usage
+1. Computes effect heterogeneity (e.g., variance of ALE derivatives or PD/ICE curves).
+2. Searches for a split (on a chosen feature) that maximally reduces heterogeneity.
+3. Splits if the reduction exceeds a threshold (`impr_par`) and node size is sufficient.
 
-### Customizing Strategies
+Splits isolate regions where feature effects are more stable, revealing interaction structure.
 
-GADGET allows you to specify which features to compute effects for (`feature.set`) and which features to use for splitting (`split.feature`):
+## Advanced usage
+
+### Feature subsets
+
+Restrict which features are used for effects and splitting:
 
 ```r
-ale_tree$fit(
-  model = learner,
+tree$fit(
   data = data,
-  target.feature.name = "count",
-  n.intervals = 20,
-  feature.set = c("temp", "hum"), # Only compute ALE for temp and hum
-  split.feature = c("season")     # Only allow splitting by season
+  target_feature_name = "y",
+  model = learner,
+  feature_set = c("x1", "x2"),
+  split_feature = c("x3")
 )
 ```
+
+### Plot options
+
+- `depth`, `node_id`, `features`: Filter which depths, nodes, or features to plot.
+- `show_point`: Overlay observed (x, y) points.
+- `mean_center`: Mean-center effect curves.
+
+## Documentation
+
+- In R: `?gadget`, `?GadgetTree`, `?AleStrategy`, `?PdStrategy`
+- Paper draft: [`paper/`](paper/) (see `paper/README.md`)
+
+## Citation
+
+Herbinger, J., Wright, M. N., Nagler, T., Bischl, B., and Casalicchio, G. (2024). Decomposing Global Feature Effects Based on Feature Interactions. *Journal of Machine Learning Research*, 25(23-0699), 1–65. <https://jmlr.org/papers/volume25/23-0699/23-0699.pdf>
 
 ## License
 
 MIT
-

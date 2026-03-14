@@ -1,5 +1,77 @@
-#' Find best ALE split point for one feature (internal).
-#' @param z,effect,st_table,split_feat,is_categorical,n_quantiles,min_node_size Arguments.
+#' Build order and split candidates for ALE sweep.
+#'
+#' @param z (`numeric()` or `factor()`) \cr
+#'   Split feature values.
+#' @param is_categorical (`logical(1)`) \cr
+#'   Whether \code{z} is categorical.
+#' @param n_quantiles (`integer(1)` or `NULL`) \cr
+#'   Quantiles for numeric features.
+#'
+#' @return (`list()` or `NULL`) \cr
+#'   \code{ord_idx}, \code{z_sorted}, \code{n_obs}, \code{is_cand}; for categorical
+#'   also \code{boundary_pos}, \code{levels_vec}. \code{NULL} if no valid split.
+#' @keywords internal
+build_ale_order_and_candidates = function(z, is_categorical, n_quantiles = NULL) {
+  if (!is_categorical) {
+    ord_idx = order(z, na.last = NA)
+    z_sorted = z[ord_idx]
+    n_obs = length(z_sorted)
+    if (n_obs <= 1L) return(NULL)
+    if (!is.null(n_quantiles) && length(unique(z_sorted)) >= n_quantiles) {
+      probs = seq(0, 1, length.out = n_quantiles + 2L)[-c(1L, n_quantiles + 2L)]
+      splits = unique(as.numeric(quantile(z_sorted, probs, type = 7)))
+    } else {
+      splits = unique(z_sorted)
+    }
+    t_idx = findInterval(splits, z_sorted)
+    if (length(t_idx) == 0L) return(NULL)
+    is_cand = rep(FALSE, n_obs - 1L)
+    valid_t = t_idx[t_idx >= 1L & t_idx <= (n_obs - 1L)]
+    is_cand[unique(valid_t)] = TRUE
+    list(ord_idx = ord_idx, z_sorted = z_sorted, n_obs = n_obs, is_cand = is_cand)
+  } else {
+    z_fac = droplevels(z)
+    z_non_na = which(!is.na(z_fac))
+    if (length(z_non_na) <= 1L) return(NULL)
+    level_id = as.integer(z_fac[z_non_na])
+    ord_idx = z_non_na[order(level_id)]
+    n_obs = length(ord_idx)
+    counts = tabulate(level_id)
+    t_idx = head(cumsum(counts), -1L)
+    if (length(t_idx) == 0L) return(NULL)
+    is_cand = rep(FALSE, n_obs - 1L)
+    is_cand[t_idx] = TRUE
+    list(
+      ord_idx = ord_idx,
+      z_sorted = z_fac[ord_idx],
+      n_obs = n_obs,
+      is_cand = is_cand,
+      boundary_pos = t_idx,
+      levels_vec = levels(z_fac)
+    )
+  }
+}
+
+#' Find best ALE split point for one feature.
+#'
+#' @param z (`numeric()` or `factor()`) \cr
+#'   Split feature values.
+#' @param effect (`list()`) \cr
+#'   ALE effect data (from \code{calculate_ale}).
+#' @param st_table (`list()`) \cr
+#'   Precomputed interval statistics.
+#' @param split_feat (`character(1)`) \cr
+#'   Name of split feature.
+#' @param is_categorical (`logical(1)`) \cr
+#'   Whether \code{z} is categorical.
+#' @param n_quantiles (`integer(1)` or `NULL`) \cr
+#'   Quantiles for numeric features.
+#' @param min_node_size (`integer(1)`) \cr
+#'   Minimum observations per child.
+#'
+#' @return (`list()`) \cr
+#'   \code{split_point}, \code{split_objective}, \code{objective_value_j},
+#'   \code{left_objective_value_j}, \code{right_objective_value_j}.
 #' @keywords internal
 search_best_split_point_ale = function(
   z, effect, st_table, split_feat,
@@ -12,60 +84,7 @@ search_best_split_point_ale = function(
   split_feat_j = match(split_feat, feature_names)
   has_self_ale = !is.na(split_feat_j)
 
-  # Helper: Calculate interval-wise SSE
-  risk_from_stats = function(n, s1, s2) ifelse(n <= 1L, 0.0, s2 - (s1 * s1) / n)
-
-  # Helper: Find split candidates
-  build_order_and_candidates = function() {
-    if (!is_categorical) {
-      ord_idx = order(z, na.last = NA)
-      z_sorted = z[ord_idx]
-      n_obs = length(z_sorted)
-      if (n_obs <= 1L) {
-        return(NULL)
-      }
-      if (!is.null(n_quantiles) && length(unique(z_sorted)) >= n_quantiles) {
-        probs = seq(0, 1, length.out = n_quantiles + 2L)[-c(1L, n_quantiles + 2L)]
-        splits = unique(as.numeric(quantile(z_sorted, probs, type = 7)))
-      } else {
-        splits = unique(z_sorted)
-      }
-      t_idx = findInterval(splits, z_sorted)
-      if (length(t_idx) == 0L) {
-        return(NULL)
-      }
-      is_cand = rep(FALSE, n_obs - 1L)
-      valid_t = t_idx[t_idx >= 1L & t_idx <= (n_obs - 1L)]
-      is_cand[unique(valid_t)] = TRUE
-      list(ord_idx = ord_idx, z_sorted = z_sorted, n_obs = n_obs, is_cand = is_cand)
-    } else {
-      z_fac = droplevels(z)
-      z_non_na = which(!is.na(z_fac))
-      if (length(z_non_na) <= 1L) {
-        return(NULL)
-      }
-      level_id = as.integer(z_fac[z_non_na])
-      ord_idx = z_non_na[order(level_id)]
-      n_obs = length(ord_idx)
-      counts = tabulate(level_id)
-      t_idx = head(cumsum(counts), -1L)
-      if (length(t_idx) == 0L) {
-        return(NULL)
-      }
-      is_cand = rep(FALSE, n_obs - 1L)
-      is_cand[t_idx] = TRUE
-      list(
-        ord_idx = ord_idx,
-        z_sorted = z_fac[ord_idx],
-        n_obs = n_obs,
-        is_cand = is_cand,
-        boundary_pos = t_idx,
-        levels_vec = levels(z_fac)
-      )
-    }
-  }
-
-  plan = build_order_and_candidates()
+  plan = build_ale_order_and_candidates(z, is_categorical, n_quantiles)
   if (is.null(plan)) {
     return(list(
       split_point = NA_real_,

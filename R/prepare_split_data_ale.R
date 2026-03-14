@@ -5,21 +5,25 @@
 #' \code{order_categorical_levels}; builds Z (data.table of split columns);
 #' calls \code{calculate_ale} for Y. Returns list \code{Z}, \code{Y}.
 #'
-#' @param model Fitted model object with a predict interface.
-#' @param data Data frame or data.table. Training data (features and target).
-#' @param target_feature_name Character. Name of the target variable.
-#' @param n_intervals Integer. Number of intervals for numeric ALE (default 10).
-#' @param feature_set Character or NULL. Features to compute ALE for; NULL = all.
-#' @param split_feature Character or NULL. Features to consider for splitting; NULL = all.
-#' @param predict_fun Function or NULL. \code{function(model, data)} returning predictions;
-#'   NULL uses mlr3-style default.
-#' @param order_method Character. How to order categorical levels: \code{"mds"},
-#'   \code{"pca"}, \code{"random"}, or \code{"raw"} (keep existing factor level order;
-#'   default \code{"mds"}).
+#' @param model (`any`) \cr
+#'   Fitted model with predict interface.
+#' @param data (`data.frame()` or `data.table()`) \cr
+#'   Training data (features and target).
+#' @param target_feature_name (`character(1)`) \cr
+#'   Name of the target variable.
+#' @param n_intervals (`integer(1)`) \cr
+#'   Number of intervals for numeric ALE.
+#' @param feature_set (`character()` or `NULL`) \cr
+#'   Features to compute ALE for; \code{NULL} = all.
+#' @param split_feature (`character()` or `NULL`) \cr
+#'   Features for splitting; \code{NULL} = all.
+#' @param predict_fun (`function()` or `NULL`) \cr
+#'   \code{function(model, data)} returning predictions; \code{NULL} = default.
+#' @param order_method (`character(1)`) \cr
+#'   Categorical level order: \code{"mds"}, \code{"pca"}, \code{"random"}, or \code{"raw"}.
 #'
-#' @return List with:
-#'   \item{Z}{data.table of split features (columns in \code{split_feature}).}
-#'   \item{Y}{List of ALE effect data per feature (from \code{calculate_ale}).}
+#' @return (`list()`) \cr
+#'   \code{Z}: data.table of split features; \code{Y}: list of ALE effect data per feature.
 #'
 #' @details
 #' Steps performed:
@@ -40,6 +44,7 @@
 #'   feature_set = c("x1", "x2"), split_feature = c("x1", "x2", "x3"))
 #' }
 #'
+#' @keywords internal
 prepare_split_data_ale = function(
   model,
   data,
@@ -50,36 +55,18 @@ prepare_split_data_ale = function(
   predict_fun = NULL,
   order_method = "mds"
 ) {
-  # Local helpers
-  all_features = setdiff(colnames(data), target_feature_name)
-  take_cols = function(d, cols) {
-    if (data.table::is.data.table(d)) d[, cols, with = FALSE] else d[, cols, drop = FALSE]
-  }
-  resolve_features = function(requested, err_label) {
-    if (is.null(requested)) {
-      return(all_features)
-    }
-    miss = setdiff(requested, all_features)
-    if (length(miss) > 0L) {
-      stop(sprintf(
-        "%s not found in data: %s. Available features: %s",
-        err_label,
-        paste(miss, collapse = ", "),
-        paste(all_features, collapse = ", ")
-      ))
-    }
-    requested
-  }
-  ensure_factors = function(d, cols) {
-    for (c in cols) {
-      if (is.character(d[[c]])) d[[c]] = factor(d[[c]])
-    }
-    d
-  }
-
-  feature_set = resolve_features(feature_set, "Features")
-  split_feature = resolve_features(split_feature, "Split features")
-  data = ensure_factors(data, union(feature_set, split_feature))
+  checkmate::assert_data_frame(data, .var.name = "data")
+  checkmate::assert_character(target_feature_name, len = 1, .var.name = "target_feature_name")
+  checkmate::assert_subset(target_feature_name, colnames(data), .var.name = "target_feature_name")
+  checkmate::assert_integerish(n_intervals, len = 1, lower = 1, any.missing = FALSE, .var.name = "n_intervals")
+  checkmate::assert_character(feature_set, null.ok = TRUE, .var.name = "feature_set")
+  checkmate::assert_character(split_feature, null.ok = TRUE, .var.name = "split_feature")
+  checkmate::assert_function(predict_fun, null.ok = TRUE, .var.name = "predict_fun")
+  checkmate::assert_choice(order_method, c("mds", "pca", "random", "raw"), .var.name = "order_method")
+  common = prepare_split_data_common(data, target_feature_name, feature_set, split_feature)
+  data = common$data
+  feature_set = common$feature_set
+  split_feature = common$split_feature
   for (col in union(feature_set, split_feature)) {
     if (is.factor(data[[col]])) {
       data[[col]] = order_categorical_levels(droplevels(data[[col]]), data, col, target_feature_name, order_method)

@@ -1,48 +1,32 @@
 #' Node: Tree Node for Effect-based Decision Trees (R6 class)
 #'
 #' Represents a single node in an effect-based decision tree, storing split information,
-#' effect statistics, and child nodes.
+#' effect statistics, and child nodes. Uses grouped fields for clearer structure.
 #'
-#' @field id Integer. \cr
+#' @field id (`integer(1)`) \cr
 #'   Node identifier within its depth level.
-#' @field depth Integer. \cr
+#' @field depth (`integer(1)`) \cr
 #'   Depth of the node (root starts at 1).
-#' @field subset_idx Integer vector. \cr
+#' @field subset_idx (`integer()`) \cr
 #'   Row indices of data that fall into this node.
-#' @field objective_value_j Numeric vector. \cr
-#'   Objective values for each feature in this node.
-#' @field objective_value Numeric. \cr
-#'   Total objective value for this node.
-#' @field objective_value_parent Numeric. \cr
-#'   Parent node's objective value.
-#' @field grid Named list. \cr
+#' @field grid (`list()`) \cr
 #'   Grid values for each feature in this node.
-#' @field id_parent Integer or NULL. \cr
-#'   Parent node id.
-#' @field child_type Character. \cr
-#'   Split direction ("<=", ">", "==", "!=").
-#' @field split_feature Character. \cr
-#'   Feature used for splitting this node.
-#' @field split_feature_parent Character. \cr
-#'   Parent node's split feature.
-#' @field split_value Numeric or factor. \cr
-#'   Threshold or level used for splitting.
-#' @field split_value_parent Numeric or factor. \cr
-#'   Parent node's split value.
-#' @field children List. \cr
-#'   Contains left and right child nodes (or NULL for terminal nodes).
-#' @field stop_criterion_met Logical. \cr
+#' @field parent (`list()` or `NULL`) \cr
+#'   Parent info: id, child_type, split_feature, split_value, objective_value, int_imp. NULL for root.
+#' @field split (`list()` or `NULL`) \cr
+#'   Split info: feature, value. NULL for terminal nodes.
+#' @field objective (`list()`) \cr
+#'   Objective: value (scalar), value_j (per-feature vector).
+#' @field importance (`list()` or `NULL`) \cr
+#'   Importance: imp (scalar), imp_j (per-feature). NULL for root and unsplit nodes.
+#' @field children (`list()` or `NULL`) \cr
+#'   Left and right child nodes (or NULL for terminal nodes).
+#' @field stop_criterion_met (`logical(1)`) \cr
 #'   Whether the minimal node size or improvement threshold has been reached.
-#' @field improvement_met Logical. \cr
+#' @field improvement_met (`logical(1)`) \cr
 #'   Whether the improvement threshold was not met.
-#' @field int_imp_j Numeric vector. \cr
-#'   Interaction importance for each feature.
-#' @field int_imp Numeric. \cr
-#'   Overall interaction importance for this node.
-#' @field int_imp_parent Numeric. \cr
-#'   Parent node's interaction importance.
-#' @field strategy Strategy object. \cr
-#'   Used for effect-specific operations.
+#' @field strategy (PdStrategy | AleStrategy) \cr
+#'   Strategy for effect-specific operations.
 #'
 #' @details
 #' This class is used internally by GadgetTree and strategy objects to represent
@@ -51,70 +35,79 @@
 #'
 #' @examples
 #' # Example: Creating a Node (typically done internally)
-#' # node <- Node$new(id = 1, depth = 1, subset_idx = 1:100, grid = list(feature1 = 1:10))
+#' # node = Node$new(id = 1, depth = 1, subset_idx = 1:100, grid = list(feature1 = 1:10))
 #'
 #' @importFrom R6 R6Class
-#' @importFrom checkmate assert_numeric assert_character
 #'
 #' @keywords internal
 Node = R6::R6Class("Node", public = list(
   id = NULL,
   depth = NULL,
   subset_idx = NULL,
-  objective_value_j = NULL,
-  objective_value = NULL,
-  objective_value_parent = NULL,
   grid = NULL,
-  id_parent = NULL,
-  child_type = NULL,
-  split_feature = NULL,
-  split_feature_parent = NULL,
-  split_value = NULL,
-  split_value_parent = NULL,
+  parent = NULL,
+  split = NULL,
+  objective = NULL,
+  importance = NULL,
   children = NULL,
   stop_criterion_met = NULL,
   improvement_met = NULL,
-  int_imp_j = NULL,
-  int_imp = NULL,
-  int_imp_parent = NULL,
   strategy = NULL,
 
   #' @description
-  #' Create a node from id, depth, subset indices, and grid. Assigns fields and sets \code{stop_criterion_met = FALSE}.
-  #' @param id Integer. Node identifier.
-  #' @param depth Integer or NULL. Node depth (root is 1).
-  #' @param subset_idx Integer vector. Row indices of data in this node.
-  #' @param grid List. Grid values for each feature.
-  #' @param id_parent Integer or NULL. Parent node id.
-  #' @param child_type Character or NULL. Split direction.
-  #' @param objective_value_parent Numeric or NULL. Parent node's objective value.
-  #' @param objective_value_j Numeric vector or NULL. Objective values for each feature.
-  #' @param objective_value Numeric or NULL. Total objective value.
-  #' @param improvement_met Logical. Whether improvement threshold was not met.
-  #' @param int_imp Numeric or NULL. Interaction importance.
-  #' @param int_imp_j Numeric vector or NULL. Interaction importance for each feature.
-  #' @param strategy Object or NULL. Strategy object for effect-specific logic.
+  #' Create a node from id, depth, subset indices, and grid. Assigns fields and sets
+  #' \code{stop_criterion_met = FALSE}. Accepts legacy scalar args for compatibility.
+  #' @param id (`integer(1)`) \cr
+  #'   Node identifier.
+  #' @param depth (`integer(1)` or `NULL`) \cr
+  #'   Node depth (root is 1).
+  #' @param subset_idx (`integer()`) \cr
+  #'   Row indices of data in this node.
+  #' @param grid (`list()`) \cr
+  #'   Grid values for each feature.
+  #' @param id_parent (`integer(1)` or `NULL`) \cr
+  #'   Parent node id.
+  #' @param child_type (`character(1)` or `NULL`) \cr
+  #'   Split direction (\code{"<="}, \code{">"}, \code{"=="}, \code{"!="}).
+  #' @param objective_value_parent (`numeric(1)` or `NULL`) \cr
+  #'   Parent node's objective value.
+  #' @param objective_value_j (`numeric()` or `NULL`) \cr
+  #'   Objective values per feature.
+  #' @param objective_value (`numeric(1)` or `NULL`) \cr
+  #'   Total objective value.
+  #' @param improvement_met (`logical(1)`) \cr
+  #'   Whether improvement threshold was not met.
+  #' @param int_imp (`numeric(1)` or `NULL`) \cr
+  #'   Interaction importance.
+  #' @param int_imp_j (`numeric()` or `NULL`) \cr
+  #'   Interaction importance per feature.
+  #' @param strategy (PdStrategy | AleStrategy or `NULL`) \cr
+  #'   Strategy; \code{NULL} not used in practice.
   initialize = function(id, depth = NULL, subset_idx, grid, id_parent = NULL,
     child_type = NULL, objective_value_parent = NULL, objective_value_j = NULL,
     objective_value = NULL, improvement_met = FALSE, int_imp = NULL, int_imp_j = NULL, strategy = NULL) {
 
-    assert_numeric(id, len = 1)
-    assert_numeric(depth, len = 1, null.ok = TRUE)
-    assert_numeric(subset_idx, min.len = 1)
-    assert_numeric(id_parent, len = 1, null.ok = TRUE)
-    assert_character(child_type, null.ok = TRUE)
+    checkmate::assert_numeric(id, len = 1)
+    checkmate::assert_numeric(depth, len = 1, null.ok = TRUE)
+    checkmate::assert_numeric(subset_idx, min.len = 1)
+    checkmate::assert_numeric(id_parent, len = 1, null.ok = TRUE)
+    checkmate::assert_character(child_type, null.ok = TRUE)
 
     self$id = id
     self$depth = depth
     self$subset_idx = subset_idx
-    self$id_parent = id_parent
-    self$child_type = child_type
-    self$int_imp = int_imp
-    self$int_imp_j = int_imp_j
-    self$objective_value_parent = objective_value_parent
-    self$objective_value = objective_value
-    self$objective_value_j = objective_value_j
     self$grid = grid
+    self$parent = if (is.null(id_parent)) NULL else list(
+      id = id_parent,
+      child_type = child_type,
+      split_feature = NULL,
+      split_value = NULL,
+      objective_value = objective_value_parent,
+      int_imp = NULL
+    )
+    self$split = NULL
+    self$objective = list(value = objective_value, value_j = objective_value_j)
+    self$importance = if (is.null(int_imp) && is.null(int_imp_j)) NULL else list(imp = int_imp, imp_j = int_imp_j)
     self$stop_criterion_met = FALSE
     self$improvement_met = improvement_met
     self$strategy = strategy
@@ -124,16 +117,25 @@ Node = R6::R6Class("Node", public = list(
   #' Given Z, Y, root objectives, and tree params: checks stopping criteria;
   #' finds best split; creates and applies children; recurses into child nodes.
   #' Returns NULL if no valid split.
-  #' @param Z Data frame. Split feature set.
-  #' @param Y List. Effect list.
-  #' @param objective_value_root_j Numeric vector. Root node's objective values for each feature.
-  #' @param objective_value_root Numeric. Root node's total objective value.
-  #' @param min_node_size Integer. Minimum node size.
-  #' @param n_quantiles Integer or NULL. Number of quantiles for candidate split points.
-  #' @param impr_par Numeric. Improvement threshold parameter.
-  #' @param depth Integer. Current node depth.
-  #' @param max_depth Integer. Maximum allowed tree depth.
-  #' @return NULL
+  #' @param Z (`data.frame()` or `data.table()`) \cr
+  #'   Split features.
+  #' @param Y (`list()`) \cr
+  #'   Effect list.
+  #' @param objective_value_root_j (`numeric()`) \cr
+  #'   Root objective values per feature.
+  #' @param objective_value_root (`numeric(1)`) \cr
+  #'   Root total objective value.
+  #' @param min_node_size (`integer(1)`) \cr
+  #'   Minimum node size.
+  #' @param n_quantiles (`integer(1)` or `NULL`) \cr
+  #'   Quantiles for candidate split points.
+  #' @param impr_par (`numeric(1)`) \cr
+  #'   Improvement threshold.
+  #' @param depth (`integer(1)`) \cr
+  #'   Current node depth.
+  #' @param max_depth (`integer(1)`) \cr
+  #'   Maximum tree depth.
+  #' @return (`NULL`)
   split_node = function(Z, Y, objective_value_root_j, objective_value_root,
     min_node_size, n_quantiles, impr_par, depth, max_depth) {
     t0 = proc.time()
@@ -145,17 +147,14 @@ Node = R6::R6Class("Node", public = list(
       return(NULL)
     }
     # 2. Find the best split
-    # Find best split with strategy-specific logic
     split_info = tryCatch({
-      if (inherits(self$strategy, "AleStrategy")) {
-        y_curr = self$strategy$node_transform(Y, idx = self$subset_idx, split_feature = self$split_feature_parent)
-        self$find_best_split(Z, y_curr, min_node_size, n_quantiles)
-      } else if (inherits(self$strategy, "PdStrategy")) {
-        y_curr = self$strategy$node_transform(Y = Y, grid = self$grid, idx = self$subset_idx)
-        self$find_best_split(Z, y_curr, min_node_size, n_quantiles)
-      }
+      y_curr = self$strategy$node_transform(
+        Y = Y, idx = self$subset_idx, grid = self$grid,
+        split_feature = if (!is.null(self$parent)) self$parent$split_feature else NULL
+      )
+      self$find_best_split(Z, y_curr, min_node_size, n_quantiles)
     }, error = function(e) {
-      message("find_best_split error: ", e$message)
+      cli::cli_inform("find_best_split error: {e$message}")
       NULL
     })
     if (is.null(split_info)) {
@@ -166,7 +165,7 @@ Node = R6::R6Class("Node", public = list(
     children_info = tryCatch({
       self$create_children(Z, Y, split_info, objective_value_root_j, objective_value_root, impr_par)
     }, error = function(e) {
-      message("create_children error: ", e$message)
+      cli::cli_inform("create_children error: {e$message}")
       NULL
     })
     if (is.null(children_info)) {
@@ -212,13 +211,17 @@ Node = R6::R6Class("Node", public = list(
   #' \code{strategy$find_best_split} and returns list with
   #' \code{split_feature}, \code{split_value}, \code{is_categorical}
   #' (and for AleStrategy: \code{left/right_objective_value_j}).
-  #' @param Z Data frame. Split feature set.
-  #' @param y_curr List. Effect list for current node.
-  #' @param min_node_size Integer. Minimum node size.
-  #' @param n_quantiles Integer or NULL. Number of quantiles for candidate split points.
-  #' @return List or NULL. Best split information or NULL if no valid split.
+  #' @param Z (`data.frame()` or `data.table()`) \cr
+  #'   Split features.
+  #' @param y_curr (`list()`) \cr
+  #'   Effect list for current node.
+  #' @param min_node_size (`integer(1)`) \cr
+  #'   Minimum node size.
+  #' @param n_quantiles (`integer(1)` or `NULL`) \cr
+  #'   Quantiles for candidate split points.
+  #' @return (`list()` or `NULL`) \cr
+  #'   Best split info or \code{NULL} if no valid split.
   find_best_split = function(Z, y_curr, min_node_size, n_quantiles) {
-    # Ensure Z subset is always a data.frame(data.table)
     z_subset = Z[self$subset_idx, ]
     if (!is.data.frame(z_subset)) {
       z_subset = data.frame(z_subset)
@@ -229,24 +232,11 @@ Node = R6::R6Class("Node", public = list(
     if (is.null(split_res$best_split) || length(split_res$best_split) == 0 || all(!split_res$best_split)) {
       return(NULL)
     }
-    if (inherits(self$strategy, "AleStrategy")) {
-      rows = which(split_res$best_split)
-      left_objective_value_j = split_res$left_objective_value_j[rows]
-      right_objective_value_j = split_res$right_objective_value_j[rows]
-      return(list(
-        split_feature = split_res$split_feature[split_res$best_split][1],
-        split_value = split_res$split_point[split_res$best_split][1],
-        is_categorical = split_res$is_categorical[split_res$best_split][1],
-        left_objective_value_j = left_objective_value_j,
-        right_objective_value_j = right_objective_value_j,
-        left_objective_value = sum(left_objective_value_j, na.rm = TRUE),
-        right_objective_value = sum(right_objective_value_j, na.rm = TRUE)
-      ))
-    }
     list(
       split_feature = split_res$split_feature[split_res$best_split][1],
       split_value = split_res$split_point[split_res$best_split][1],
-      is_categorical = split_res$is_categorical[split_res$best_split][1]
+      is_categorical = split_res$is_categorical[split_res$best_split][1],
+      raw_result = split_res
     )
   },
 
@@ -256,13 +246,20 @@ Node = R6::R6Class("Node", public = list(
   #' creates left/right Node instances and sets parent info.
   #' Returns list of \code{left_child}, \code{right_child}, \code{int_imp},
   #' \code{int_imp_j} or NULL if improvement too small.
-  #' @param Z Data frame. Split feature set.
-  #' @param Y List. Effect list.
-  #' @param split_info List. Information about the split.
-  #' @param objective_value_root_j Numeric vector. Root node's objective values for each feature.
-  #' @param objective_value_root Numeric. Root node's total objective value.
-  #' @param impr_par Numeric. Improvement threshold parameter.
-  #' @return List. Contains left and right child nodes and split statistics.
+  #' @param Z (`data.frame()` or `data.table()`) \cr
+  #'   Split features.
+  #' @param Y (`list()`) \cr
+  #'   Effect list.
+  #' @param split_info (`list()`) \cr
+  #'   Split information.
+  #' @param objective_value_root_j (`numeric()`) \cr
+  #'   Root objective values per feature.
+  #' @param objective_value_root (`numeric(1)`) \cr
+  #'   Root total objective value.
+  #' @param impr_par (`numeric(1)`) \cr
+  #'   Improvement threshold.
+  #' @return (`list()`) \cr
+  #'   Left/right child nodes and split statistics.
   create_children = function(Z, Y, split_info, objective_value_root_j, objective_value_root, impr_par) {
     split_feature = split_info$split_feature
     split_value = split_info$split_value
@@ -279,31 +276,20 @@ Node = R6::R6Class("Node", public = list(
     if (length(idx_left) == 0) idx_left = 0
     if (length(idx_right) == 0) idx_right = 0
 
-    # Create grids for children (note: grid_info only effective for PdStrategy)
     grid_info = self$create_child_grids(split_feature, split_value, is_categorical)
-    # Calculate objective values for children
-    if (inherits(self$strategy, "PdStrategy")) {
-      y_curr_left = self$strategy$node_transform(Y = Y, grid = grid_info$grid_left, idx = idx_left)
-      y_curr_right = self$strategy$node_transform(Y = Y, grid = grid_info$grid_right, idx = idx_right)
-      left_objective_value_j = self$strategy$heterogeneity(y_curr_left)
-      right_objective_value_j = self$strategy$heterogeneity(y_curr_right)
-      left_objective_value = sum(left_objective_value_j, na.rm = TRUE)
-      right_objective_value = sum(right_objective_value_j, na.rm = TRUE)
-      # Calculate interaction importance
-      int_imp_j = (self$objective_value_j - left_objective_value_j - right_objective_value_j) / objective_value_root_j
-      int_imp = (self$objective_value - left_objective_value - right_objective_value) / objective_value_root
-    } else if (inherits(self$strategy, "AleStrategy")) {
-      left_objective_value_j = split_info$left_objective_value_j
-      right_objective_value_j = split_info$right_objective_value_j
-      left_objective_value = split_info$left_objective_value
-      right_objective_value = split_info$right_objective_value
-      # Calculate interaction importance
-      int_imp_j = (self$objective_value_j - left_objective_value_j - right_objective_value_j) / objective_value_root_j
-      int_imp = (self$objective_value - left_objective_value - right_objective_value) / objective_value_root
-    }
+    obj = self$strategy$get_child_objectives(
+      Z, Y, split_info, idx_left, idx_right,
+      grid_info$grid_left, grid_info$grid_right
+    )
+    left_objective_value_j = obj$left_objective_value_j
+    right_objective_value_j = obj$right_objective_value_j
+    left_objective_value = obj$left_objective_value
+    right_objective_value = obj$right_objective_value
+    int_imp_j = (self$objective$value_j - left_objective_value_j - right_objective_value_j) / objective_value_root_j
+    int_imp = (self$objective$value - left_objective_value - right_objective_value) / objective_value_root
 
-    # Threshold for root node: impr_par; for child node: int_imp_parent * impr_par
-    threshold = if (self$id == 1) impr_par else self$int_imp_parent * impr_par
+    # Threshold for root node: impr_par; for child node: parent int_imp * impr_par
+    threshold = if (self$id == 1) impr_par else self$parent$int_imp * impr_par
     # Check if improvement meets threshold
     if (int_imp < threshold) {
       self$improvement_met = TRUE
@@ -314,7 +300,7 @@ Node = R6::R6Class("Node", public = list(
       id = 2 * self$id, depth = self$depth + 1,
       subset_idx = idx_left, grid = grid_info$grid_left, id_parent = self$id,
       child_type = if (is.factor(Z[[split_feature]])) "==" else "<=",
-      objective_value_parent = self$objective_value,
+      objective_value_parent = self$objective$value,
       objective_value = left_objective_value,
       objective_value_j = left_objective_value_j,
       int_imp = NULL, int_imp_j = NULL,
@@ -325,17 +311,17 @@ Node = R6::R6Class("Node", public = list(
       id = 2 * self$id + 1, depth = self$depth + 1,
       subset_idx = idx_right, grid = grid_info$grid_right, id_parent = self$id,
       child_type = if (is.factor(Z[[split_feature]])) "!=" else ">",
-      objective_value_parent = self$objective_value,
+      objective_value_parent = self$objective$value,
       objective_value = right_objective_value,
       objective_value_j = right_objective_value_j,
       int_imp = NULL, int_imp_j = NULL,
       improvement_met = self$improvement_met,
       strategy = self$strategy
     )
-    # Set parent info for children
-    left_child$split_feature_parent = right_child$split_feature_parent = split_feature
-    left_child$split_value_parent = right_child$split_value_parent = split_value
-    left_child$int_imp_parent = right_child$int_imp_parent = int_imp
+    # Set parent split/int_imp for children
+    left_child$parent$split_feature = right_child$parent$split_feature = split_feature
+    left_child$parent$split_value = right_child$parent$split_value = split_value
+    left_child$parent$int_imp = right_child$parent$int_imp = int_imp
 
     list(
       left_child = left_child,
@@ -349,10 +335,14 @@ Node = R6::R6Class("Node", public = list(
   #' Given split_feature, split_value, and is_categorical: partitions
   #' \code{self$grid[[split_feature]]} into left (<= or ==) and
   #' right (> or !=). Returns list \code{grid_left}, \code{grid_right}.
-  #' @param split_feature Character. Feature used for splitting.
-  #' @param split_value Numeric or factor. Value used for splitting.
-  #' @param is_categorical Logical. Whether the split feature is categorical.
-  #' @return List. List with grid_left and grid_right.
+  #' @param split_feature (`character(1)`) \cr
+  #'   Feature used for splitting.
+  #' @param split_value (`numeric(1)` or `factor()`) \cr
+  #'   Split value.
+  #' @param is_categorical (`logical(1)`) \cr
+  #'   Whether the split feature is categorical.
+  #' @return (`list()`) \cr
+  #'   \code{grid_left}, \code{grid_right}.
   create_child_grids = function(split_feature, split_value, is_categorical) {
     grid_left = self$grid
     grid_right = self$grid
@@ -373,14 +363,17 @@ Node = R6::R6Class("Node", public = list(
   #' @description
   #' Given split_info and children_info: sets \code{split_feature},
   #' \code{split_value}, \code{int_imp}, \code{int_imp_j}, \code{children}.
-  #' @param split_info List. Information about the split.
-  #' @param children_info List. Information about the children.
-  #' @return NULL
+  #' @param split_info (`list()`) \cr
+  #'   Split information.
+  #' @param children_info (`list()`) \cr
+  #'   Children information.
+  #' @return (`NULL`)
   apply_split = function(split_info, children_info) {
-    self$split_feature = split_info$split_feature
-    self$split_value = if (split_info$is_categorical) split_info$split_value else as.numeric(split_info$split_value)
-    self$int_imp = children_info$int_imp
-    self$int_imp_j = children_info$int_imp_j
+    self$split = list(
+      feature = split_info$split_feature,
+      value = if (split_info$is_categorical) split_info$split_value else as.numeric(split_info$split_value)
+    )
+    self$importance = list(imp = children_info$int_imp, imp_j = children_info$int_imp_j)
     self$children = list("left_child" = children_info$left_child, "right_child" = children_info$right_child)
   }
 ))

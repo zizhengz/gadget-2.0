@@ -4,10 +4,13 @@
 #' columns of (sum of squares - (sum)^2/n) via \code{node_heterogeneity_cpp}.
 #' Returns numeric vector of length \code{length(Y)}.
 #'
-#' @param Y List of numeric matrices (e.g., ICE effect matrices per feature).
-#' @return Numeric vector of length \code{length(Y)}.
+#' @param Y (`list()`) \cr
+#'   List of numeric matrices (ICE effect per feature).
+#'
+#' @return (`numeric()`) \cr
+#'   Heterogeneity per feature, length \code{length(Y)}.
 #' @keywords internal
 node_heterogeneity = function(Y) {
-  y_mat = lapply(Y, function(x) as.matrix(x))
+  y_mat = mlr3misc::map(Y, as.matrix)
   node_heterogeneity_cpp(y_mat)
 }

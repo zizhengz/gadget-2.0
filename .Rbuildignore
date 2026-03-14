@@ -1,5 +1,7 @@
 ^\.agents$
 ^\.ccache$
+^\.clang-format$
+^xplaineff_review
 ^\.clangd$
 ^\.claude$
 ^\.cspell$
@@ -34,3 +36,7 @@
 ^README.html$
 ^revdep$
 ^tests/testthat/_object_snapshots$
+^ALE Test Results\.pdf$
+^ALE Test Results2\.pdf$
+^UR Datasets Test\.Rmd$
+^data$

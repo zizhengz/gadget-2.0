@@ -2,21 +2,41 @@
 % Please edit documentation in R/calculate_ale.R
 \name{ale_categorical_feature}
 \alias{ale_categorical_feature}
-\title{ALE for a single categorical feature (internal)}
+\title{ALE for a single categorical feature.}
 \usage{
 ale_categorical_feature(
   model,
   data,
   X,
   feature,
-  target.feature.name,
-  predict.fun = NULL
+  target_feature_name,
+  predict_fun = NULL
 )
 }
 \arguments{
-\item{model, data, X, feature, target.feature.name, predict.fun}{See \code{\link{calculate_ale}}.}
+\item{model}{(`any`) \cr
+Fitted model. See \code{\link{calculate_ale}}.}
+
+\item{data}{(`data.frame()` or `data.table()`) \cr
+Training data.}
+
+\item{X}{(`data.frame()` or `data.table()`) \cr
+Features (excl. target).}
+
+\item{feature}{(`character(1)`) \cr
+Feature name.}
+
+\item{target_feature_name}{(`character(1)`) \cr
+Target name.}
+
+\item{predict_fun}{(`function()` or `NULL`) \cr
+Prediction function.}
+}
+\value{
+(`data.table()`) \cr
+  ALE data with \code{row_id}, \code{feat_val}, \code{d_l}, \code{interval_index}, etc.
 }
 \description{
-ALE for a single categorical feature (internal)
+ALE for a single categorical feature.
 }
 \keyword{internal}

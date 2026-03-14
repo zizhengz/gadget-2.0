@@ -34,11 +34,11 @@ x9 = round(rnorm(n, mean = 1000, sd = 20), 7)
 x10 = rnorm(n, mean = 10000, sd = 25)
 
 # target
-y = 0.2*x1 - 8*x2 + ifelse(x3 == 0, I(16*x2),0) + ifelse(x1 > 0, I(8*x2),0) + 2*x8
-eps = rnorm(n, 0, 0.1*sd(y))
+y = 0.2 * x1 - 8 * x2 + ifelse(x3 == 0, I(16 * x2), 0) + ifelse(x1 > 0, I(8 * x2), 0) + 2 * x8
+eps = rnorm(n, 0, 0.1 * sd(y))
 y = y + eps
 
-dat = data.frame(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10,y)
+dat = data.frame(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, y)
 X = dat[, setdiff(colnames(dat), "y")]
 
 # Fit model and compute ICE
@@ -51,35 +51,20 @@ effect = FeatureEffects$new(model, method = "ice", grid.size = 20)
 ```{r}
 library(gadget)
 
-prepared.data = prepare_split_data_pd(effect = effect, data = dat, target.feature.name = "y")
-Z = prepared.data$Z
-Y = prepared.data$Y
-grid = prepared.data$grid
+prepared_data = prepare_split_data_pd(effect = effect, data = dat, target_feature_name = "y")
+Z = prepared_data$Z
+Y = prepared_data$Y
+grid = prepared_data$grid
 ```
-### Do split
+### Split (C++ only)
 ```{r}
-search_best_split_point(dat$x2, Y, min.node.size = 1)
-search_best_split_point_cpp(dat$x2, Y, min_node_size = 1)
+search_best_split_cpp(Z, Y, min_node_size = 1L, n_quantiles = NULL)
 ```
-
-```{r}
-search_best_split(Z, Y, min.node.size = 1, n.quantiles = NULL)
-search_best_split_cpp(Z, Y, min_node_size = 1, n_quantiles = NULL)
-```
-### Compare speed
+### Benchmark C++ split
 ```{r}
 library(microbenchmark)
-# speed test
 microbenchmark(
-  search_best_split_point(dat$x2, Y, min.node.size = 1),
-  search_best_split_point_cpp(dat$x2, Y, min_node_size = 1),
-  times = 50
-)
-
-# speed test
-microbenchmark(
-  search_best_split(Z, Y, min.node.size = 1, n.quantiles = NULL),
-  search_best_split_cpp(Z, Y, min_node_size = 1, n_quantiles = NULL),
+  search_best_split_cpp(Z, Y, min_node_size = 1L, n_quantiles = NULL),
   times = 50
 )
 ```

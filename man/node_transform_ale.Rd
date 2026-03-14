@@ -7,34 +7,42 @@
 node_transform_ale(
   Y,
   idx,
-  split.feature = NULL,
+  split_feature = NULL,
   model = NULL,
   data = NULL,
-  target.feature.name = NULL,
-  n.intervals = 10,
-  predict.fun = NULL
+  target_feature_name = NULL,
+  n_intervals = 10,
+  predict_fun = NULL
 )
 }
 \arguments{
-\item{Y}{List. List of ALE effect data for each feature.}
+\item{Y}{(`list()`) \cr
+ALE effect data per feature.}
 
-\item{idx}{Integer vector. Indices of samples in the current node.}
+\item{idx}{(`integer()`) \cr
+Sample indices in the current node.}
 
-\item{split.feature}{Character(1) or NULL. Name of the feature used for splitting.
-If NULL (first split), no preprocessing is applied.}
+\item{split_feature}{(`character(1)` or `NULL`) \cr
+Feature used for splitting; \code{NULL} = no preprocessing.}
 
-\item{model}{Fitted model object. Used for categorical recalculation.}
+\item{model}{(`any`) \cr
+Fitted model (for categorical recalculation).}
 
-\item{data}{Data frame. Original complete data.}
+\item{data}{(`data.frame()` or `data.table()`) \cr
+Original data.}
 
-\item{target.feature.name}{Character(1). Name of the target variable.}
+\item{target_feature_name}{(`character(1)`) \cr
+Target variable name.}
 
-\item{n.intervals}{Integer. Number of intervals for numeric features.}
+\item{n_intervals}{(`integer(1)`) \cr
+Intervals for numeric features.}
 
-\item{predict.fun}{Function or NULL. Prediction function.}
+\item{predict_fun}{(`function()` or `NULL`) \cr
+Prediction function.}
 }
 \value{
-List. List of transformed ALE effects.
+(`list()`) \cr
+  Transformed ALE effects per feature.
 }
 \description{
 Applies node-specific transformations to ALE effect data, including subsetting,

@@ -8,47 +8,54 @@ plot_tree_ale(
   tree,
   effect,
   data,
-  target.feature.name,
+  target_feature_name,
   depth = NULL,
-  node.id = NULL,
+  node_id = NULL,
   features = NULL,
-  color.ale = "lightgreen",
-  show.plot = TRUE,
-  show.point = FALSE,
-  mean.center = TRUE,
+  color_ale = "lightgreen",
+  show_plot = TRUE,
+  show_point = FALSE,
+  mean_center = TRUE,
   ...
 )
 }
 \arguments{
-\item{tree}{Depth-based list of Node objects (from \code{convert_tree_to_list()}).}
+\item{tree}{(`list()`) \cr
+Depth-based list of Node objects.}
 
-\item{effect}{List returned by \code{calculate_ale()}.}
+\item{effect}{(`list()`) \cr
+Output of \code{calculate_ale()}.}
 
-\item{data}{Data frame or data.table (features and target).}
+\item{data}{(`data.frame()` or `data.table()`) \cr
+Data with features and target.}
 
-\item{target.feature.name}{Character(1). Target variable name.}
+\item{target_feature_name}{(`character(1)`) \cr
+Target variable name.}
 
-\item{depth}{Integer vector or NULL. Depth levels to render.}
+\item{depth}{(`integer()` or `NULL`) \cr
+Depth levels to render.}
 
-\item{node.id}{Integer vector or NULL. Specific node IDs to render.}
+\item{node_id}{(`integer()` or `NULL`) \cr
+Node IDs to render.}
 
-\item{features}{Character vector or NULL. Feature subset to plot.}
+\item{features}{(`character()` or `NULL`) \cr
+Feature subset.}
 
-\item{color.ale}{Character. Color for ALE mean curves.}
+\item{color_ale}{(`character(1)`) \cr
+Color for ALE curves.}
 
-\item{show.plot}{Logical. Whether to print plots while generating.}
+\item{show_plot, show_point, mean_center}{(`logical(1)`) \cr
+Plot options.}
 
-\item{show.point}{Logical. Whether to show per-node observation points on ALE plots.}
-
-\item{mean.center}{Logical. Whether to mean-center ALE curves (default \code{TRUE}).}
-
-\item{...}{Additional arguments passed to lower-level plotting helpers.}
+\item{...}{Additional arguments passed to plotting helpers.}
 }
 \value{
-Nested list (depth -> node -> patchwork object).
+(`list()`) \cr
+  Nested list (depth -> node -> patchwork).
 }
 \description{
-External helper mirroring \code{plot_tree_pd}, used by \code{aleStrategy$plot}.
+External helper mirroring \code{plot_tree_pd}, used by \code{AleStrategy$plot}.
 Produces patchwork objects per node with ALE mean curves and optional observation points.
 Y-axis limits are auto-computed from effect and target data (like PD strategy).
 }
+\keyword{internal}

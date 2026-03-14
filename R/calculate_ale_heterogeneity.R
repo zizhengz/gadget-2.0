@@ -1,10 +1,11 @@
 #' Calculate ALE Heterogeneity
 #'
-#' @param Y List or data.frame. ALE effect data.
+#' @param Y (`list()` or `data.frame()`) \cr
+#'   ALE effect data.
 #'
-#' @return Numeric. If Y is a list, returns a list of heterogeneity values for each feature.
-#'   If Y is a data.frame, returns a single heterogeneity value.
-#'
+#' @return (`numeric()`) \cr
+#'   Heterogeneity value(s): vector per feature when Y is list, single value when Y is data.frame.
+#' @keywords internal
 calculate_ale_heterogeneity_cpp = function(Y) {
   # Handle both data.frame and list cases
   if (is.data.frame(Y)) {
@@ -14,12 +15,17 @@ calculate_ale_heterogeneity_cpp = function(Y) {
   } else if (is.list(Y)) {
     calculate_ale_heterogeneity_list_cpp(Y)
   } else {
-    stop("Y must be either a data.frame or a list")
+    cli::cli_abort("Y must be either a data.frame or a list")
   }
 }
 
-#' Sum-of-squares ALE heterogeneity from list of effect data.tables (internal).
-#' @param y_list List of ALE data.tables per feature.
+#' Sum-of-squares ALE heterogeneity from effect data.tables.
+#'
+#' @param y_list (`list()`) \cr
+#'   ALE data.tables per feature.
+#'
+#' @return (`list()`) \cr
+#'   Heterogeneity per feature.
 #' @keywords internal
 ss_ale_dt = function(y_list) {
   lapply(y_list, function(feat) {

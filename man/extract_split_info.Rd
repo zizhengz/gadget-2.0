@@ -7,21 +7,26 @@
 extract_split_info(tree, split_benchmark = NULL)
 }
 \arguments{
-\item{tree}{(`list`)
-A depth-based list of Node objects, typically produced by `convert_tree_to_list`.}
+\item{tree}{(`list()`) \cr
+Depth-based list of Node objects (from \code{convert_tree_to_list}).}
 
-\item{split_benchmark}{(`data.frame` or `list`, optional)
-Optional. A data frame or list containing split timing information, with columns `node.id` and `depth` (or similar). If provided, timing info will be merged into the output.}
+\item{split_benchmark}{(`data.frame()` or `list()` or `NULL`) \cr
+Optional split timing info with columns \code{node_id} and \code{depth}.}
 }
 \value{
-(`data.frame`)
-  A data frame where each row summarizes a node, including split feature, split value, statistics, and (if available) split timing.
+(`data.frame()`) \cr
+  One row per node: split feature/value, statistics, and (if available) timing.
 }
 \description{
-Given tree (depth-list of Node objects) and optional split_benchmark: flattens nodes; builds one row per node (depth, id, n.obs, split.feature, split.value, intImp, intImp.j, etc.); merges timing if split_benchmark has node.id/depth. 
+Given tree (depth-list of Node objects) and optional split_benchmark:
+flattens nodes; builds one row per node (depth, id, n_obs, split_feature,
+split_value, int_imp, int_imp_j, etc.); merges timing if split_benchmark has
+node_id/depth.
 Returns data frame.
 }
 \details{
-This function is used internally by the gadgetTree framework to extract and summarize the structure and statistics of effect-based decision trees. It is useful for interpretation, reporting, and benchmarking.
+This function is used internally by the GadgetTree framework to extract
+and summarize the structure and statistics of effect-based decision trees.
+It is useful for interpretation, reporting, and benchmarking.
 }
 \keyword{internal}

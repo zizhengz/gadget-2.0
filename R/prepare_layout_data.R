@@ -3,9 +3,11 @@
 #' Given tree (depth-list of Node objects): flattens to one row per node; extracts id, id_parent,
 #' split_feature, split_value, N, depth; builds label. Returns data frame for \code{plot_tree_structure} (ggraph).
 #'
-#' @param tree List of depth levels, each a list of node objects.
-#' @return Data frame with columns \code{id}, \code{node_id}, \code{id_parent},
-#'   \code{split_feature}, \code{split_value}, \code{label}, \code{depth}, etc.
+#' @param tree (`list()`) \cr
+#'   Depth-based list of Node objects.
+#' @return (`data.frame()`) \cr
+#'   Columns: \code{id}, \code{node_id}, \code{id_parent}, \code{split_feature},
+#'   \code{split_value}, \code{label}, \code{depth}, etc.
 #' @keywords internal
 prepare_layout_data = function(tree) {
   rows = vector("list", 0)
@@ -18,11 +20,11 @@ prepare_layout_data = function(tree) {
         rows[[k]] = list(
           id            = paste0(depth, "_", i),
           node_id       = if (!is.null(node$id)) node$id else NA,
-          id_parent     = if (!is.null(node$id_parent)) node$id_parent else NA,
-          child_type    = if (!is.null(node$child_type)) node$child_type else NA,
-          split_feature = if (!is.null(node$split_feature)) node$split_feature else NA,
-          split_value   = if (!is.null(node$split_value)) node$split_value else NA,
-          int_imp        = if (!is.null(node$int_imp)) node$int_imp else NA,
+          id_parent     = if (!is.null(node$parent)) node$parent$id else NA,
+          child_type    = if (!is.null(node$parent)) node$parent$child_type else NA,
+          split_feature = if (!is.null(node$split)) node$split$feature else NA,
+          split_value   = if (!is.null(node$split)) node$split$value else NA,
+          int_imp       = if (!is.null(node$importance)) node$importance$imp else NA,
           N             = if (!is.null(node$subset_idx)) length(node$subset_idx) else NA,
           depth         = depth
         )

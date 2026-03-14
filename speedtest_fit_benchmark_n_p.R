@@ -148,6 +148,5 @@ ggplot(bench_long, aes(x = factor(n), y = time_ms, color = factor(p), group = p)
   geom_boxplot(aes(group = interaction(n, p))) +
   geom_jitter(width = 0.2, alpha = 0.5) +
   labs(x = "Sample Size (n)", y = "Fit Time (ms)", color = "Feature Number (p)",
-       title = "GadgetTree$fit Benchmark: Varying n and p") +
+    title = "GadgetTree$fit Benchmark: Varying n and p") +
   theme_minimal()
-

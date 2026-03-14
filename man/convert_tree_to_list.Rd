@@ -4,18 +4,21 @@
 \alias{convert_tree_to_list}
 \title{Convert Recursive Tree to Depth-based List}
 \usage{
-convert_tree_to_list(root.node, max.depth = NULL)
+convert_tree_to_list(root_node, max_depth = NULL)
 }
 \arguments{
-\item{root.node}{A Node object representing the root of the tree}
+\item{root_node}{(`Node` or `NULL`) \cr
+Root node of the tree.}
 
-\item{max.depth}{Maximum depth to traverse (optional)}
+\item{max_depth}{(`integer(1)` or `NULL`) \cr
+Maximum depth to traverse; \code{NULL} = no limit.}
 }
 \value{
-A list where each element represents a depth level and contains a list of Node objects
+(`list()`) \cr
+  List where each element is a depth level containing Node objects.
 }
 \description{
-Given root.node and optional max.depth: traverses children recursively, collects nodes by depth. 
+Given root_node and optional max_depth: traverses children recursively, collects nodes by depth.
 Returns list of lists (depth 1, 2, ...), each element a list of Node objects at that depth.
 }
 \keyword{internal}

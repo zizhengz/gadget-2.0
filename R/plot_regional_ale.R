@@ -1,25 +1,23 @@
-utils::globalVariables(c("x_grid", "d_l", "level", "x", "y"))
-x_grid = d_l = level = x = y = NULL
-
 #' Build per-feature ALE panels (mean curve only)
 #'
 #' Helper used by \code{plot_tree_ale()} to generate per-feature ALE mean
 #' panels (optionally with overlaid observation points).
 #'
-#' @param curves Output of \code{prepare_plot_data_ale()} for a single node.
-#' @param color_ale Character. Color for ALE mean curves.
-#' @param ymin Numeric. Lower y-axis limit (auto-computed by \code{plot_tree_ale}).
-#' @param ymax Numeric. Upper y-axis limit (auto-computed by \code{plot_tree_ale}).
-#' @param show_point Logical. Whether to add observation points to ALE plots.
-#' @param point_values Named list where each element is a data.frame with columns
-#'   \code{x} (feature values) and \code{y} (target/response), only needed when
-#'   \code{show_point = TRUE}.
-#' @param x_limits Named list providing per-feature x-axis info. For numeric
-#'   features: numeric length-2 vector \code{c(xmin, xmax)}. For categorical
-#'   features: character vector with the full level order.
+#' @param curves (`list()`) \cr
+#'   Output of \code{prepare_plot_data_ale} for a node.
+#' @param color_ale (`character(1)`) \cr
+#'   Color for ALE curves.
+#' @param ymin,ymax (`numeric(1)` or `NULL`) \cr
+#'   Y-axis limits.
+#' @param show_point (`logical(1)`) \cr
+#'   Whether to add observation points.
+#' @param point_values (`list()` or `NULL`) \cr
+#'   Per-feature data.frames with \code{x}, \code{y}; used when \code{show_point = TRUE}.
+#' @param x_limits (`list()` or `NULL`) \cr
+#'   Per-feature x-axis: numeric \code{c(xmin, xmax)} or character (level order).
 #'
-#' @return List named by feature, each element a single ggplot object for the
-#'   ALE mean curve (with optional observation points).
+#' @return (`list()`) \cr
+#'   Named list of ggplot objects per feature.
 #' @keywords internal
 plot_regional_ale = function(curves, color_ale = "lightcoral",
   ymin = NULL, ymax = NULL, show_point = FALSE,

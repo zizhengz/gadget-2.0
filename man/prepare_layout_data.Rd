@@ -7,14 +7,16 @@
 prepare_layout_data(tree)
 }
 \arguments{
-\item{tree}{List of depth levels, each a list of node objects.}
+\item{tree}{(`list()`) \cr
+Depth-based list of Node objects.}
 }
 \value{
-Data frame with columns \code{id}, \code{node.id}, \code{id.parent},
-  \code{split.feature}, \code{split.value}, \code{label}, \code{depth}, etc.
+(`data.frame()`) \cr
+  Columns: \code{id}, \code{node_id}, \code{id_parent}, \code{split_feature},
+  \code{split_value}, \code{label}, \code{depth}, etc.
 }
 \description{
-Given tree (depth-list of Node objects): flattens to one row per node; extracts id, id.parent, 
-split.feature, split.value, N, depth; builds label. Returns data frame for \code{plot_tree_structure} (ggraph).
+Given tree (depth-list of Node objects): flattens to one row per node; extracts id, id_parent,
+split_feature, split_value, N, depth; builds label. Returns data frame for \code{plot_tree_structure} (ggraph).
 }
 \keyword{internal}

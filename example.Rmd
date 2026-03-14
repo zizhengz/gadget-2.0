@@ -1,7 +1,7 @@
 ---
 title: "Introduction to gadget - PDP/ALE Method & Benchmarks"
 author: "Zizheng Zhang"
-date: "2025-12-10"
+date: "2026-3-10"
 output: html_document
 ---
 
@@ -41,7 +41,7 @@ The gadget workflow would be as follows:
 
 3.  **(Optional) Feature Set Selection**: Define interacting feature set (feature of interest) and splitting feature set. Interacting features and splitting features can be distinct, or partially, or fully overlap with each other. By default we use all features as both interacting feature set and splitting feature set.
 
-4.  **Tree Construction**: Initialize a `gadgetTree` object and use its `$fit()` method to recursively partition the feature space, minimizing regional feature interactions within predefined features of interest.
+4.  **Tree Construction**: Initialize a `GadgetTree` object and use its `$fit()` method to recursively partition the feature space, minimizing regional feature interactions within predefined features of interest.
 
 5.  **Visualization**: Use `$plot()` to visualize the feature effects in each node, and `$plot_tree_structure()` to display the tree's topology and split points.
 
@@ -53,49 +53,49 @@ The gadget workflow would be as follows:
 
 ```{r}
 set.seed(1234)
-n = 25000
+n = 500
 x1 = runif(n, -1, 1)
 x2 = runif(n, -1, 1)
 x3 = runif(n, -1, 1)
 y = ifelse(x3 > 0, 3 * x1, -3 * x1) + x3 + rnorm(n, sd = 0.3)
-syn.data = data.frame(x1, x2, x3, y)
+syn_data = data.frame(x1, x2, x3, y)
 
-syn.task = TaskRegr$new("xor", backend = syn.data, target = "y")
-syn.learner = lrn("regr.ranger")
-syn.learner$train(syn.task)
-syn.predictor = Predictor$new(syn.learner, data = syn.data[, c("x1", "x2", "x3")], y = syn.data$y)
-syn.effect = FeatureEffects$new(syn.predictor, grid.size = 20, method = "ice")
+syn_task = TaskRegr$new("xor", backend = syn_data, target = "y")
+syn_learner = lrn("regr.ranger")
+syn_learner$train(syn_task)
+syn_predictor = Predictor$new(syn_learner, data = syn_data[, c("x1", "x2", "x3")], y = syn_data$y)
+syn_effect = FeatureEffects$new(syn_predictor, grid.size = 20, method = "ice")
 ```
 
 ### ICE/PDP Method: Fit and visualize the explanation tree
 
 ```{r}
-syn.tree.pd = gadgetTree$new(strategy = pdStrategy$new(), n.split = 4, impr.par = 0.1, min.node.size = 1)
-syn.tree.pd$fit(effect = syn.effect, data = syn.data, target.feature.name = "y")
-syn.tree.pd$plot_tree_structure()
-syn.esi.pd = syn.tree.pd$extract_split_info()
-print(syn.esi.pd)
-syn.tree.pd$plot(syn.effect, syn.data, target.feature.name = "y",
-  show.plot = TRUE, show.point = T, mean.center = TRUE)
+syn_tree_pd = GadgetTree$new(strategy = PdStrategy$new(), n_split = 4, impr_par = 0.1, min_node_size = 1)
+syn_tree_pd$fit(effect = syn_effect, data = syn_data, target_feature_name = "y")
+syn_tree_pd$plot_tree_structure()
+syn_esi_pd = syn_tree_pd$extract_split_info()
+print(syn_esi_pd)
+syn_tree_pd$plot(syn_effect, syn_data, target_feature_name = "y",
+  show_plot = TRUE, show_point = TRUE, mean_center = TRUE)
 ```
 
 ### ALE Method
 
 ```{r}
-syn.tree.ale = gadgetTree$new(strategy = aleStrategy$new(), n.split = 3)
-syn.tree.ale$fit(model = syn.learner, data = syn.data, target.feature.name = "y", n.intervals = 10)
-syn.tree.ale$plot_tree_structure()
-syn.esi.ale = syn.tree.ale$extract_split_info()
-print(syn.esi.ale)
-object_size(syn.tree.ale)
+syn_tree_ale = GadgetTree$new(strategy = AleStrategy$new(), n_split = 3)
+syn_tree_ale$fit(model = syn_learner, data = syn_data, target_feature_name = "y", n_intervals = 10)
+syn_tree_ale$plot_tree_structure()
+syn_esi_ale = syn_tree_ale$extract_split_info()
+print(syn_esi_ale)
+object_size(syn_tree_ale)
 ```
 
 ```{r}
-syn.tree.ale$plot(
-  data   = syn.data,
-  target.feature.name = "y",
-  depth   = NULL,
-  show.plot = TRUE
+syn_tree_ale$plot(
+  data = syn_data,
+  target_feature_name = "y",
+  depth = NULL,
+  show_plot = TRUE
 )
 ```
 
@@ -112,38 +112,38 @@ bike = data.table(Bikeshare[sample(1:8645, 1000), ])
 bike[, workingday := as.factor((workingday))]
 # working and hr is factor
 
-# bike.X = bike[, .(day, hr, temp, windspeed, weekday, workingday, hum, season, mnth, holiday, registered, weathersit, atemp, casual)]
-bike.X = bike[, .(hr, temp, workingday)]
-bike.y = bike$bikers
-train = cbind(bike.X, "target" = bike.y)
-bike.data = as.data.frame(train)
+# bike_x = bike[, .(day, hr, temp, windspeed, weekday, workingday, hum, season, ...)]
+bike_x = bike[, .(hr, temp, workingday)]
+bike_y = bike$bikers
+train = cbind(bike_x, "target" = bike_y)
+bike_data = as.data.frame(train)
 
 set.seed(123)
-bike.task = TaskRegr$new(id = "bike", backend = bike.data, target = "target")
-bike.learner = lrn("regr.ranger")
-bike.learner$train(bike.task)
+bike_task = TaskRegr$new(id = "bike", backend = bike_data, target = "target")
+bike_learner = lrn("regr.ranger")
+bike_learner$train(bike_task)
 
-bike.X = bike.task$data(cols = bike.task$feature_names)
-bike.y = bike.task$data(cols = bike.task$target_names)[[1]]
+bike_x = bike_task$data(cols = bike_task$feature_names)
+bike_y = bike_task$data(cols = bike_task$target_names)[[1]]
 
-bike.predictor = Predictor$new(model = bike.learner, data = bike.X, y = bike.y)
+bike_predictor = Predictor$new(model = bike_learner, data = bike_x, y = bike_y)
 
-effect.all = FeatureEffects$new(bike.predictor, method = "ice",
+effect_all = FeatureEffects$new(bike_predictor, method = "ice",
   grid.size = 20)
 ```
 
 ### ICE/PDP Method: Fit and visualize the explanation tree
 
 ```{r}
-bike.tree.pd = gadgetTree$new(strategy = pdStrategy$new(), n.split = 4)
-bike.tree.pd$fit(effect = effect.all, data = bike.data, target.feature.name = "target")
-bike.tree.pd$plot_tree_structure()
-bike.esi.pd = bike.tree.pd$extract_split_info()
-print(bike.esi.pd)
-bike.tree.pd$plot(effect.all, bike.data, target.feature.name = "target",
-  show.plot = TRUE, show.point = TRUE, mean.center = FALSE,
-  depth = c(2,3),
-  node.id = 2:7,
+bike_tree_pd = GadgetTree$new(strategy = PdStrategy$new(), n_split = 4)
+bike_tree_pd$fit(effect = effect_all, data = bike_data, target_feature_name = "target")
+bike_tree_pd$plot_tree_structure()
+bike_esi_pd = bike_tree_pd$extract_split_info()
+print(bike_esi_pd)
+bike_tree_pd$plot(effect_all, bike_data, target_feature_name = "target",
+  show_plot = TRUE, show_point = TRUE, mean_center = FALSE,
+  depth = NULL,
+  node_id = NULL,
   features = c("hr", "temp")
 )
 ```
@@ -151,39 +151,37 @@ bike.tree.pd$plot(effect.all, bike.data, target.feature.name = "target",
 ### ALE Method
 
 ```{r}
-bike.tree.ale = gadgetTree$new(strategy = aleStrategy$new(), impr.par = 0.01, n.split = 2)
-bike.tree.ale$fit(model = bike.learner, data = bike.data, target.feature.name = "target", n.intervals = 10)
-bike.tree.ale$plot_tree_structure()
-bike.esi.ale = bike.tree.ale$extract_split_info()
-print(bike.esi.ale)
+bike_tree_ale = GadgetTree$new(strategy = AleStrategy$new(), impr_par = 0.01, n_split = 2)
+bike_tree_ale$fit(model = bike_learner, data = bike_data, target_feature_name = "target", n_intervals = 10)
+bike_tree_ale$plot_tree_structure()
+bike_esi_ale = bike_tree_ale$extract_split_info()
+print(bike_esi_ale)
 ```
 
 ```{r}
-bike.tree.ale$plot(
-  data   = bike.data,
-  target.feature.name = "target",
-  #depth   = NULL,
-  #node.id = 2,
-  mean.center = FALSE,
-  show.point = TRUE,
-  show.plot = TRUE
+bike_tree_ale$plot(
+  data = bike_data,
+  target_feature_name = "target",
+  mean_center = FALSE,
+  show_point = TRUE,
+  show_plot = TRUE
 )
 ```
 
 ```{r}
-object_size(bike.esi.ale)
+object_size(bike_esi_ale)
 ```
 
 ## Speed
 
 ```{r}
-boxplot(time ~ depth, data = syn.esi.pd, main = "Distribution of split time per depth - Syn.PD")
-boxplot(time ~ depth, data = syn.esi.ale, main = "Distribution of split time per depth - Syn.ALE")
-boxplot(time ~ depth, data = bike.esi.pd, main = "Distribution of split time per depth - Bike.PD")
-boxplot(time ~ depth, data = bike.esi.ale, main = "Distribution of split time per depth - Bike.ALE")
+boxplot(time ~ depth, data = syn_esi_pd, main = "Distribution of split time per depth - Syn.PD")
+boxplot(time ~ depth, data = syn_esi_ale, main = "Distribution of split time per depth - Syn.ALE")
+boxplot(time ~ depth, data = bike_esi_pd, main = "Distribution of split time per depth - Bike.PD")
+boxplot(time ~ depth, data = bike_esi_ale, main = "Distribution of split time per depth - Bike.ALE")
 ```
 
-## gadgetTree fit benchmark
+## GadgetTree fit benchmark
 
 ### Data generation
 
@@ -272,8 +270,10 @@ n_list = c(1000, 5000, 10000)
 p_list = c(5, 10, 20)
 
 bench_results = list()
-tree_sizes = data.frame(n = integer(), p = integer(), tree_size_MB = numeric(), 
-                       mem_before_MB = numeric(), mem_after_MB = numeric(), mem_increase_MB = numeric())
+tree_sizes = data.frame(
+  n = integer(), p = integer(), tree_size_mb = numeric(),
+  mem_before_mb = numeric(), mem_after_mb = numeric(), mem_increase_mb = numeric()
+)
 # Initial memory cleanup
 gc()
 initial_mem = gc()["Vcells", "used"]
@@ -294,22 +294,22 @@ for (n in n_list) {
     # Clean memory after data generation
     gc()
     # Create and fit tree
-    tree = gadgetTree$new(strategy = pdStrategy$new(), n.split = 10)
-    tree$fit(effect = sim$eff, data = sim$dat, target.feature.name = "y")
+    tree = GadgetTree$new(strategy = PdStrategy$new(), n_split = 10)
+    tree$fit(effect = sim$eff, data = sim$dat, target_feature_name = "y")
     # Clean memory after tree fitting
     gc()
     # Calculate tree size and memory usage
-    tree_size_MB = as.numeric(pryr::object_size(tree)) / 1024^2
+    tree_size_mb = as.numeric(pryr::object_size(tree)) / 1024^2
     mem_after = gc()["Vcells", "used"]
     mem_increase = mem_after - mem_before
     # Record results
     tree_sizes = rbind(tree_sizes, data.frame(
-      n = n, 
-      p = p, 
-      tree_size_MB = tree_size_MB,
-      mem_before_MB = mem_before,
-      mem_after_MB = mem_after,
-      mem_increase_MB = mem_increase
+      n = n,
+      p = p,
+      tree_size_mb = tree_size_mb,
+      mem_before_mb = mem_before,
+      mem_after_mb = mem_after,
+      mem_increase_mb = mem_increase
     ))
     # Clean up tree object
     rm(tree)
@@ -319,8 +319,8 @@ for (n in n_list) {
       fit = {
         # Clean memory
         gc()
-        tree = gadgetTree$new(strategy = pdStrategy$new(), n.split = 10)
-        tree$fit(effect = sim$eff, data = sim$dat, target.feature.name = "y")
+        tree = GadgetTree$new(strategy = PdStrategy$new(), n_split = 10)
+        tree$fit(effect = sim$eff, data = sim$dat, target_feature_name = "y")
         # Clean memory
         gc()
       },
@@ -332,7 +332,7 @@ for (n in n_list) {
     # Clean up sim data
     rm(sim)
     gc()
-    cat(sprintf("Memory used: %.2f MB, Tree size: %.2f MB\n", mem_increase, tree_size_MB))
+    cat(sprintf("Memory used: %.2f MB, Tree size: %.2f MB\n", mem_increase, tree_size_mb))
   }
 }
 
@@ -359,8 +359,10 @@ bench_long = data.frame(
 ggplot(bench_long, aes(x = factor(n), y = time_ms, color = factor(p), group = p)) +
   geom_boxplot(aes(group = interaction(n, p))) +
   geom_jitter(width = 0.2, alpha = 0.5) +
-  labs(x = "Sample Size (n)", y = "Fit Time (ms)", color = "Feature Number (p)",
-       title = "gadgetTree$fit(n.split = 10) Benchmark: Varying n and p") +
+  labs(
+    x = "Sample Size (n)", y = "Fit Time (ms)", color = "Feature Number (p)",
+    title = "GadgetTree$fit(n_split = 10) Benchmark: Varying n and p"
+  ) +
   theme_minimal()
 ```
 

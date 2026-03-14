@@ -2,22 +2,46 @@
 % Please edit documentation in R/search_best_split_point_ale.R
 \name{search_best_split_point_ale}
 \alias{search_best_split_point_ale}
-\title{Find best ALE split point for one feature (internal).}
+\title{Find best ALE split point for one feature.}
 \usage{
 search_best_split_point_ale(
   z,
   effect,
-  st.table,
-  split.feat,
-  is.categorical,
-  n.quantiles = NULL,
-  min.node.size = 1L
+  st_table,
+  split_feat,
+  is_categorical,
+  n_quantiles = NULL,
+  min_node_size = 1L
 )
 }
 \arguments{
-\item{z, effect, st.table, split.feat, is.categorical, n.quantiles, min.node.size}{Arguments.}
+\item{z}{(`numeric()` or `factor()`) \cr
+Split feature values.}
+
+\item{effect}{(`list()`) \cr
+ALE effect data (from \code{calculate_ale}).}
+
+\item{st_table}{(`list()`) \cr
+Precomputed interval statistics.}
+
+\item{split_feat}{(`character(1)`) \cr
+Name of split feature.}
+
+\item{is_categorical}{(`logical(1)`) \cr
+Whether \code{z} is categorical.}
+
+\item{n_quantiles}{(`integer(1)` or `NULL`) \cr
+Quantiles for numeric features.}
+
+\item{min_node_size}{(`integer(1)`) \cr
+Minimum observations per child.}
+}
+\value{
+(`list()`) \cr
+  \code{split_point}, \code{split_objective}, \code{objective_value_j},
+  \code{left_objective_value_j}, \code{right_objective_value_j}.
 }
 \description{
-Find best ALE split point for one feature (internal).
+Find best ALE split point for one feature.
 }
 \keyword{internal}

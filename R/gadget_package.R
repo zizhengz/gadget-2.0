@@ -1,3 +1,11 @@
+# NSE variables used in data.table, ggplot2/ggraph - suppress "no visible binding" notes
+utils::globalVariables(c(
+  ".value", ".borders", ".id", ".type", ".feature", ".data", "type",
+  "x_grid", "d_l", "level", "x", "y", "label", "depth",
+  "interval_index", "x_left", "x_right", "int_n", "int_s1", "int_s2",
+  "row_id", "feat_val"
+))
+
 #' gadget: General Additive Decomposition Based on Global Effect Tree
 #'
 #' @description
@@ -20,9 +28,13 @@
 #' \enumerate{
 #'   \item Train a model (e.g., with \pkg{mlr3}).
 #'   \item Create a tree: \code{tree = GadgetTree$new(strategy = AleStrategy$new(), n_split = 3, min_node_size = 50)}.
-#'   \item Fit: \code{tree$fit(model = learner, data = data, target_feature_name = "y", n_intervals = 20, ...)}\cr
-#'         (more control via \code{feature_set}, \code{split_feature}, \code{order_method}, \code{with_stab},\cr
-#'         and tree hyperparameters such as \code{impr_par}, \code{min_node_size}, \code{n_quantiles}, etc.).
+#'   \item Fit: \code{tree$fit(data, target_feature_name, ...)}\cr
+#'         Strategy-specific \code{...} arguments:\cr
+#'         \strong{AleStrategy}: \code{model} (required), \code{n_intervals = 10}, \code{predict_fun = NULL},
+#'         \code{order_method = "raw"}, \code{with_stab = FALSE}.\cr
+#'         \strong{PdStrategy}: \code{effect} (required).
+#'         Both accept \code{feature_set} and \code{split_feature}.\cr
+#'         Tree params: \code{impr_par}, \code{min_node_size}, \code{n_quantiles}.
 #'   \item Visualize: \code{tree$plot_tree_structure()}, \code{tree$plot(...)}, \code{tree$extract_split_info()}.
 #' }
 #'

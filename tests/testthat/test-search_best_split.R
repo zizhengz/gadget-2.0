@@ -3,7 +3,7 @@ skip_cpp_if_unavailable = function() {
     search_best_split_cpp(Z = data.frame(x = 1:5), Y = list(matrix(1:10, ncol = 2)), min_node_size = 2)
   }, error = function(e) {
     if (grepl("not available for .Call", conditionMessage(e), fixed = TRUE)) {
-      skip("C++ symbols not loaded (install package with compile)")
+      testthat::skip("C++ symbols not loaded (install package with compile)")
     }
   })
 }
@@ -18,7 +18,7 @@ test_that("search_best_split_cpp works with numeric data", {
   expect_true(is.data.frame(result))
   expect_true(nrow(result) >= 1)
   expect_true(all(c("split_feature", "is_categorical", "split_point",
-    "split_objective", "split_runtime", "best_split") %in% names(result)))
+        "split_objective", "split_runtime", "best_split") %in% names(result)))
   expect_true(all(result$is_categorical %in% c(TRUE, FALSE)))
 })
 
@@ -52,12 +52,4 @@ test_that("search_best_split_cpp with multiple Y matrices", {
   result = search_best_split_cpp(Z = Z, Y = Y, min_node_size = 5)
   expect_true(is.data.frame(result))
   expect_equal(nrow(result), 1)
-})
-
-test_that("search_best_split_point_cpp exists and is callable", {
-  skip_cpp_if_unavailable()
-  z = 1:20
-  Y = list(matrix(rnorm(40), ncol = 2))
-  result = search_best_split_point_cpp(z = z, Y = Y, min_node_size = 3)
-  expect_true(is.vector(result) || is.data.frame(result) || is.list(result))
 })

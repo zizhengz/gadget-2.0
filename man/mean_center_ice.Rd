@@ -4,33 +4,26 @@
 \alias{mean_center_ice}
 \title{Extract and optionally mean-center effect matrices}
 \usage{
-mean_center_ice(effect, feature.set = NULL, mean.center = TRUE)
+mean_center_ice(effect, feature_set = NULL, mean_center = TRUE)
 }
 \arguments{
-\item{effect}{(`R6` object or list)\cr
-An object containing feature effect results, typically with
-a `results` field. Usually produced by `FeatureEffect` or
-similar functions.}
+\item{effect}{(R6 or `list()`) \cr
+Effect object with \code{results} field (e.g. from FeatureEffect).}
 
-\item{feature.set}{(`character` or `NULL`)\cr
-Optional. Subset of features to include. If `NULL`, all
-features in the effect object are used. Default is `NULL`.}
+\item{feature_set}{(`character()` or `NULL`) \cr
+Features to include; \code{NULL} = all.}
 
-\item{mean.center}{(`logical(1)`)\cr
-Whether to mean-center the effect matrix for each observation.
-Default is `TRUE`.}
+\item{mean_center}{(`logical(1)`) \cr
+Whether to mean-center each effect matrix.}
 }
 \value{
-(`list`)\cr
-  A list with the following elements (always lists, even for
-  a single feature):
-  \describe{
-    \item{Y}{A named list of effect matrices (one per feature).}
-    \item{grid}{A named list of grid values (column names) for each feature.}
-  }
+(`list()`) \cr
+  \code{Y}: named list of effect matrices; \code{grid}: grid values per feature.
 }
 \description{
-Given effect (with \code{results}), feature.set (or all), and mean.center: pivots effect results to wide matrices per feature; optionally subtracts row means. 
+Given effect (with \code{results}), feature_set (or all), and mean_center:
+pivots effect results to wide matrices per feature; optionally subtracts
+row means.
 Returns list \code{Y} (named list of matrices), \code{grid} (column names per feature).
 }
 \details{
@@ -44,7 +37,7 @@ effect tree construction and visualization.
 \examples{
 # Example usage (assuming 'effect' is an object with a 'results' field
 # from FeatureEffect):
-# result <- mean_center_ice(effect, feature.set = c("feature1", "feature2"), mean.center = TRUE)
+# result <- mean_center_ice(effect, feature_set = c("feature1", "feature2"), mean_center = TRUE)
 # Y <- result$Y
 # grid <- result$grid
 

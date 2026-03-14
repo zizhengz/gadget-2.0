@@ -58,8 +58,14 @@ Rscript -e "devtools::check()"
 ## Core dependencies
 * Use `checkmate` for arg-checks
 * Use `data.table` for efficient table structures
-* For OOP-stype use `R6`
-* Use `cli` to format messages, warnings, errors and prints
+* For OOP-style use `R6`
+* Use `cli` to format messages, warnings, and errors:
+  * `cli_abort()` instead of `stop()`
+  * `cli_warn()` instead of `warning()`
+  * `cli_inform()` instead of `message()` (or `cli_alert_info()` for emphasis)
+* Use `mlr3misc` utilities when appropriate:
+  * `map()`, `map_chr()`, `map_lgl()`, etc. instead of `lapply()`/`sapply()`
+  * `invoke()`, `calculate_hash()`, `str_collapse()`, `%nin%`, `%??%`
 
 ## Testing
 
@@ -72,6 +78,7 @@ Rscript -e "devtools::check()"
 ## Documentation
 
 - Every user-facing function should be exported and have roxygen2 documentation.
+- **Strictly follow mlr3 roxygen style** (see § mlr3-style roxygen format below).
 - Wrap roxygen comments at 120 characters.
 - Write one sentence per line.
 - If a sentence exceeds the limit, break at a comma or other appropriate point.
@@ -80,6 +87,27 @@ Rscript -e "devtools::check()"
 - Don’t hand-edit generated artifacts: `man/`, or `NAMESPACE`.
 - Roxygen templates live in `man-roxygen/`
 - Bibliographic references go in `R/bibentries.R` and are cited with `` `r format_bib("key")` ``.
+
+### mlr3-style roxygen format
+
+All `@param` and `@return` must specify types in parentheses (checkmate/R-style), then `\cr`, then the description on the next line with 2-space indent:
+
+```r
+#' @param x (`character(1)`) \cr
+#'   Description of x.
+#' @param n (`integer(1)`) \cr
+#'   Number of items.
+#' @param opts (`list()` or `NULL`) \cr
+#'   Optional settings.
+#' @return (`data.frame`) \cr
+#'   Result with columns ...
+```
+
+- **Type format**: `(character(1))`, `(integer(1))`, `(numeric())`, `(logical(1))`, `(list())`, `(data.frame())`, `(data.table())`, `([R6Class])`.
+- For optional args: `(character()` or `NULL`)`, `(integer(1)` or `NULL`)`.
+- Always use `\cr` after the type; description on the next line with `#'   ` (two spaces).
+- `@return` must also have type and description.
+- R6 `@field` entries: `@field name (type) Description.`
 
 ## `NEWS.md`
 

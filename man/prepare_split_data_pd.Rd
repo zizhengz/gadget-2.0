@@ -7,27 +7,33 @@
 prepare_split_data_pd(
   effect,
   data,
-  target.feature.name = NULL,
-  feature.set = NULL,
-  split.feature = NULL
+  target_feature_name = NULL,
+  feature_set = NULL,
+  split_feature = NULL
 )
 }
 \arguments{
-\item{effect}{Effect object or list (e.g. from FeatureEffect).}
+\item{effect}{(R6 or `list()`) \cr
+Effect object (e.g. FeatureEffect).}
 
-\item{data}{Data frame or data.table. Training data (features and target).}
+\item{data}{(`data.frame()` or `data.table()`) \cr
+Training data.}
 
-\item{target.feature.name}{Character or NULL. Name of the target variable (for \code{all.features} resolution).}
+\item{target_feature_name}{(`character(1)` or `NULL`) \cr
+Target variable name; \code{NULL} = all columns are features.}
 
-\item{feature.set}{Character or NULL. Features in effect; NULL = all non-target columns.}
+\item{feature_set}{(`character()` or `NULL`) \cr
+Features in effect; \code{NULL} = all non-target columns.}
 
-\item{split.feature}{Character or NULL. Features to consider for splitting; NULL = all.}
+\item{split_feature}{(`character()` or `NULL`) \cr
+Features for splitting; \code{NULL} = all.}
 }
 \value{
-List with \code{Z} (split-feature matrix), \code{Y} (mean-centered effects), \code{grid}.
+(`list()`) \cr
+  \code{Z}: split-feature data.table; \code{Y}: mean-centered effects; \code{grid}: grid list.
 }
 \description{
 Given effect, data, and optional feature/split sets: validates features;
-converts character to factor; builds Z (data.table of split columns);
-calls \code{mean_center_ice} for Y and grid. Returns list \code{Z}, \code{Y}, \code{grid}.
+converts character to factor; builds Z (split columns); calls \code{mean_center_ice} for Y and grid.
 }
+\keyword{internal}

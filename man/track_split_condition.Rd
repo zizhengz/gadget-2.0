@@ -7,16 +7,19 @@
 track_split_condition(node, tree)
 }
 \arguments{
-\item{node}{Node object (with \code{id.parent}, \code{depth}).}
+\item{node}{(`Node`) \cr
+Node object with \code{parent} and \code{depth}.}
 
-\item{tree}{Depth-based list of nodes (from \code{convert_tree_to_list}).}
+\item{tree}{(`list()`) \cr
+Depth-based list of nodes (from \code{convert_tree_to_list}).}
 }
 \value{
-Character vector of conditions (e.g. \code{"x <= 0.5"}).
+(`character()`) \cr
+  Conditions from root to node (e.g. \code{"x <= 0.5"}).
 }
 \description{
-Given node and tree (depth-list): walks parent chain via \code{find_parent_by_id}; 
-at each step builds condition string (e.g. "x <= 0.5") via \code{choose_operator}. 
+Given node and tree (depth-list): walks parent chain via \code{find_node_by_id};
+at each step builds condition string (e.g. "x <= 0.5") via \code{choose_operator}.
 Returns character vector of conditions (root to node).
 }
 \keyword{internal}

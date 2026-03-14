@@ -2,14 +2,19 @@
 % Please edit documentation in R/prepare_plot_data_ale.R
 \name{cumsum_na_as_zero}
 \alias{cumsum_na_as_zero}
-\title{Cumulative Sum with NA Handling}
+\title{Cumulative sum with NA as zero.}
 \usage{
 cumsum_na_as_zero(values)
 }
 \arguments{
-\item{values}{Numeric vector. Values to be cumulatively summed;
-any \code{NA} values are treated as \code{0}.}
+\item{values}{(`numeric()`) \cr
+Values to cumulatively sum; \code{NA} treated as 0.}
+}
+\value{
+(`numeric()`) \cr
+  Cumulative sum.
 }
 \description{
-Cumulative Sum with NA Handling
+Cumulative sum with NA as zero.
 }
+\keyword{internal}

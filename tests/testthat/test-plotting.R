@@ -7,7 +7,7 @@ test_that("plot_tree_structure works", {
       list(id = 3, id_parent = 1, depth = 2, split_feature = NA, split_value = NA, subset_idx = 11:20)
     )
   )
-  plot_result = plot_tree_structure(tree)
+  plot_result = gadget:::plot_tree_structure(tree)
   expect_true(inherits(plot_result, "gg"))
 })
 
@@ -23,7 +23,7 @@ test_that("plot_regional_pd is callable with valid prepared_data", {
   )
   origin_data = data.frame(x1 = c(0, 0.5, 1)[rep(1:3, length.out = n)], y = rnorm(n))
   p = tryCatch({
-    plot_regional_pd(
+    gadget:::plot_regional_pd(
       prepared_data = prepared_data,
       origin_data = origin_data,
       target_feature_name = "y",
@@ -32,7 +32,7 @@ test_that("plot_regional_pd is callable with valid prepared_data", {
       ymin = NA, ymax = NA, show_point = FALSE, mean_center = TRUE
     )
   }, error = function(e) {
-    skip(paste("plot_regional_pd:", conditionMessage(e)))
+    testthat::skip(paste("plot_regional_pd:", conditionMessage(e)))
   })
   # plot_regional_pd returns list of ggplot objects (one per feature)
   expect_true(is.list(p))
@@ -44,8 +44,13 @@ test_that("ALE tree plot returns list", {
   skip_if_not_installed("mlr3")
   skip_if_not_installed("mlr3learners")
   n = 5
-  dt = data.table::data.table(row_id = seq_len(n), interval_index = rep(1L, n), d_l = 0, int_n = n, int_s1 = 0, int_s2 = 0)
-  tryCatch(calculate_ale_heterogeneity_list_cpp(list(x = dt)), error = function(e) skip("ALE C++ not loaded"))
+  dt = data.table::data.table(
+    row_id = seq_len(n), interval_index = rep(1L, n), d_l = 0, int_n = n, int_s1 = 0, int_s2 = 0
+  )
+  tryCatch(
+    gadget:::calculate_ale_heterogeneity_list_cpp(list(x = dt)),
+    error = function(e) testthat::skip("ALE C++ not loaded")
+  )
   set.seed(123)
   n = 40
   data = data.frame(x1 = rnorm(n), x2 = rnorm(n), y = rnorm(n))

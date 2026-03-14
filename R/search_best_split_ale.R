@@ -1,5 +1,82 @@
-#' Find best ALE split (internal).
-#' @param Z,effect,min_node_size,n_quantiles,with_stab Split/search arguments.
+#' Build per-feature interval statistics for ALE effect.
+#'
+#' @param effect (`list()`) \cr
+#'   ALE effect data per feature (from \code{calculate_ale}).
+#' @param features (`character()`) \cr
+#'   Feature names to include.
+#'
+#' @return (`list()`) \cr
+#'   Statistics: K, offsets, tot_n, tot_s1, tot_s2, r_n, r_s1, r_s2, r_risks, d_l_mat, interval_idx_mat.
+#' @keywords internal
+build_ale_interval_stats = function(effect, features) {
+  p = length(features)
+  stats_list = vector("list", p)
+  row_pos_list = vector("list", p)
+  d_l_list = vector("list", p)
+  K = integer(p)
+  for (j in seq_len(p)) {
+    DT = effect[[features[j]]]
+    data.table::setorder(DT, row_id)
+    S = unique(DT[, list(interval_index, n = int_n, s1 = int_s1, s2 = int_s2)])
+    data.table::setorder(S, interval_index)
+    stats_list[[j]] = S
+    row_pos_list[[j]] = match(DT$interval_index, S$interval_index)
+    d_l_list[[j]] = DT$d_l
+    K[j] = nrow(S)
+  }
+  offsets = c(0L, cumsum(K))
+  M = offsets[length(offsets)]
+  offsets = offsets[-length(offsets)]
+
+  tot_n = numeric(M)
+  tot_s1 = numeric(M)
+  tot_s2 = numeric(M)
+  r_n = numeric(M)
+  r_s1 = numeric(M)
+  r_s2 = numeric(M)
+  r_risks = numeric(p)
+  pos = 1L
+  for (j in seq_len(p)) {
+    m = K[j]
+    S = stats_list[[j]]
+    rng = pos:(pos + m - 1L)
+    tot_n[rng] = S$n
+    tot_s1[rng] = S$s1
+    tot_s2[rng] = S$s2
+    r_n[rng] = S$n
+    r_s1[rng] = S$s1
+    r_s2[rng] = S$s2
+    r_risks[j] = sum(risk_from_stats(S$n, S$s1, S$s2))
+    pos = pos + m
+  }
+  N = length(effect[[1]]$d_l)
+  d_l_mat = matrix(0.0, nrow = p, ncol = N)
+  interval_idx_mat = matrix(0L, nrow = p, ncol = N)
+  for (j in seq_len(p)) {
+    d_l_mat[j, ] = d_l_list[[j]]
+    interval_idx_mat[j, ] = row_pos_list[[j]]
+  }
+  list(K = K, offsets = offsets,
+    tot_n = tot_n, tot_s1 = tot_s1, tot_s2 = tot_s2,
+    r_n = r_n, r_s1 = r_s1, r_s2 = r_s2, r_risks = r_risks,
+    d_l_mat = d_l_mat, interval_idx_mat = interval_idx_mat)
+}
+
+#' Find best ALE split across features.
+#'
+#' @param Z (`data.frame()` or `data.table()`) \cr
+#'   Split features.
+#' @param effect (`list()`) \cr
+#'   ALE effect data per feature (from \code{calculate_ale}).
+#' @param min_node_size (`integer(1)`) \cr
+#'   Minimum observations per node.
+#' @param n_quantiles (`integer(1)` or `NULL`) \cr
+#'   Quantiles for numeric split candidates.
+#' @param with_stab (`logical(1)`) \cr
+#'   Use boundary stabilizer.
+#'
+#' @return (`data.frame()`) \cr
+#'   Best split info with per-feature objective values.
 #' @keywords internal
 search_best_split_ale = function(
   Z, effect,
@@ -7,86 +84,11 @@ search_best_split_ale = function(
   n_quantiles = NULL,
   with_stab = FALSE
 ) {
-  #### Helper: Build per-feature interval statistics ####
-  build_stats = function(effect, features) {
-    p = length(features)
-    stats_list = vector("list", p)
-    # row_pos_list: p x n, interval index per sample
-    row_pos_list = vector("list", p)
-    # d_l_list: p x n, d_l per sample
-    d_l_list = vector("list", p)
-    # K: p x 1, number of intervals per feature
-    K = integer(p)
-    risk_from_stats = function(n, s1, s2) ifelse(n <= 1L, 0.0, s2 - (s1 * s1) / n)
-    for (j in seq_len(p)) {
-      DT = effect[[features[j]]]
-      # Ensure DT is ordered by row_id to maintain alignment with original data rows
-      # row_id column ensures correct mapping even if DT was reordered
-      data.table::setorder(DT, row_id)
-      # sort by interval, one row per interval
-      S = unique(DT[, list(interval_index, n = int_n, s1 = int_s1, s2 = int_s2)])
-      data.table::setorder(S, interval_index)
-      # sufficient statistics of feature j
-      stats_list[[j]] = S
-      # map the sample-level interval_index to row numbers in S
-      row_pos_list[[j]] = match(DT$interval_index, S$interval_index)
-      # d_l for n samples of feature j (order matches original data rows via row_id)
-      d_l_list[[j]] = DT$d_l
-      # number of intervals of feature j
-      K[j] = nrow(S)
-    }
-
-    # |feat1 int1 | feat1 int2 | feat2 int1 | feat2 int2 | feat2 int3 |
-    # |feat3 int1 | feat3 int2 | feat3 int3 |
-    # |----- offsets[1]=0 -----|---- offsets[2]=2 -----|---- offsets[3]=5 ----|
-    # offsets[j]: number of intervals for the first (j−1) features
-    offsets = c(0L, cumsum(K))
-    # M: total number of intervals across all features of interest
-    M = offsets[length(offsets)]
-    # initial offset of each feature, then the position of the k-th interval for feature j is: offsets[j] + k
-    offsets = offsets[-length(offsets)]
-
-    tot_n = numeric(M)
-    tot_s1 = numeric(M)
-    tot_s2 = numeric(M)
-    r_n = numeric(M)
-    r_s1 = numeric(M)
-    r_s2 = numeric(M)
-    r_risks = numeric(p)
-    pos = 1L
-    for (j in seq_len(p)) {
-      m = K[j]
-      S = stats_list[[j]]
-      rng = pos:(pos + m - 1L)
-      tot_n[rng] = S$n
-      tot_s1[rng] = S$s1
-      tot_s2[rng] = S$s2
-      r_n[rng] = S$n
-      r_s1[rng] = S$s1
-      r_s2[rng] = S$s2
-      r_risks[j] = sum(risk_from_stats(S$n, S$s1, S$s2))
-      pos = pos + m
-    }
-    N = length(effect[[1]]$d_l)
-    # d_l of the j-th feature on the i-th sample
-    d_l_mat = matrix(0.0, nrow = p, ncol = N)
-    # interval that the i-th sample of the j-th feature belongs to
-    interval_idx_mat = matrix(0L, nrow = p, ncol = N)
-    for (j in seq_len(p)) {
-      d_l_mat[j, ] = d_l_list[[j]]
-      interval_idx_mat[j, ] = row_pos_list[[j]]
-    }
-    list(K = K, offsets = offsets,
-      tot_n = tot_n, tot_s1 = tot_s1, tot_s2 = tot_s2,
-      r_n = r_n, r_s1 = r_s1, r_s2 = r_s2, r_risks = r_risks,
-      d_l_mat = d_l_mat, interval_idx_mat = interval_idx_mat)
-  }
-  #####
   split_feature_names = colnames(Z)
-  if (is.null(split_feature_names)) stop("Z (split features) must have column names.")
+  if (is.null(split_feature_names)) cli::cli_abort("Z (split features) must have column names.")
   t_start = proc.time()
 
-  st_table = build_stats(effect, names(effect))
+  st_table = build_ale_interval_stats(effect, names(effect))
   # Per split_feature, compute best split once and capture per-feature vectors
   per_feature_res = lapply(split_feature_names, function(split_feat) {
     if (with_stab) {

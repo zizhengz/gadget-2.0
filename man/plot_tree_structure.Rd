@@ -7,14 +7,17 @@
 plot_tree_structure(tree)
 }
 \arguments{
-\item{tree}{List. A list containing the tree structure, typically converted from the internal Node object format.}
+\item{tree}{(`list()`) \cr
+Depth-based list of Node objects.}
 }
 \value{
-A `ggplot` object representing the tree structure.
+(ggplot) \cr
+  Tree structure visualization.
 }
 \description{
-Given tree (depth-list of Node objects): calls \code{prepare_layout_data} to build layout data; 
-creates parent map; builds edge list; creates ggraph plot with nodes labeled by split info and edges representing tree hierarchy.
-Returns ggplot object.
+Given tree (depth-list of Node objects): calls
+\code{prepare_layout_data} to build layout data; creates parent map;
+builds edge list; creates ggraph plot with nodes labeled by split info
+and edges representing tree hierarchy. Returns ggplot object.
 }
 \keyword{internal}

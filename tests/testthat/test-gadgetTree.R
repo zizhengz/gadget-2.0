@@ -6,18 +6,6 @@ test_that("GadgetTree can be created", {
   expect_true(inherits(tree$strategy, "PdStrategy"))
 })
 
-skip_ale_cpp_if_unavailable = function() {
-  n = 5
-  dt = data.table::data.table(row_id = seq_len(n), interval_index = rep(1L, n), d_l = 0, int_n = n, int_s1 = 0, int_s2 = 0)
-  tryCatch({
-    calculate_ale_heterogeneity_list_cpp(list(x = dt))
-  }, error = function(e) {
-    if (grepl("not available for .Call", conditionMessage(e), fixed = TRUE)) {
-      skip("ALE C++ symbols not loaded (install package with compile)")
-    }
-  })
-}
-
 test_that("GadgetTree fit with ALE strategy works", {
   skip_if_not_installed("mlr3")
   skip_if_not_installed("mlr3learners")

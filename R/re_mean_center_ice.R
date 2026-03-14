@@ -2,10 +2,15 @@
 #' idx: subsets rows by idx; sets non-grid columns to NA; subtracts row means.
 #' Returns list of mean-centered matrices.
 #'
-#' @param Y List of data.frame (one per feature)
-#' @param grid List of grid column names, i.e. character vectors (one per feature)
-#' @param idx Integer vector of row indices to keep
-#' @return List of mean-centered matrices
+#' @param Y (`list()`) \cr
+#'   Effect matrices per feature.
+#' @param grid (`list()`) \cr
+#'   Grid column names per feature.
+#' @param idx (`integer()`) \cr
+#'   Row indices to keep.
+#'
+#' @return (`list()`) \cr
+#'   Mean-centered matrices per feature.
 re_mean_center_ice = function(Y, grid, idx) {
   feature_names = names(Y)
   y_centered = lapply(seq_along(Y), function(i) {

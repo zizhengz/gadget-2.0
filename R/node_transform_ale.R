@@ -3,17 +3,25 @@
 #' Applies node-specific transformations to ALE effect data, including subsetting,
 #' single value handling, and categorical feature recalculation when needed.
 #'
-#' @param Y List. List of ALE effect data for each feature.
-#' @param idx Integer vector. Indices of samples in the current node.
-#' @param split_feature Character(1) or NULL. Name of the feature used for splitting.
-#'   If NULL (first split), no preprocessing is applied.
-#' @param model Fitted model object. Used for categorical recalculation.
-#' @param data Data frame. Original complete data.
-#' @param target_feature_name Character(1). Name of the target variable.
-#' @param n_intervals Integer. Number of intervals for numeric features.
-#' @param predict_fun Function or NULL. Prediction function.
+#' @param Y (`list()`) \cr
+#'   ALE effect data per feature.
+#' @param idx (`integer()`) \cr
+#'   Sample indices in the current node.
+#' @param split_feature (`character(1)` or `NULL`) \cr
+#'   Feature used for splitting; \code{NULL} = no preprocessing.
+#' @param model (`any`) \cr
+#'   Fitted model (for categorical recalculation).
+#' @param data (`data.frame()` or `data.table()`) \cr
+#'   Original data.
+#' @param target_feature_name (`character(1)`) \cr
+#'   Target variable name.
+#' @param n_intervals (`integer(1)`) \cr
+#'   Intervals for numeric features.
+#' @param predict_fun (`function()` or `NULL`) \cr
+#'   Prediction function.
 #'
-#' @return List. List of transformed ALE effects.
+#' @return (`list()`) \cr
+#'   Transformed ALE effects per feature.
 #'
 node_transform_ale = function(Y, idx, split_feature = NULL, model = NULL, data = NULL,
   target_feature_name = NULL, n_intervals = 10, predict_fun = NULL) {

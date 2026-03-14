@@ -5,47 +5,48 @@
 \title{Order Levels of a Categorical Feature}
 \usage{
 order_categorical_levels(
-  x.cat,
+  x_cat,
   data,
   feature,
-  target.feature.name,
-  order.method = "mds"
+  target_feature_name,
+  order_method = "mds"
 )
 }
 \arguments{
-\item{x.cat}{Factor. Focal feature values; must be \code{droplevels()}-ed so
-unused levels are dropped.}
+\item{x_cat}{(`factor()`) \cr
+Focal feature values; use \code{droplevels()} first.}
 
-\item{data}{Data frame or data.table. Full dataset including the target column.}
+\item{data}{(`data.frame()` or `data.table()`) \cr
+Full dataset including target.}
 
-\item{feature}{Character. Name of the focal categorical feature (column in \code{data}).}
+\item{feature}{(`character(1)`) \cr
+Name of the categorical feature in \code{data}.}
 
-\item{target.feature.name}{Character. Name of the target column; excluded from
-\dQuote{other features} when building the distance matrix.}
+\item{target_feature_name}{(`character(1)`) \cr
+Target column name; excluded from distance computation.}
 
-\item{order.method}{Character. How to turn the level-distance matrix into an order:
-\code{"mds"} (default, 1D classic MDS), \code{"pca"} (first PC),
-\code{"random"} (random permutation), or \code{"raw"} (keep existing level order).}
+\item{order_method}{(`character(1)`) \cr
+\code{"mds"}, \code{"pca"}, \code{"random"}, or \code{"raw"}.}
 }
 \value{
-Factor with the same length and values as \code{x.cat}, with
-  \code{levels} reordered and \code{ordered = TRUE}. If \code{nlevels(x.cat) <= 1}
-  or there are no other features, returns \code{x.cat} unchanged.
+(`factor()`) \cr
+  Same as \code{x_cat} with reordered \code{levels} and \code{ordered = TRUE};
+  unchanged if \code{nlevels(x_cat) <= 1} or no other features.
 }
 \description{
-Given x.cat (factor), data, feature, target.feature.name, 
-order.method: builds KxK distance matrix from other features (ECDF diff for numeric, L1 for categorical); 
-embeds in 1D via MDS/PCA/random/raw; reorders levels. 
-Returns factor with reordered levels (or x.cat unchanged if K<=1 or no other features).
+Given x_cat (factor), data, feature, target_feature_name,
+order_method: builds KxK distance matrix from other features (ECDF diff for numeric, L1 for categorical);
+embeds in 1D via MDS/PCA/random/raw; reorders levels.
+Returns factor with reordered levels (or x_cat unchanged if K<=1 or no other features).
 }
 \details{
 For each pair of levels, a distance is computed from all other features
-(all columns in \code{data} except \code{feature} and \code{target.feature.name}):
+(all columns in \code{data} except \code{feature} and \code{target_feature_name}):
 \itemize{
   \item Numeric: sum over features of max absolute difference of ECDFs (KS-style).
   \item Categorical: sum over features of L1 distance of conditional level distributions.
 }
-The \eqn{K \times K} distance matrix is embedded in 1D via \code{order.method};
+The \eqn{K \times K} distance matrix is embedded in 1D via \code{order_method};
 that 1D order defines the new level order. Single-level factors or no other
-features yield \code{x.cat} unchanged.
+features yield \code{x_cat} unchanged.
 }

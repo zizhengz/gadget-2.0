@@ -4,7 +4,8 @@ options("install.opts" = "--without-keep.source")
 pkg_install_binary <- function(pkg, ...) {
   repo = Sys.getenv("R_BINARY_REPO")
   if (is.null(repo) || trimws(repo) == "") {
-    stop("R_BINARY_REPO is not set! Put something like 'export R_BINARY_REPO=\"https://packagemanager.posit.co/cran/__linux__/jammy/latest\"' in your .bashrc")
+    hint = "export R_BINARY_REPO=\"https://packagemanager.posit.co/cran/__linux__/jammy/latest\""
+    stop("R_BINARY_REPO is not set! Put something like '", hint, "' in your .bashrc")
   } else {
     message(sprintf("Using Package Manager binary repository: %s", toString(repo)))
   }
@@ -15,7 +16,7 @@ pkg_install_binary <- function(pkg, ...) {
 
 if (interactive()) {
   options(
-    menu.graphics=FALSE, #no popups, use text prompts
+    menu.graphics = FALSE, #no popups, use text prompts
     useFancyQuotes = FALSE, # Uses straight ASCII quotes (" and ') instead of typographic “curly” quotes in
     digits = 4, # don't print a million digits
     scipen = 2, # use scientific notation for values >10^7
@@ -40,54 +41,58 @@ if (interactive()) {
     base::addTaskCallback(.savehist_cb, name = "savehistory")
   }
 
-  # autoload devel packages
+  # autoload devel packages (skip if not installed)
   devel_packages = c("devtools", "testthat", "roxygen2", "pak")
-  message(sprintf(
-    "Loading devel packages: %s",
-    paste(devel_packages, collapse = ", ")
-  ))
-  lapply(devel_packages, library, character.only = TRUE)
+  loaded = character()
+  for (pkg in devel_packages) {
+    if (requireNamespace(pkg, quietly = TRUE)) {
+      suppressPackageStartupMessages(library(pkg, character.only = TRUE))
+      loaded = c(loaded, pkg)
+    }
+  }
+  message(sprintf("Loading devel packages: %s", paste(loaded, collapse = ", ")))
   invisible(TRUE)
 
   # Define some global settings
   options(width = 150)
 }
 
-# Hotfix languageserver: ignore virtual URIs for diagnostics
-ns = asNamespace("languageserver")
-orig = get("diagnose_file", envir = ns)
-my_diagnose_file = function(uri, content, is_rmarkdown = FALSE, globals = NULL, cache = FALSE) {
-  if (grepl("^(git:|vscode-|gitlens:|scm:)", uri)) {
-    return(list())
-  }
-  # Ensure `.lintr` is respected for unsaved buffers / inline linting.
-  #
-  # languageserver lints editor buffers via `lintr::lint(path, text = content)`.
-  # lintr treats this as "inline data" and (by default) skips parsing settings,
-  # which leads to default linters being used and false positives (e.g. `=`).
-  if (length(content) == 0) {
-    return(list())
-  }
-  if (is_rmarkdown) {
-    if (!any(stringi::stri_detect_regex(content, "```\\{r[ ,\\}]"))) {
+# Hotfix languageserver: ignore virtual URIs for diagnostics (only in interactive sessions with languageserver)
+if (interactive() && requireNamespace("languageserver", quietly = TRUE)) {
+  ns = asNamespace("languageserver")
+  orig = get("diagnose_file", envir = ns)
+  my_diagnose_file = function(uri, content, is_rmarkdown = FALSE, globals = NULL, cache = FALSE) {
+    if (grepl("^(git:|vscode-|gitlens:|scm:)", uri)) {
       return(list())
     }
+    # Ensure `.lintr` is respected for unsaved buffers / inline linting.
+    #
+    # languageserver lints editor buffers via `lintr::lint(path, text = content)`.
+    # lintr treats this as "inline data" and (by default) skips parsing settings,
+    # which leads to default linters being used and false positives (e.g. `=`).
+    if (length(content) == 0) {
+      return(list())
+    }
+    if (is_rmarkdown) {
+      if (!any(stringi::stri_detect_regex(content, "```\\{r[ ,\\}]"))) {
+        return(list())
+      }
+    }
+    path = languageserver:::path_from_uri(uri)
+    if (length(content) == 1) {
+      content = c(content, "")
+    }
+    if (length(globals)) {
+      env_name = "languageserver:globals"
+      do.call("attach", list(globals, name = env_name, warn.conflicts = FALSE))
+      on.exit(do.call("detach", list(env_name, character.only = TRUE)))
+    }
+    lints = lintr::lint(path, cache = cache, text = content, parse_settings = TRUE)
+    diagnostics = lapply(lints, languageserver:::diagnostic_from_lint, content = content)
+    names(diagnostics) = NULL
+    diagnostics
   }
-  path = languageserver:::path_from_uri(uri)
-  if (length(content) == 1) {
-    content = c(content, "")
-  }
-  if (length(globals)) {
-    env_name = "languageserver:globals"
-    do.call("attach", list(globals, name = env_name, warn.conflicts = FALSE))
-    on.exit(do.call("detach", list(env_name, character.only = TRUE)))
-  }
-  lints = lintr::lint(path, cache = cache, text = content, parse_settings = TRUE)
-  diagnostics = lapply(lints, languageserver:::diagnostic_from_lint, content = content)
-  names(diagnostics) = NULL
-  diagnostics
+  unlockBinding("diagnose_file", ns)
+  assign("diagnose_file", my_diagnose_file, envir = ns)
+  lockBinding("diagnose_file", ns)
 }
-unlockBinding("diagnose_file", ns)
-assign("diagnose_file", my_diagnose_file, envir = ns)
-lockBinding("diagnose_file", ns)
-

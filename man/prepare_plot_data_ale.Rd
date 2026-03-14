@@ -8,26 +8,28 @@ prepare_plot_data_ale(
   effect,
   idx = NULL,
   features = names(effect),
-  mean.center = TRUE
+  mean_center = TRUE
 )
 }
 \arguments{
-\item{effect}{List returned by \code{calculate_ale()}.}
+\item{effect}{(`list()`) \cr
+List returned by \code{calculate_ale()}.}
 
-\item{idx}{Integer vector of row indices (node subset), list of such vectors,
-or NULL for the root node.}
+\item{idx}{(`integer()` or `list()` or `NULL`) \cr
+Row indices (node subset); list of such vectors; or \code{NULL} for root.}
 
-\item{features}{Character vector of features to include (default: all features in effect).}
+\item{features}{(`character()`) \cr
+Features to include (default: all in effect).}
 
-\item{mean.center}{Logical. Whether to mean-center ALE curves (default \code{TRUE}).}
+\item{mean_center}{(`logical(1)`) \cr
+Whether to mean-center ALE curves.}
 }
 \value{
-Named list where each element contains a single \code{mean_effect}
-  data.table for the corresponding feature (or a nested list if \code{idx}
-  is a list).
+(`list()`) \cr
+  Named list of \code{mean_effect} data.tables per feature; nested if \code{idx} is list.
 }
 \description{
-Given effect (from \code{calculate_ale}), idx (row indices or list of such), features, 
-mean.center: subsets ALE rows by idx; calls \code{mean_center_ale} per feature for cumulative and optional centering. 
+Given effect (from \code{calculate_ale}), idx (row indices or list of such), features,
+mean_center: subsets ALE rows by idx; calls \code{mean_center_ale} per feature for cumulative and optional centering.
 Returns named list of \code{mean_effect} data.tables (or nested list if idx is list).
 }

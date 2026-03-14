@@ -2,26 +2,52 @@
 % Please edit documentation in R/plot_regional_pd.R
 \name{plot_regional_pd}
 \alias{plot_regional_pd}
-\title{Plot regional PD/ICE for one node (internal).}
+\title{Plot regional PD/ICE for one node.}
 \usage{
 plot_regional_pd(
-  prepared.data,
-  origin.data,
-  target.feature.name,
-  node.idx,
-  color.ice,
-  color.pd,
+  prepared_data,
+  origin_data,
+  target_feature_name,
+  node_idx,
+  color_ice,
+  color_pd,
   ymin,
   ymax,
-  split.condition = NULL,
-  show.point,
-  mean.center
+  split_condition = NULL,
+  show_point,
+  mean_center
 )
 }
 \arguments{
-\item{prepared.data, origin.data, target.feature.name, node.idx, color.ice, color.pd, ymin, ymax, split.condition, show.point, mean.center}{Plot arguments.}
+\item{prepared_data}{(`list()`) \cr
+Prepared effect matrices per feature.}
+
+\item{origin_data}{(`data.frame()`) \cr
+Original data.}
+
+\item{target_feature_name}{(`character(1)`) \cr
+Target column.}
+
+\item{node_idx}{(`integer(1)`) \cr
+Node index.}
+
+\item{color_ice, color_pd}{(`character(1)`) \cr
+Colors.}
+
+\item{ymin, ymax}{(`numeric(1)`) \cr
+Y-axis limits.}
+
+\item{split_condition}{(`character(1)` or `NULL`) \cr
+Split condition label.}
+
+\item{show_point, mean_center}{(`logical(1)`) \cr
+Plot options.}
+}
+\value{
+(`list()`) \cr
+  List of ggplot objects per feature.
 }
 \description{
-Plot regional PD/ICE for one node (internal).
+Plot regional PD/ICE for one node.
 }
 \keyword{internal}

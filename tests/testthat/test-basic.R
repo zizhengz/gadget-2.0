@@ -1,33 +1,49 @@
-test_that("package can be loaded", {
+# Basic behavioral contract tests (no brittle symbol/existence checks)
+
+test_that("strategies satisfy contract: name and GadgetTree creation", {
   library(gadget)
-  expect_true(TRUE)
+  pd = PdStrategy$new()
+  ale = AleStrategy$new()
+  expect_equal(pd$name, "pd")
+  expect_equal(ale$name, "ale")
+  expect_s3_class(GadgetTree$new(strategy = pd), "GadgetTree")
+  expect_s3_class(GadgetTree$new(strategy = ale), "GadgetTree")
 })
 
-test_that("basic functionality works", {
+test_that("GadgetTree$new rejects non-R6 strategy", {
   library(gadget)
-
-  # Test that main classes can be created
-  expect_true(inherits(PdStrategy$new(), "PdStrategy"))
-  expect_true(inherits(GadgetTree$new(strategy = PdStrategy$new()), "GadgetTree"))
-
-  # Test that C++ functions are available
-  expect_true(exists("search_best_split_cpp"))
-  expect_true(exists("search_best_split_point_cpp"))
-})
-
-test_that("package exports are available", {
-  library(gadget)
-
-  # Check that main functions are exported
-  expected_functions = c(
-    "GadgetTree", "PdStrategy", "AleStrategy",
-    "search_best_split_cpp", "search_best_split_point_cpp",
-    "plot_tree_structure", "plot_regional_pd", "plot_tree_pd",
-    "calculate_ale", "convert_tree_to_list", "extract_split_info",
-    "node_heterogeneity"
+  expect_error(
+    GadgetTree$new(strategy = "not_r6", n_split = 2),
+    "R6"
   )
+})
 
-  for (func in expected_functions) {
-    expect_true(exists(func), info = paste("Function", func, "should be available"))
-  }
+test_that("GadgetTree$fit rejects target_feature_name not in data", {
+  library(gadget)
+  tree = GadgetTree$new(strategy = PdStrategy$new(), n_split = 1)
+  data = data.frame(x = 1:5, y = 1:5)
+  expect_error(
+    tree$fit(data = data, target_feature_name = "z", effect = list()),
+    "subset|not.*found|target_feature_name"
+  )
+})
+
+test_that("PdStrategy fit rejects missing effect", {
+  library(gadget)
+  tree = GadgetTree$new(strategy = PdStrategy$new(), n_split = 1)
+  data = data.frame(x = 1:5, y = 1:5)
+  expect_error(
+    tree$fit(data = data, target_feature_name = "y"),
+    "effect|PdStrategy requires"
+  )
+})
+
+test_that("AleStrategy fit rejects missing model", {
+  library(gadget)
+  tree = GadgetTree$new(strategy = AleStrategy$new(), n_split = 1)
+  data = data.frame(x = 1:5, y = 1:5)
+  expect_error(
+    tree$fit(data = data, target_feature_name = "y"),
+    "model|AleStrategy requires"
+  )
 })

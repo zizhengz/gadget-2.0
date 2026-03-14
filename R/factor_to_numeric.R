@@ -2,8 +2,10 @@
 #' uses as.numeric(as.character(f)); otherwise uses as.numeric(f) (level indices).
 #' Returns numeric vector.
 #'
-#' @param f Factor.
-#' @return Numeric vector.
+#' @param f (`factor()`) \cr
+#'   Factor to convert.
+#' @return (`numeric()`) \cr
+#'   Numeric vector.
 #' @keywords internal
 factor_to_numeric = function(f) {
   stopifnot(is.factor(f))

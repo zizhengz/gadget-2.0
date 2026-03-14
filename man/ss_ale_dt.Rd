@@ -2,14 +2,19 @@
 % Please edit documentation in R/calculate_ale_heterogeneity.R
 \name{ss_ale_dt}
 \alias{ss_ale_dt}
-\title{Sum-of-squares ALE heterogeneity from list of effect data.tables (internal).}
+\title{Sum-of-squares ALE heterogeneity from effect data.tables.}
 \usage{
 ss_ale_dt(y_list)
 }
 \arguments{
-\item{y_list}{List of ALE data.tables per feature.}
+\item{y_list}{(`list()`) \cr
+ALE data.tables per feature.}
+}
+\value{
+(`list()`) \cr
+  Heterogeneity per feature.
 }
 \description{
-Sum-of-squares ALE heterogeneity from list of effect data.tables (internal).
+Sum-of-squares ALE heterogeneity from effect data.tables.
 }
 \keyword{internal}
