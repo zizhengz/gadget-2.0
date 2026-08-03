@@ -6,14 +6,13 @@ source("example_CB_CC_26-07-13_input.R")
 
 noise_levels = c(0.001, 0.1, 0.2, 0.5, 2.0)
 tau_values = c(0.005, 0.05, 0.5, 0.95)
-# Selective early stopping methods (Section 5.1), Methods 1-4.
-methods = c("plain_risk", "risk_reduction", "interaction_fraction", "interaction_fraction_total")
 
 # Column 1: disabled baseline; then every (method, tau) combination.
 configs = c(
-  list(list(gi = NULL, tau = NULL, label = "disabled")),
-  unlist(lapply(methods, function(m) {
-    lapply(tau_values, function(tt) list(gi = m, tau = tt, label = paste0(m, "|tau=", tt)))
+  list(list(improvement_method = NULL, tau = NULL, label = "disabled")),
+  unlist(lapply(methods, function(method) {
+    lapply(tau_values, function(tau) list(improvement_method = method, tau = tau,
+      label = paste0(method, "|tau=", tau)))
   }), recursive = FALSE)
 )
 
@@ -42,15 +41,16 @@ signal = ifelse(dat3$x3 > 0, 3 * dat3$x1, -3 * dat3$x1) +
   dat3$x2 + 0.5 * dat3$x1 + 2 * dat3$x4
 for (i in seq_along(noise_levels)) {
   dat3$y = signal + rnorm(n, sd = noise_levels[i])
-  eff = make_effect(dat3)
+  effect = make_effect(dat3)
   if (detailed) detailed_results[[rownames(n_nodes)[i]]] = list()
   for (j in seq_along(configs)) {
-    tr = fit_tree(dat3, eff, configs[[j]]$gi, tau = configs[[j]]$tau)
-    si = tr$extract_split_info()
-    n_nodes[i, j] = nrow(si)
-    rf = tr$root$vecb_remaining_features
-    root_remaining[i, j] = if (is.null(rf)) "all" else paste(names(rf)[rf], collapse = ",")
-    if (detailed) detailed_results[[rownames(n_nodes)[i]]][[configs[[j]]$label]] = si
+    tree = fit_tree(dat3, effect, configs[[j]]$improvement_method, tau = configs[[j]]$tau)
+    split_info = tree$extract_split_info()
+    n_nodes[i, j] = nrow(split_info)
+    remaining_features = tree$root$vecb_remaining_features
+    root_remaining[i, j] = if (is.null(remaining_features)) "all" else
+      paste(names(remaining_features)[remaining_features], collapse = ",")
+    if (detailed) detailed_results[[rownames(n_nodes)[i]]][[configs[[j]]$label]] = split_info
   }
 }
 
@@ -61,11 +61,11 @@ print(root_remaining)
 
 # Full per-run trees, only when requested.
 if (detailed) {
-  detail_cols = function(si) {
+  detail_cols = function(split_info) {
     keep = c("depth", "id", "n_obs", "split_feature", "split_value", "remaining_features",
       "node_objective", "node_objective_remaining", "int_imp", "int_imp_remaining",
-      grep("^(int_imp_|early_stopping_stat_)", colnames(si), value = TRUE))
-    si[, intersect(keep, colnames(si)), drop = FALSE]
+      grep("^(int_imp_|early_stopping_stat_)", colnames(split_info), value = TRUE))
+    split_info[, intersect(keep, colnames(split_info)), drop = FALSE]
   }
   for (noise_label in names(detailed_results)) {
     for (config_label in names(detailed_results[[noise_label]])) {
