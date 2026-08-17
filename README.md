@@ -150,11 +150,11 @@ tree$plot(
 
 **Tree structure and regional PD/ICE plots (root and first split):**
 
-![PD Bike tree structure](figures/pd_bike_tree_structure.png)
+![PD Bike tree structure](man/figures/pd_bike_tree_structure.png)
 
-![PD Bike depth 1, node 1](figures/pd_bike_depth1_id1.png)
-![PD Bike depth 2, node 2](figures/pd_bike_depth2_id2.png)
-![PD Bike depth 2, node 3](figures/pd_bike_depth2_id3.png)
+![PD Bike depth 1, node 1](man/figures/pd_bike_depth1_id1.png)
+![PD Bike depth 2, node 2](man/figures/pd_bike_depth2_id2.png)
+![PD Bike depth 2, node 3](man/figures/pd_bike_depth2_id3.png)
 
 ### ALE + Bikeshare
 
@@ -214,11 +214,11 @@ tree$plot(
 
 **Tree structure and regional ALE plots (root and first split):**
 
-![ALE Bike tree structure](figures/ale_bike_tree_structure.png)
+![ALE Bike tree structure](man/figures/ale_bike_tree_structure.png)
 
-![ALE Bike depth 1, node 1](figures/ale_bike_depth1_id1.png)
-![ALE Bike depth 2, node 2](figures/ale_bike_depth2_id2.png)
-![ALE Bike depth 2, node 3](figures/ale_bike_depth2_id3.png)
+![ALE Bike depth 1, node 1](man/figures/ale_bike_depth1_id1.png)
+![ALE Bike depth 2, node 2](man/figures/ale_bike_depth2_id2.png)
+![ALE Bike depth 2, node 3](man/figures/ale_bike_depth2_id3.png)
 
 ## More plot options
 
