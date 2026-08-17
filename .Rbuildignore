@@ -13,6 +13,7 @@
 ^\.ignore$
 ^\.lintr$
 ^\.r-lib$
+^\.venv.*$
 ^\.Rproj\.user$
 ^\.vscode$
 ^.*\.Rproj$
