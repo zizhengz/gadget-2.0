@@ -9,8 +9,8 @@ Authors@R: c(
       role = c("aut", "cre")
     )
   )
-Description: Implements the GADGET (General Additive Decomposition based on Global
-    Effect Tree) algorithm for interpretable machine learning. The package
+Description: Implements the GADGET (Generalized Additive Decomposition of Global
+    EffecTs) algorithm for interpretable machine learning. The package
     recursively partitions the feature space to minimize heterogeneity of
     feature effects (e.g., Accumulated Local Effects or Partial Dependence),
     producing a tree of regions where effects are more stable. It supports

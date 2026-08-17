@@ -6,7 +6,7 @@ utils::globalVariables(c(
   "row_id", "feat_val"
 ))
 
-#' xplaineff: General Additive Decomposition Based on Global Effect Tree
+#' xplaineff: Generalized Additive Decomposition of Global EffecTs
 #'
 #' @description
 #' The **xplaineff** package implements the GADGET algorithm for interpretable

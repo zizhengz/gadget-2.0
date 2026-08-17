@@ -1,4 +1,4 @@
-#' GadgetTree: Generalized Additive Decomposition of Global Effects Tree
+#' GadgetTree: Regional feature-effect tree
 #'
 #' @description
 #' Wrapper for effect-based trees: given a strategy (pd/ale), fits tree via

@@ -4,7 +4,7 @@
 \name{xplaineff-package}
 \alias{xplaineff-package}
 \alias{xplaineff}
-\title{xplaineff: General Additive Decomposition Based on Global Effect Tree}
+\title{xplaineff: Generalized Additive Decomposition of Global EffecTs}
 \description{
 The **xplaineff** package implements the GADGET algorithm for interpretable
 machine learning. It builds a tree by recursively partitioning the feature

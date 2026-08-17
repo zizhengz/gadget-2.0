@@ -2,7 +2,7 @@
 % Please edit documentation in R/GadgetTree.R
 \name{GadgetTree}
 \alias{GadgetTree}
-\title{GadgetTree: Generalized Additive Decomposition of Global Effects Tree}
+\title{GadgetTree: Regional feature-effect tree}
 \format{
 [R6::R6Class] object.
 }
