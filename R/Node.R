@@ -55,8 +55,8 @@ Node = R6::R6Class("Node", public = list(
   strategy = NULL,
 
   #' @description
-  #' Create a node from id, depth, subset indices, and grid. Assigns fields and sets
-  #' \code{stop_criterion_met = FALSE}. Accepts legacy scalar args for compatibility.
+  #' Create a node from id, depth, subset indices, grid, and optional parent/objective metadata.
+  #' Sets \code{stop_criterion_met = FALSE}.
   #' @param id (`integer(1)`) \cr
   #'   Node identifier.
   #' @param depth (`integer(1)` or `NULL`) \cr

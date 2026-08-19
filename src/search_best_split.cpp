@@ -230,8 +230,7 @@ List child_objectives_categorical_flat(
     SL += yi;
     QL += yi % yi;
   }
-  // TODO: as in the categorical objective above, no split-feature grid halving is applied here
-  // (default -1). The categorical splitting feature's own effect is treated like the others.
+  // Categorical split features keep the split feature's own effect on the shared full grid.
   return child_objectives_from_flat_sums(SL, QL, S_tot, Q_tot, offsets, NL, N - NL);
 }
 
@@ -332,12 +331,8 @@ List search_best_split_point_cpp_internal(
       }
     };
 
-    // TODO: split-feature handling for a CATEGORICAL splitting feature is not done here.
-    // For the numeric case, the split feature's own ICE grid is divided across the children,
-    // so its risk uses the true child SSE over each surviving half minus its parent SS
-    // (is_own_effect_halved branch below). The analogous treatment for a categorical splitting
-    // feature is still open (same TODO as in the R reference search_best_split_point_pd.R);
-    // currently its own effect is treated like any other feature (S-only, full grid).
+    // For categorical split features, the split feature's own effect stays on the shared
+    // full grid here; only the numeric self-effect branch below uses the child-grid split.
     if (categorical_split == "exhaustive") {
       std::vector<int> observed_levels;
       observed_levels.reserve(K);

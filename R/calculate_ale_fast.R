@@ -4,7 +4,7 @@
 #' interval indexing and interval-wise aggregation.
 #' Numeric and categorical branches stack lower/upper (or plus/minus) configurations
 #' into \code{2n} rows and call the predictor once per feature, matching the batched
-#' \code{predict_newdata_fast} pattern used in \code{xplaineff::ale}.
+#' \code{predict_newdata_fast} pattern used by \code{calculate_ale()}.
 #'
 #' @param model (`any`) \cr
 #'   Fitted model with predict interface.

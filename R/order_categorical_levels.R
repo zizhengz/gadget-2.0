@@ -72,8 +72,7 @@ order_categorical_levels = function(x_cat, data, feature, target_feature_name, o
       total_dists = total_dists + apply(diffs, 2, max)
     } else {
       # Categorical / discrete other feature: compare conditional distributions via half-L1 (total variation) distance.
-      # Half-L1 matches the convention used by the ale package (idxs_kolmogorov_smirnov in ALEPlot_compatibility.R)
-      # and ensures values stay in [0, 1], comparable to the KS-distance contribution from numeric other features.
+      # This keeps the distance bounded in [0, 1] and matches the categorical convention used by ale.
       tbl = table(x_cat, val)
       prob_mat = tbl / ifelse(rowSums(tbl) == 0, 1, rowSums(tbl))
       diffs = abs(prob_mat[pairs$from, ] - prob_mat[pairs$to, ])
