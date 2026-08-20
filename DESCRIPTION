@@ -14,8 +14,7 @@ Description: Implements the GADGET (Generalized Additive Decomposition of Global
     recursively partitions the feature space to minimize heterogeneity of
     feature effects (e.g., Accumulated Local Effects or Partial Dependence),
     producing a tree of regions where effects are more stable. It supports
-    both ALE and PD strategies, works with 'mlr3' learners, accepts 'iml'-style
-    PD/ICE outputs for PD trees, and provides visualization of the interaction
+    both ALE and PD strategies, works with 'mlr3' learners and provides visualization of the interaction
     tree and regional effect plots.
 License: MIT + file LICENSE
 Depends: R (>= 4.3.0)
