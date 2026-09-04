@@ -33,10 +33,6 @@
 #' and manage nodes in effect-based decision trees. Each node stores split information,
 #' effect statistics, and references to its children.
 #'
-#' @examples
-#' # Example: Creating a Node (typically done internally)
-#' # node = Node$new(id = 1, depth = 1, subset_idx = 1:100, grid = list(feature1 = 1:10))
-#'
 #' @importFrom R6 R6Class
 #'
 #' @keywords internal

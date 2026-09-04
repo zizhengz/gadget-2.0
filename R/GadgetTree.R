@@ -47,21 +47,8 @@
 #' point for fitting and visualizing effect-based decision trees in the xplaineff package.
 #'
 #' @examples
-#' \dontrun{
-#' # PD: `data` and `target_feature_name` come first; pass `effect` and/or `model` via `...`.
-#' pd_strat = PdStrategy$new()
-#' tree = GadgetTree$new(strategy = pd_strat, n_split = 2)
-#' tree$fit(data = dat, target_feature_name = "y", effect = effect_obj)
-#' tree$plot(data = dat, target_feature_name = "y", effect = effect_obj)
-#' tree$plot(data = dat, target_feature_name = "y")  # uses cached effect from fit()
-#' tree$plot_tree_structure()
-#' split_info = tree$extract_split_info()
-#'
-#' # ALE: pass `model` (and optional `n_intervals`, `ale_engine`, etc.).
-#' tree_ale = GadgetTree$new(strategy = AleStrategy$new(), n_split = 2)
-#' tree_ale$fit(data = dat, target_feature_name = "y", model = fitted_model)
-#' tree_ale$plot(data = dat, target_feature_name = "y")
-#' }
+#' tree = GadgetTree$new(strategy = PdStrategy$new(), n_split = 2L)
+#' tree$n_split
 #'
 #' @export
 GadgetTree = R6::R6Class(

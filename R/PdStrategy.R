@@ -29,14 +29,8 @@
 #' but can be instantiated for advanced customization.
 #'
 #' @examples
-#' \dontrun{
-#' # Example: Fit and plot a PD tree using PdStrategy and GadgetTree
-#' # (Assuming effect and data are prepared)
 #' pd_strat = PdStrategy$new()
-#' tree = GadgetTree$new(strategy = pd_strat, n_split = 2)
-#' tree$fit(data = data, target_feature_name = "target", effect = effect)
-#' tree$plot(data = data, target_feature_name = "target", effect = effect)
-#' }
+#' pd_strat$categorical_split
 #'
 #' @include EffectStrategy.R
 #' @export

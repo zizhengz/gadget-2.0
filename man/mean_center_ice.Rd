@@ -28,10 +28,4 @@ per-feature tables. Delegates pivoting to \code{pivot_effect_to_wide}.
 If \code{effect$results} is a \code{data.frame}, one feature is inferred from column names.
 If it is a named list, each element is pivoted separately.
 }
-\examples{
-# result = mean_center_ice(effect, feature_set = c("feature1", "feature2"), mean_center = TRUE)
-# Y = result$Y
-# grid = result$grid
-
-}
 \keyword{internal}

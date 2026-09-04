@@ -40,11 +40,8 @@
 #' \code{tree$fit(...)}. Can be instantiated directly for custom pipelines.
 #'
 #' @examples
-#' \dontrun{
 #' ale_strat = AleStrategy$new()
-#' tree = GadgetTree$new(strategy = ale_strat, n_split = 2)
-#' tree$fit(model = model, data = data, target_feature_name = "y")
-#' }
+#' ale_strat$categorical_split
 #'
 #' @include EffectStrategy.R
 #' @export

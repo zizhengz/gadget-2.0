@@ -50,11 +50,6 @@ pivot_effect_to_wide = function(data, grid_col, value_col = ".value", drop_cols 
 #' If \code{effect$results} is a \code{data.frame}, one feature is inferred from column names.
 #' If it is a named list, each element is pivoted separately.
 #'
-#' @examples
-#' # result = mean_center_ice(effect, feature_set = c("feature1", "feature2"), mean_center = TRUE)
-#' # Y = result$Y
-#' # grid = result$grid
-#'
 #' @keywords internal
 mean_center_ice = function(effect, feature_set = NULL, mean_center = TRUE) {
   checkmate::assert_true(inherits(effect, "R6") || is.list(effect), .var.name = "effect")

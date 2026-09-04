@@ -17,11 +17,6 @@ This class is used internally by GadgetTree and strategy objects to represent
 and manage nodes in effect-based decision trees. Each node stores split information,
 effect statistics, and references to its children.
 }
-\examples{
-# Example: Creating a Node (typically done internally)
-# node = Node$new(id = 1, depth = 1, subset_idx = 1:100, grid = list(feature1 = 1:10))
-
-}
 \keyword{internal}
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
@@ -80,8 +75,8 @@ Strategy for effect-specific operations.}
 \if{html}{\out{<a id="method-Node-new"></a>}}
 \if{latex}{\out{\hypertarget{method-Node-new}{}}}
 \subsection{Method \code{new()}}{
-Create a node from id, depth, subset indices, and grid. Assigns fields and sets
-\code{stop_criterion_met = FALSE}. Accepts legacy scalar args for compatibility.
+Create a node from id, depth, subset indices, grid, and optional parent/objective metadata.
+Sets \code{stop_criterion_met = FALSE}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Node$new(
   id,

@@ -39,13 +39,6 @@
 #' }
 #' Stops with an error if any requested feature is missing from \code{data}.
 #'
-#' @examples
-#' \dontrun{
-#' result = prepare_split_data_ale(model, data, "y", n_intervals = 10)
-#' result = prepare_split_data_ale(model, data, "y", n_intervals = 10,
-#'   feature_set = c("x1", "x2"), split_feature = c("x1", "x2", "x3"))
-#' }
-#'
 #' @keywords internal
 prepare_split_data_ale = function(
   model,

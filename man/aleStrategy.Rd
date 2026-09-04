@@ -24,18 +24,15 @@ s = AleStrategy$new(categorical_split = "ordered_prefix")
 }
 
 \examples{
-\dontrun{
 ale_strat = AleStrategy$new()
-tree = GadgetTree$new(strategy = ale_strat, n_split = 2)
-tree$fit(model = model, data = data, target_feature_name = "y")
-}
+ale_strat$categorical_split
 
 }
 \seealso{
 \code{\link{calculate_ale_heterogeneity_cpp}}
 }
 \section{Super class}{
-\code{\link[xplaineff:EffectStrategy]{xplaineff::EffectStrategy}} -> \code{AleStrategy}
+\code{::EffectStrategy} -> \code{AleStrategy}
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}

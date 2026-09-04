@@ -15,7 +15,10 @@ Description: Implements the GADGET (Generalized Additive Decomposition of Global
     feature effects (e.g., Accumulated Local Effects or Partial Dependence),
     producing a tree of regions where effects are more stable. It supports
     both ALE and PD strategies, works with 'mlr3' learners and provides visualization of the interaction
-    tree and regional effect plots.
+    tree and regional effect plots. The method is described in Herbinger, J.,
+    Wright, M. N., Nagler, T., Bischl, B., and Casalicchio, G. (2024),
+    "Decomposing Global Feature Effects Based on Feature Interactions"
+    <https://jmlr.org/papers/volume25/23-0699/23-0699.pdf>.
 License: MIT + file LICENSE
 Depends: R (>= 4.3.0)
 URL: https://github.com/mlr-org/xplaineff

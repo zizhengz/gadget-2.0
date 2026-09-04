@@ -27,18 +27,12 @@ s = PdStrategy$new(categorical_split = "one_vs_rest")
 }
 
 \examples{
-\dontrun{
-# Example: Fit and plot a PD tree using PdStrategy and GadgetTree
-# (Assuming effect and data are prepared)
 pd_strat = PdStrategy$new()
-tree = GadgetTree$new(strategy = pd_strat, n_split = 2)
-tree$fit(data = data, target_feature_name = "target", effect = effect)
-tree$plot(data = data, target_feature_name = "target", effect = effect)
-}
+pd_strat$categorical_split
 
 }
 \section{Super class}{
-\code{\link[xplaineff:EffectStrategy]{xplaineff::EffectStrategy}} -> \code{PdStrategy}
+\code{::EffectStrategy} -> \code{PdStrategy}
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
